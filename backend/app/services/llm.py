@@ -12,6 +12,7 @@ _DEFAULT_BASES = {
     "deepseek": "https://api.deepseek.com",
     "openai": "https://api.openai.com/v1",
     "openrouter": "https://openrouter.ai/api/v1",
+    "groq": "https://api.groq.com/openai/v1",
 }
 
 _TIMEOUT = 60.0
@@ -19,7 +20,7 @@ _TIMEOUT = 60.0
 
 def is_configured() -> bool:
     s = get_settings()
-    return bool((s.LLM_API_KEY or "").strip())
+    return bool((s.LLM_API_KEY or "").strip() or (s.GROQ_API_KEY or "").strip())
 
 
 def _base_url() -> str:
@@ -39,14 +40,26 @@ def _fallback_model() -> str:
     return (get_settings().LLM_FALLBACK_MODEL or "").strip()
 
 
-def _headers() -> dict:
+def _route(model: str) -> tuple:
+    """(base_url, api_key, headers) for a model.
+
+    - `:free` suffix → OpenRouter free tier.
+    - `deepseek/*` → OpenRouter (DeepSeek access lives there).
+    - everything else → configured provider (Groq hosts qwen/*,
+      openai/gpt-oss-*, meta-llama/*, whisper-*, groq/* natively)."""
     s = get_settings()
-    headers = {"Authorization": f"Bearer {s.LLM_API_KEY}"}
-    # OpenRouter attribution (optional but recommended; harmless elsewhere).
-    if (s.LLM_PROVIDER or "").lower() == "openrouter":
+    if model.endswith(":free") or model.startswith("deepseek/"):
+        key = s.LLM_API_KEY
+        headers = {"Authorization": f"Bearer {key}"}
         headers["HTTP-Referer"] = getattr(s, "APP_URL", "") or ""
         headers["X-Title"] = "VoiceField"
-    return headers
+        return "https://openrouter.ai/api/v1", key, headers
+    provider = (s.LLM_PROVIDER or "deepseek").lower()
+    base = ((s.LLM_BASE_URL or "").strip()
+            or _DEFAULT_BASES.get(provider, _DEFAULT_BASES["deepseek"]))
+    key = ((s.GROQ_API_KEY or "").strip()
+           if provider == "groq" else s.LLM_API_KEY)
+    return base, key, {"Authorization": f"Bearer {key}"}
 
 
 def _models() -> list:
@@ -76,17 +89,26 @@ async def _post(payload: dict) -> dict:
     if not is_configured():
         raise RuntimeError("LLM not configured (LLM_API_KEY missing)")
     models = _models()
+    has_images = any(isinstance(m.get("content"), list)
+                     for m in payload.get("messages", [])
+                     if isinstance(m, dict))
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         for i, model in enumerate(models):
             body = dict(payload)
             body["model"] = model
+            base, _key, headers = _route(model)
+            if not (_key or "").strip():
+                last_error = RuntimeError(f"No API key for route of {model}")
+                if i < len(models) - 1:
+                    continue
+                raise last_error
             # Only the primary attempt uses strict JSON mode; fallbacks that
             # reject response_format (e.g. via Novita) retry without it below.
             try:
                 resp = await client.post(
-                    f"{_base_url()}/chat/completions",
-                    headers=_headers(),
+                    f"{base}/chat/completions",
+                    headers=headers,
                     json=body,
                 )
                 resp.raise_for_status()
@@ -103,8 +125,8 @@ async def _post(payload: dict) -> dict:
                     body.pop("response_format", None)
                     try:
                         resp = await client.post(
-                            f"{_base_url()}/chat/completions",
-                            headers=_headers(),
+                            f"{base}/chat/completions",
+                            headers=headers,
                             json=body,
                         )
                         resp.raise_for_status()
@@ -113,7 +135,10 @@ async def _post(payload: dict) -> dict:
                         last_error = e2
                         continue
                 last_error = e
-                if i < len(models) - 1 and _retryable(e, status):
+                if i < len(models) - 1 and (
+                        _retryable(e, status)
+                        # Vision: model without image support → next model.
+                        or (has_images and status == 400)):
                     continue
                 raise
             except Exception as e:

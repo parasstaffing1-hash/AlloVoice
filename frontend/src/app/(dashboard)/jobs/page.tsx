@@ -15,6 +15,12 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [lateJobId, setLateJobId] = useState<string | null>(null);
+  const [lateMins, setLateMins] = useState("30");
+  const [lateStatus, setLateStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [lateMsg, setLateMsg] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -37,6 +43,81 @@ export default function JobsPage() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const toggleLate = (jobId: string) => {
+    if (lateJobId === jobId) {
+      setLateJobId(null);
+      return;
+    }
+    setLateJobId(jobId);
+    setLateMins("30");
+    setLateStatus("idle");
+    setLateMsg("");
+  };
+
+  const sendRunningLate = (job: any) => {
+    if (!token || lateStatus === "sending") return;
+    const mins = parseInt(lateMins, 10) || 30;
+    setLateStatus("sending");
+    setLateMsg("");
+    const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    const eta = new Date(Date.now() + mins * 60000).toLocaleTimeString(
+      "en-GB",
+      { hour: "2-digit", minute: "2-digit" }
+    );
+    const buildAndSend = (phone: string, name: string) => {
+      const text = `Hi ${name}, your VoiceField engineer is running ~${mins} late. New ETA ${eta}. Reply to this text if that doesn't work.`;
+      fetch(
+        `${API}/api/sms/send?to_phone=${encodeURIComponent(
+          phone
+        )}&message=${encodeURIComponent(text)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+        .then((r: any) => r.json())
+        .then((r: any) => {
+          if (r && (r.success === true || r.sid)) {
+            setLateStatus("sent");
+            setLateMsg(`Customer texted — running ${mins} min late, new ETA ${eta}.`);
+          } else {
+            setLateStatus("error");
+            setLateMsg(r?.error || "Text failed to send. Please try again.");
+          }
+        })
+        .catch((e: any) => {
+          setLateStatus("error");
+          setLateMsg(e?.message || "Text failed to send. Please try again.");
+        });
+    };
+    const directPhone: string | null = job.customer_phone || job.phone || null;
+    const directName: string = job.customer_name || "there";
+    if (directPhone) {
+      buildAndSend(directPhone, directName);
+      return;
+    }
+    if (!job.customer_id) {
+      setLateStatus("error");
+      setLateMsg("No phone on file for this customer.");
+      return;
+    }
+    api.customers
+      .get(job.customer_id, token!)
+      .then((r: any) => {
+        if (!r?.phone) {
+          setLateStatus("error");
+          setLateMsg("No phone on file for this customer.");
+          return;
+        }
+        buildAndSend(r.phone, r.full_name || directName);
+      })
+      .catch((e: any) => {
+        console.error(e);
+        setLateStatus("error");
+        setLateMsg("No phone on file for this customer.");
+      });
   };
 
   const filteredJobs = jobs.filter(
@@ -151,9 +232,48 @@ export default function JobsPage() {
                           Complete
                         </Button>
                       )}
+                      <Button size="sm" variant="outline" onClick={() => toggleLate(job.id)} className="gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Running late
+                      </Button>
                     </div>
                   </div>
                 </div>
+                {lateJobId === job.id && (
+                  <div className="mt-3 rounded-lg border bg-muted/30 p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+                    <select
+                      value={lateMins}
+                      onChange={(e) => setLateMins(e.target.value)}
+                      className="rounded-lg border bg-background px-2 py-1.5 text-sm"
+                      aria-label="Minutes late"
+                    >
+                      <option value="15">15 min late</option>
+                      <option value="30">30 min late</option>
+                      <option value="45">45 min late</option>
+                      <option value="60">60 min late</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={() => sendRunningLate(job)}
+                      disabled={lateStatus === "sending"}
+                    >
+                      {lateStatus === "sending" ? "Sending…" : "Send text"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setLateJobId(null)}
+                    >
+                      Cancel
+                    </Button>
+                    {lateStatus === "sent" && (
+                      <span className="text-xs text-emerald-500">{lateMsg}</span>
+                    )}
+                    {lateStatus === "error" && (
+                      <span className="text-xs text-destructive">{lateMsg}</span>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))

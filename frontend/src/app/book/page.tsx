@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { COUNTRIES } from "@/lib/money";
 
 interface Service {
   id: string;
@@ -50,6 +51,7 @@ interface BookingData {
   service: string;
   description: string;
   photos: string[];
+  country: string;
   postcode: string;
   address: AddressResult | null;
   date: string;
@@ -132,6 +134,7 @@ export default function BookingPage() {
     service: draft?.service || "",
     description: draft?.description || "",
     photos: draft?.photos || [],
+    country: draft?.country || "GB",
     postcode: draft?.postcode || "",
     address: draft?.address || null,
     date: draft?.date || "",
@@ -159,6 +162,20 @@ export default function BookingPage() {
 
   const update = <K extends keyof BookingData>(key: K, value: BookingData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const isGB = (data.country || "GB") === "GB";
+
+  const handleCountryChange = (code: string) => {
+    setPostcodeSuggestions([]);
+    setData((prev) => ({
+      ...prev,
+      country: code,
+      address:
+        code === "GB"
+          ? prev.address
+          : prev.address ?? { line_1: "", line_2: "", town: "", county: "", postcode: "" },
+    }));
   };
 
   const fetchPostcodeSuggestions = useCallback(async (q: string) => {
@@ -239,7 +256,7 @@ export default function BookingPage() {
     switch (step) {
       case 0: return !!data.service;
       case 1: return data.description.trim().length > 0;
-      case 2: return !!data.postcode && !!data.address;
+      case 2: return isGB ? (!!data.postcode && !!data.address) : (!!data.address?.line_1?.trim() && !!data.address?.town?.trim());
       case 3: return !!data.date && !!data.time;
       case 4: return !!data.name && !!data.phone && !!data.email;
       default: return true;
@@ -282,7 +299,7 @@ export default function BookingPage() {
             <p className="text-sm text-muted-foreground">
               You&apos;ll receive a confirmation email and a call from our team to confirm your appointment.
             </p>
-            <Button variant="outline" className="mt-6" onClick={() => { setSubmitted(false); setStep(0); setData({ service: "", description: "", photos: [], postcode: "", address: null, date: "", time: "", name: "", phone: "", email: "", referralSource: "" }); }}>
+            <Button variant="outline" className="mt-6" onClick={() => { setSubmitted(false); setStep(0); setData({ service: "", description: "", photos: [], country: "GB", postcode: "", address: null, date: "", time: "", name: "", phone: "", email: "", referralSource: "" }); }}>
               Book Another
             </Button>
           </CardContent>
@@ -391,6 +408,26 @@ export default function BookingPage() {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium mb-2">Country</label>
+                  <select
+                    value={data.country || "GB"}
+                    onChange={(e) => handleCountryChange(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {!isGB && (
+                  <p className="text-xs text-muted-foreground">
+                    Postcode lookup is only available for UK addresses. Please enter your address manually below.
+                  </p>
+                )}
+                {isGB && (
+                <div>
                   <label className="block text-sm font-medium mb-2">Postcode</label>
                   <div className="relative">
                     <Input
@@ -418,11 +455,12 @@ export default function BookingPage() {
                     )}
                   </div>
                 </div>
+                )}
                 {data.address && (
                   <div className="rounded-xl bg-muted/50 p-4 space-y-3">
                     <p className="text-sm font-medium flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      Address Found
+                      {isGB ? "Address Found" : "Address"}
                     </p>
                     <div className="space-y-2">
                       <Input
@@ -448,7 +486,7 @@ export default function BookingPage() {
                         />
                       </div>
                       <Input
-                        placeholder="Postcode"
+                        placeholder={isGB ? "Postcode" : "Postcode / ZIP"}
                         value={data.address.postcode}
                         onChange={(e) => update("address", { ...data.address!, postcode: e.target.value })}
                       />

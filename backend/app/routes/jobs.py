@@ -103,6 +103,23 @@ async def update_job_status(
     )
     db.add(timeline)
     await db.commit()
+
+    if status == "completed":
+        try:
+            from app.services.analytics import capture
+
+            try:
+                job_value = float(job.final_cost or job.estimated_cost or 0)
+            except Exception:
+                job_value = 0.0
+            capture(
+                "job_completed",
+                distinct_id=str(current_user.id),
+                properties={"job_id": str(job.id), "value": job_value},
+            )
+        except Exception:
+            pass
+
     return {"message": "Status updated"}
 
 

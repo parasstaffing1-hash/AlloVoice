@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database import get_db
 from app.routes.auth import get_current_user
-from app.models.models import User
+from app.models.models import Business, User
 
 router = APIRouter(prefix="/api/pricebook", tags=["pricebook"])
 
@@ -15,7 +18,8 @@ class ServiceCreate(BaseModel):
     base_price: float
     unit: str = "fixed"
     estimated_duration_minutes: Optional[float] = None
-    vat_rate: float = 20.0
+    # None = inherit the caller's business tax_rate at calculate time.
+    vat_rate: Optional[float] = None
 
 
 class ServiceUpdate(BaseModel):
@@ -215,7 +219,27 @@ def update_quote_template(data: QuoteTemplate, current_user: User = Depends(get_
 
 
 @router.post("/calculate", response_model=PriceResult)
-def calculate_price(data: PriceCalculation, current_user: User = Depends(get_current_user)):
+async def calculate_price(
+    data: PriceCalculation,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Business locale tax rate (fallback 20.0 when no business/DB).
+    business_tax_rate = 20.0
+    try:
+        result = await db.execute(
+            select(Business).where(Business.owner_id == current_user.id)
+        )
+        business = result.scalar_one_or_none()
+        if business is not None:
+            candidate = getattr(business, "tax_rate", None)
+            if candidate is None:
+                candidate = getattr(business, "vat_rate", None)
+            if candidate is not None:
+                business_tax_rate = float(candidate)
+    except Exception:
+        business_tax_rate = 20.0
+
     labour_cost = 0.0
     for item in data.services:
         svc = services_db.get(item.id)
@@ -250,7 +274,10 @@ def calculate_price(data: PriceCalculation, current_user: User = Depends(get_cur
         for item in data.services:
             svc = services_db.get(item.id)
             if svc:
-                vat_amount += svc["base_price"] * item.quantity * (svc["vat_rate"] / 100)
+                rate = svc.get("vat_rate")
+                if rate is None:
+                    rate = business_tax_rate
+                vat_amount += svc["base_price"] * item.quantity * (float(rate) / 100)
 
     total = total_before_vat + vat_amount
 

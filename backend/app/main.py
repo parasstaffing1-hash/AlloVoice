@@ -18,18 +18,12 @@ from app.routes import (
     compliance_certificates, uk_compliance, ai_quote, voice_notes, duration_prediction,
     quickbooks, review_platforms, marketing, chatbot, performance,
     warehouses, attendance, safety, branding, billing, voice_agent,
-    gocardless,
+    gocardless, outlook, fault_codes, rams,
 )
 
-# Sentry (optional - enable in production)
-# import sentry_sdk
-# from sentry_sdk.integrations.fastapi import FastApiIntegration
-# sentry_sdk.init(
-#     dsn="",
-#     integrations=[FastApiIntegration()],
-#     traces_sample_rate=0.1,
-#     environment="development",
-# )
+# Sentry (guarded inside init_sentry — no-op without DSN)
+from app.core.sentry import init_sentry
+init_sentry()
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -102,6 +96,7 @@ app.include_router(search.router)
 app.include_router(import_export.router)
 app.include_router(portal.router)
 app.include_router(calendar.router)
+app.include_router(outlook.router)
 
 # ─── Production: Business Operations ──────────────────
 app.include_router(contracts.router)
@@ -114,6 +109,7 @@ app.include_router(memberships.router)
 app.include_router(fleet.router)
 app.include_router(reports.router)
 app.include_router(branches.router)
+app.include_router(branches.business_router)
 app.include_router(analytics.router)
 
 # ─── Customer Tracking ───────────────────────────────────
@@ -148,8 +144,10 @@ app.include_router(review_platforms.router)
 app.include_router(marketing.router)
 app.include_router(chatbot.router)
 
-# ─── Voice Agent (local STT/TTS) ──────────────────────────
+# ─── Field Tools: Fault Codes + RAMS ────────────────────────
 app.include_router(voice_agent.router)
+app.include_router(fault_codes.router)
+app.include_router(rams.router)
 
 # ─── Tier 5: Premium ──────────────────────────────────────
 app.include_router(performance.router)

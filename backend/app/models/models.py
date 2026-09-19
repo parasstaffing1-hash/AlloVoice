@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import (
     Column, String, DateTime, Boolean, Text, ForeignKey,
-    Numeric, Integer, Enum as SAEnum, JSON, Index
+    Numeric, Integer, Float, Enum as SAEnum, JSON, Index
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -112,7 +112,10 @@ class Business(Base):
     service_radius_km = Column(Integer, default=50)
     vat_rate = Column(Numeric(5, 2), default=20)
     currency = Column(String(3), default="GBP")
-    timezone = Column(String(50), default="Europe/London")
+    country_code = Column(String(2), default="GB")
+    timezone = Column(String(64), default="Europe/London")
+    tax_rate = Column(Float, default=20.0)
+    tax_name = Column(String(16), default="VAT")
     stripe_account_id = Column(String(255))
     stripe_onboarded = Column(Boolean, default=False)
     gocardless_mandate = Column(String(255))

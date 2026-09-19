@@ -32,6 +32,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -336,19 +337,31 @@ def _build_contact_payload(customer: Customer) -> dict[str, Any]:
 # ─── OAuth ────────────────────────────────────────────────────────────
 
 @router.get("/auth")
-async def xero_auth() -> dict[str, str]:
-    """Return the Xero OAuth consent URL (works keyless; never calls Xero)."""
+async def xero_auth(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_optional_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
+    """Return the Xero OAuth consent URL (works keyless; never calls Xero."""
     try:
         settings = get_settings()
         client_id = str(settings.XERO_CLIENT_ID or "")
     except Exception:
         client_id = ""
+    # Embed the user id in state so the browser callback (no auth header)
+    # can resolve which business is connecting. Falls back to "xero".
+    state = "xero"
+    try:
+        user = await _resolve_user(credentials, db)
+        if user is not None:
+            state = str(user.id)
+    except Exception:
+        pass
     params = {
         "response_type": "code",
         "client_id": client_id,
         "redirect_uri": _redirect_uri(),
         "scope": XERO_SCOPES,
-        "state": "xero",
+        "state": state,
     }
     return {"auth_url": f"{XERO_AUTH_URL}?{urlencode(params)}"}
 
@@ -359,7 +372,7 @@ async def xero_callback(
     state: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_optional_bearer),
-) -> dict[str, bool]:
+):
     """Exchange an OAuth code for tokens and store them for the business."""
     _require_usable()
 
@@ -455,6 +468,16 @@ async def xero_callback(
         except Exception:
             pass
 
+    if credentials is None:
+        # Browser flow (no auth header on redirects): send them back to
+        # settings UI with a success flag instead of raw JSON.
+        try:
+            app_url = str(get_settings().APP_URL or "http://localhost:3002").rstrip("/")
+        except Exception:
+            app_url = "http://localhost:3002"
+        return RedirectResponse(
+            f"{app_url}/settings?tab=integrations&xero=connected", status_code=302
+        )
     return {"connected": True}
 
 

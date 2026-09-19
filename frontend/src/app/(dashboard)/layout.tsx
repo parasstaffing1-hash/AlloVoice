@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import CommandPalette from "@/components/command-palette";
+import { GloveToggle } from "@/components/glove-mode";
 import { useAuth } from "@/lib/store";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <main className="ml-64 p-8">{children}</main>
       <CommandPalette />
+      <GloveToggle />
     </div>
   );
 }

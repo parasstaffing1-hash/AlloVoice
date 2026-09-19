@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/store";
 import { api } from "@/lib/api";
-import { formatCurrency, getStatusColor, getStatusLabel, formatDateTime } from "@/lib/utils";
+import { getStatusColor, getStatusLabel, formatDateTime } from "@/lib/utils";
+import { formatMoney, resolveCurrency } from "@/lib/money";
 import { Receipt, CheckCircle2, Clock, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import CardPaymentModal from "@/components/card-payment-modal";
@@ -15,10 +16,12 @@ export default function InvoicesPage() {
   const { token } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [cardInvoice, setCardInvoice] = useState<any | null>(null);
+  const [currency, setCurrency] = useState("GBP");
 
   useEffect(() => {
     if (!token) return;
     loadInvoices();
+    api.auth.getBusiness(token).then((r: any) => setCurrency(resolveCurrency(r))).catch(() => setCurrency(resolveCurrency(null)));
   }, [token]);
 
   const loadInvoices = async () => {
@@ -84,7 +87,7 @@ export default function InvoicesPage() {
                           <div key={i} className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{item.description}</span>
                             <span>
-                              {item.quantity} × {formatCurrency(item.unit_price)} = {formatCurrency(item.total)}
+                              {item.quantity} × {formatMoney(item.unit_price, currency)} = {formatMoney(item.total, currency)}
                             </span>
                           </div>
                         ))}
@@ -93,11 +96,11 @@ export default function InvoicesPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-bold gradient-text">
-                      {formatCurrency(invoice.total)}
+                      {formatMoney(invoice.total, currency)}
                     </div>
                     {invoice.amount_paid > 0 && (
                       <p className="text-xs text-green-400">
-                        Paid: {formatCurrency(invoice.amount_paid)}
+                        Paid: {formatMoney(invoice.amount_paid, currency)}
                       </p>
                     )}
                     {invoice.payment_status !== "paid" && (

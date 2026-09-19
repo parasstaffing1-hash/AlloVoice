@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/store";
 import { api } from "@/lib/api";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
+import { formatMoney, resolveCurrency } from "@/lib/money";
 import { FileText, CheckCircle2, Clock, Send } from "lucide-react";
 
 export default function QuotesPage() {
   const { token } = useAuth();
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [currency, setCurrency] = useState("GBP");
 
   useEffect(() => {
     if (!token) return;
     loadQuotes();
+    api.auth.getBusiness(token).then((r: any) => setCurrency(resolveCurrency(r))).catch(() => setCurrency(resolveCurrency(null)));
   }, [token]);
 
   const loadQuotes = async () => {
@@ -93,7 +96,7 @@ export default function QuotesPage() {
                           <div key={i} className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{item.description}</span>
                             <span>
-                              {item.quantity} × {formatCurrency(item.unit_price)} = {formatCurrency(item.total)}
+                              {item.quantity} × {formatMoney(item.unit_price, currency)} = {formatMoney(item.total, currency)}
                             </span>
                           </div>
                         ))}
@@ -102,11 +105,11 @@ export default function QuotesPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-bold gradient-text">
-                      {formatCurrency(quote.total)}
+                      {formatMoney(quote.total, currency)}
                     </div>
                     {quote.tax_amount > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        incl. {formatCurrency(quote.tax_amount)} tax
+                        incl. {formatMoney(quote.tax_amount, currency)} tax
                       </p>
                     )}
                     {!quote.is_accepted && (

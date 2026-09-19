@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.models.models import Customer, Property, Business, User
 from app.schemas import CustomerCreate, CustomerResponse, PropertyCreate, PropertyResponse
 from app.routes.auth import get_current_user
-from app.services.phone import normalize_uk_phone
+from app.services.phone import normalize_phone
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -18,6 +18,23 @@ async def get_business_id(user: User, db: AsyncSession) -> UUID:
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
     return business.id
+
+
+async def get_business_region(user: User, db: AsyncSession) -> str:
+    """Return the business's country_code (uppercased), falling back to GB."""
+    try:
+        result = await db.execute(select(Business).where(Business.owner_id == user.id))
+        business = result.scalar_one_or_none()
+        code = getattr(business, "country_code", None) if business else None
+        if code and str(code).strip():
+            return str(code).strip().upper()
+    except Exception:
+        pass
+    return "GB"
+
+
+def _phone_error_detail(region: str) -> str:
+    return "Invalid UK phone number" if region == "GB" else "Invalid phone number"
 
 
 @router.get("/", response_model=List[CustomerResponse])
@@ -39,12 +56,13 @@ async def create_customer(
     db: AsyncSession = Depends(get_db)
 ):
     business_id = await get_business_id(current_user, db)
+    region = await get_business_region(current_user, db)
     payload = data.model_dump()
     if payload.get("phone"):
         try:
-            payload["phone"] = normalize_uk_phone(payload["phone"])
+            payload["phone"] = normalize_phone(payload["phone"], region)
         except ValueError:
-            raise HTTPException(status_code=422, detail="Invalid UK phone number")
+            raise HTTPException(status_code=422, detail=_phone_error_detail(region))
     customer = Customer(business_id=business_id, **payload)
     db.add(customer)
     await db.commit()
@@ -84,10 +102,11 @@ async def update_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
     updates = data.model_dump(exclude_unset=True)
     if "phone" in updates and updates["phone"]:
+        region = await get_business_region(current_user, db)
         try:
-            updates["phone"] = normalize_uk_phone(updates["phone"])
+            updates["phone"] = normalize_phone(updates["phone"], region)
         except ValueError:
-            raise HTTPException(status_code=422, detail="Invalid UK phone number")
+            raise HTTPException(status_code=422, detail=_phone_error_detail(region))
     for key, value in updates.items():
         setattr(customer, key, value)
     await db.commit()

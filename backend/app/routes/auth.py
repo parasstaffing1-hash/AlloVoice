@@ -52,6 +52,17 @@ async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
+    try:
+        from app.services.analytics import capture
+
+        capture(
+            "user_signed_up",
+            distinct_id=str(user.id),
+            properties={"email": user.email},
+        )
+    except Exception:
+        pass
+
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(
         access_token=token,

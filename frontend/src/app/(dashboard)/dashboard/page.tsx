@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/store";
 import { api } from "@/lib/api";
-import { formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils";
+import { getStatusColor, getStatusLabel } from "@/lib/utils";
+import { formatMoney, resolveCurrency } from "@/lib/money";
 import {
   Briefcase,
   Users,
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const { token } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [recentJobs, setRecentJobs] = useState<any[]>([]);
+  const [currency, setCurrency] = useState("GBP");
 
   const startTour = async () => {
     if (typeof window === "undefined") return;
@@ -96,6 +98,7 @@ export default function DashboardPage() {
       }
     };
     load();
+    api.auth.getBusiness(token).then((r: any) => setCurrency(resolveCurrency(r))).catch(() => setCurrency(resolveCurrency(null)));
   }, [token]);
 
   if (!stats) {
@@ -109,9 +112,9 @@ export default function DashboardPage() {
   const statCards = [
     {
       title: "Total Revenue",
-      value: formatCurrency(stats.total_revenue),
+      value: formatMoney(stats.total_revenue, currency),
       icon: PoundSterling,
-      change: `+${formatCurrency(stats.revenue_this_month)} this month`,
+      change: `+${formatMoney(stats.revenue_this_month, currency)} this month`,
       color: "text-green-400",
     },
     {

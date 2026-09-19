@@ -88,3 +88,28 @@ body {
   background: #09090b;
   color: #fafafa;
 }
+
+/* ─── Glove mode: big-touch field UI (toggled, persisted) ─── */
+html.glove-mode {
+  font-size: 112.5%;
+}
+html.glove-mode button,
+html.glove-mode a,
+html.glove-mode input,
+html.glove-mode select,
+html.glove-mode textarea,
+html.glove-mode [role="tab"] {
+  min-height: 56px;
+  font-size: 1rem;
+}
+html.glove-mode .text-muted-foreground {
+  color: #b8b8c0;
+}
+html.glove-mode *:focus-visible {
+  outline: 3px solid #f97316;
+  outline-offset: 2px;
+}
+html.glove-mode aside a {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}

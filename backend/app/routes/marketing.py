@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, stop_after_attempt, wait_fixed
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.models import Business, Customer, Job, User
 from app.routes.auth import get_current_user
@@ -24,8 +25,37 @@ BREVO_API_BASE = "https://api.brevo.com/v3"
 
 
 def _get_brevo_api_key() -> str:
-    """Return BREVO_API_KEY from env (or empty string when not configured)."""
+    """Return BREVO_API_KEY from Settings (or env fallback). Empty when not configured."""
+    try:
+        settings = get_settings()
+        key = (getattr(settings, "BREVO_API_KEY", "") or "").strip()
+        if key:
+            return key
+    except Exception:
+        pass
     return (os.getenv("BREVO_API_KEY") or "").strip()
+
+
+def _get_brevo_sender_email(default: str = "") -> str:
+    try:
+        settings = get_settings()
+        configured = (getattr(settings, "BREVO_SENDER_EMAIL", "") or "").strip()
+        if configured:
+            return configured
+    except Exception:
+        pass
+    return (os.getenv("BREVO_SENDER_EMAIL") or default or "").strip()
+
+
+def _get_brevo_sender_name(default: str = "VoiceField") -> str:
+    try:
+        settings = get_settings()
+        configured = (getattr(settings, "BREVO_SENDER_NAME", "") or "").strip()
+        if configured:
+            return configured
+    except Exception:
+        pass
+    return (os.getenv("BREVO_SENDER_NAME") or default or "VoiceField").strip() or "VoiceField"
 
 
 def _brevo_headers() -> dict:
@@ -221,6 +251,8 @@ async def create_list(
 
     key = _get_brevo_api_key()
     if key:
+        # REAL path: POST /contacts/lists with api-key header. Never fake
+        # success when a key is configured — surface Brevo failures as 502.
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
@@ -228,17 +260,19 @@ async def create_list(
                     headers=_brevo_headers(),
                     json={"name": name},
                 )
-            if resp.status_code in (200, 201):
-                data = resp.json() if resp.content else {}
-                remote_id = data.get("id")
-                new_id = remote_id if isinstance(remote_id, int) else _next_list_id()
-                # Avoid duplicate ids in local store.
-                if not any(lst.get("id") == new_id for lst in _BREVO_LISTS):
-                    _BREVO_LISTS.append({"id": new_id, "name": name, "count": 0})
-                return {"id": new_id, "name": name}
-            # Non-2xx: fall through to local simulation.
         except Exception:
-            pass
+            raise HTTPException(status_code=502, detail="Brevo request failed")
+        if resp.status_code in (200, 201):
+            data = resp.json() if resp.content else {}
+            remote_id = data.get("id")
+            new_id = remote_id if isinstance(remote_id, int) else _next_list_id()
+            # Avoid duplicate ids in local store.
+            if not any(lst.get("id") == new_id for lst in _BREVO_LISTS):
+                _BREVO_LISTS.append({"id": new_id, "name": name, "count": 0})
+            return {"id": new_id, "name": name}
+        raise HTTPException(
+            status_code=502, detail=f"Brevo list creation failed ({resp.status_code})"
+        )
 
     new_id = _next_list_id()
     _BREVO_LISTS.append({"id": new_id, "name": name, "count": 0})
@@ -265,6 +299,8 @@ async def sync_contacts(
     key = _get_brevo_api_key()
     synced = 0
     if key:
+        # REAL path: POST /contacts (updateEnabled) per customer. Never fake
+        # success when a key is configured — surface failures as 502.
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 for c in customers:
@@ -288,15 +324,11 @@ async def sync_contacts(
                         if resp.status_code in (200, 201, 204):
                             synced += 1
                     except Exception:
-                        continue
-            # If Brevo yielded zero (e.g. no emails) but customers exist,
-            # still report attempted sync gracefully.
-            if synced == 0 and customers:
-                # Keep 0 as honest count when key is set but nothing pushed.
-                pass
+                        raise HTTPException(status_code=502, detail="Brevo request failed")
+        except HTTPException:
+            raise
         except Exception:
-            # Graceful fallback: simulate.
-            synced = len([c for c in customers if c.email]) or len(customers)
+            raise HTTPException(status_code=502, detail="Brevo request failed")
     else:
         synced = len(customers)
 
@@ -327,12 +359,20 @@ async def create_campaign(
         raise HTTPException(status_code=400, detail="name, subject and html_content are required")
 
     sender_email = (business.email or current_user.email or "").strip()
+    configured_sender = _get_brevo_sender_email()
+    if configured_sender and "@" in configured_sender:
+        sender_email = configured_sender
     if "@" not in sender_email:
         sender_email = f"noreply@{business.slug}.voicefield.co.uk" if business.slug else "noreply@voicefield.co.uk"
     sender_name = business.name or "VoiceField"
+    configured_sender_name = _get_brevo_sender_name(default=sender_name)
+    if configured_sender_name:
+        sender_name = configured_sender_name
 
     key = _get_brevo_api_key()
     if key:
+        # REAL path: POST /emailCampaigns + sendNow. Never return simulated
+        # when a key is configured — surface Brevo failures as 502.
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
                 create_resp = await client.post(
@@ -347,21 +387,32 @@ async def create_campaign(
                         "type": "classic",
                     },
                 )
-                if create_resp.status_code in (200, 201):
-                    data = create_resp.json() if create_resp.content else {}
-                    campaign_id = data.get("id") or f"sim-{uuid.uuid4().hex[:12]}"
-                    # Best-effort send.
-                    try:
-                        await client.post(
-                            f"{BREVO_API_BASE}/emailCampaigns/{campaign_id}/sendNow",
-                            headers=_brevo_headers(),
-                            timeout=10.0,
-                        )
-                    except Exception:
-                        pass
-                    return {"campaign_id": campaign_id, "status": "sent"}
         except Exception:
-            pass
+            raise HTTPException(status_code=502, detail="Brevo request failed")
+        if create_resp.status_code in (200, 201):
+            data = create_resp.json() if create_resp.content else {}
+            campaign_id = data.get("id")
+            if campaign_id is None:
+                raise HTTPException(status_code=502, detail="Brevo campaign creation failed")
+            # Best-effort send (sendNow failure is still a 502 when keyed,
+            # since faking "sent" would hide a real delivery problem).
+            try:
+                send_resp = await httpx.AsyncClient(timeout=10.0).post(
+                    f"{BREVO_API_BASE}/emailCampaigns/{campaign_id}/sendNow",
+                    headers=_brevo_headers(),
+                )
+            except Exception:
+                raise HTTPException(status_code=502, detail="Brevo campaign send failed")
+            if send_resp.status_code not in (200, 201, 202, 204):
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Brevo campaign send failed ({send_resp.status_code})",
+                )
+            return {"campaign_id": campaign_id, "status": "sent"}
+        raise HTTPException(
+            status_code=502,
+            detail=f"Brevo campaign creation failed ({create_resp.status_code})",
+        )
 
     return {"campaign_id": f"sim-{uuid.uuid4().hex[:12]}", "status": "simulated"}
 

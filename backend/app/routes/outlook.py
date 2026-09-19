@@ -1,15 +1,17 @@
-"""Google Calendar integration for VoiceField (graceful, mock-testable).
+"""Microsoft (Outlook) calendar integration for VoiceField (graceful, mock-testable).
 
-No live keys required:
-- GET /google/auth builds a real OAuth URL keylessly (never calls Google).
-- GET /google/callback exchanges ?code= via httpx; failures -> 502.
-- POST /sync?provider=google pushes upcoming scheduled jobs (next 30d,
-  limit 50) as Google Calendar events; unusable config -> 503.
-- Per-user tokens live in module dict ``_GOOGLE_TOKENS`` keyed by user id
+Raw httpx OAuth against login.microsoftonline.com (no msal dependency at
+runtime, fewer moving parts):
+
+- GET /auth builds a real authorize URL keylessly (never calls Microsoft).
+- GET /callback?code= exchanges via httpx; failures -> 502.
+- POST /sync pushes upcoming scheduled jobs (next 30d, limit 50) as Graph
+  /me/calendar/events; unusable config -> 503.
+- Per-user tokens live in module dict ``_OUTLOOK_TOKENS`` keyed by user id
   str -> {access_token, refresh_token, expires_at, last_synced}.
-  CalendarSync rows are updated best-effort where present (never fatal).
-  NOTE: module dict does not survive restarts; CalendarSync table is the
-  durable fallback.
+  CalendarSync rows (provider="outlook") are updated best-effort.
+  NOTE: module dict does not survive restarts; CalendarSync is the durable
+  fallback.
 """
 
 from __future__ import annotations
@@ -30,19 +32,14 @@ from app.models.models import Business, CalendarSync, Customer, Job, JobStatus, 
 from app.routes.auth import get_current_user
 from app.services.auth import decode_access_token
 
-router = APIRouter(prefix="/api/calendar", tags=["calendar"])
+router = APIRouter(prefix="/api/outlook", tags=["outlook"])
 
-GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GOOGLE_EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+GRAPH_EVENTS_URL = "https://graph.microsoft.com/v1.0/me/calendar/events"
 
-GOOGLE_SCOPES = (
-    "https://www.googleapis.com/auth/calendar.events "
-    "https://www.googleapis.com/auth/calendar"
-)
+MS_SCOPES = "https://graph.microsoft.com/Calendars.ReadWrite offline_access"
 
-NOT_CONNECTED_DETAIL = "Google Calendar not connected — add GOOGLE_* keys and connect"
-NOT_AUTHORISED_DETAIL = "Google Calendar not connected — complete OAuth connect first"
+NOT_CONNECTED_DETAIL = "Outlook not connected — add MS_* keys and connect"
+NOT_AUTHORISED_DETAIL = "Outlook not connected — complete OAuth connect first"
 
 _PLACEHOLDER_MARKERS = (
     "placeholder",
@@ -60,7 +57,7 @@ _PLACEHOLDER_MARKERS = (
 _PLACEHOLDER_EXACT = {"", "none", "null", "test", "testing", "changeme", "placeholder"}
 
 # user_id str -> {access_token, refresh_token, expires_at, last_synced}
-_GOOGLE_TOKENS: dict[str, dict[str, Any]] = {}
+_OUTLOOK_TOKENS: dict[str, dict[str, Any]] = {}
 
 _optional_bearer = HTTPBearer(auto_error=False)
 
@@ -77,11 +74,11 @@ def _looks_placeholder(value: Any) -> bool:
     return any(marker in low for marker in _PLACEHOLDER_MARKERS)
 
 
-def _google_usable() -> bool:
+def _ms_usable() -> bool:
     try:
         settings = get_settings()
-        cid = str(getattr(settings, "GOOGLE_CLIENT_ID", "") or "")
-        secret = str(getattr(settings, "GOOGLE_CLIENT_SECRET", "") or "")
+        cid = str(getattr(settings, "MS_CLIENT_ID", "") or "")
+        secret = str(getattr(settings, "MS_CLIENT_SECRET", "") or "")
     except Exception:
         return False
     if not cid.strip() or not secret.strip():
@@ -91,21 +88,40 @@ def _google_usable() -> bool:
     return True
 
 
-def _require_google_usable() -> None:
-    if not _google_usable():
+def _require_ms_usable() -> None:
+    if not _ms_usable():
         raise HTTPException(status_code=503, detail=NOT_CONNECTED_DETAIL)
 
 
-def _google_redirect_uri() -> str:
+def _tenant() -> str:
     try:
         settings = get_settings()
-        configured = str(getattr(settings, "GOOGLE_REDIRECT_URI", "") or "").strip()
+        tenant = str(getattr(settings, "MS_TENANT_ID", "") or "").strip()
+        if tenant:
+            return tenant
+    except Exception:
+        pass
+    return "common"
+
+
+def _ms_redirect_uri() -> str:
+    try:
+        settings = get_settings()
+        configured = str(getattr(settings, "MS_REDIRECT_URI", "") or "").strip()
         if configured:
             return configured
         app_url = str(getattr(settings, "APP_URL", "") or "http://localhost:3002").rstrip("/")
     except Exception:
         app_url = "http://localhost:3002"
-    return f"{app_url}/api/calendar/google/callback"
+    return f"{app_url}/api/outlook/callback"
+
+
+def _authorize_url() -> str:
+    return f"https://login.microsoftonline.com/{_tenant()}/oauth2/v2.0/authorize"
+
+
+def _token_url() -> str:
+    return f"https://login.microsoftonline.com/{_tenant()}/oauth2/v2.0/token"
 
 
 def _utcnow() -> datetime:
@@ -152,9 +168,8 @@ async def _require_user(
     return user
 
 
-async def _get_google_token(user_id: str) -> str:
-    """Return a valid Google access token, refreshing when expiring."""
-    entry = _GOOGLE_TOKENS.get(str(user_id))
+async def _get_ms_token(user_id: str) -> str:
+    entry = _OUTLOOK_TOKENS.get(str(user_id))
     if not entry or not entry.get("refresh_token"):
         raise HTTPException(status_code=400, detail=NOT_AUTHORISED_DETAIL)
     expires_at = _as_aware(entry.get("expires_at"))
@@ -163,56 +178,57 @@ async def _get_google_token(user_id: str) -> str:
         return str(entry["access_token"])
 
     settings = get_settings()
-    client_id = str(getattr(settings, "GOOGLE_CLIENT_ID", "") or "")
-    client_secret = str(getattr(settings, "GOOGLE_CLIENT_SECRET", "") or "")
+    client_id = str(getattr(settings, "MS_CLIENT_ID", "") or "")
+    client_secret = str(getattr(settings, "MS_CLIENT_SECRET", "") or "")
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
-                GOOGLE_TOKEN_URL,
+                _token_url(),
                 data={
                     "grant_type": "refresh_token",
                     "refresh_token": entry["refresh_token"],
                     "client_id": client_id,
                     "client_secret": client_secret,
+                    "scope": MS_SCOPES,
                 },
             )
     except httpx.HTTPError:
-        raise HTTPException(status_code=502, detail="Google token refresh failed")
+        raise HTTPException(status_code=502, detail="Microsoft token refresh failed")
     except Exception:
-        raise HTTPException(status_code=502, detail="Google token refresh failed")
+        raise HTTPException(status_code=502, detail="Microsoft token refresh failed")
     if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail="Google token refresh failed")
+        raise HTTPException(status_code=502, detail="Microsoft token refresh failed")
     try:
         data = resp.json()
         access_token = data["access_token"]
         refresh_token = data.get("refresh_token") or entry["refresh_token"]
         expires_in = int(data.get("expires_in", 3600))
     except Exception:
-        raise HTTPException(status_code=502, detail="Google token refresh failed")
+        raise HTTPException(status_code=502, detail="Microsoft token refresh failed")
     entry["access_token"] = access_token
     entry["refresh_token"] = refresh_token
     entry["expires_at"] = now + timedelta(seconds=expires_in)
-    _GOOGLE_TOKENS[str(user_id)] = entry
+    _OUTLOOK_TOKENS[str(user_id)] = entry
     return str(access_token)
 
 
-def _build_google_event(job: Job, customer_name: str = "", location: str = "") -> dict[str, Any]:
+def _build_graph_event(job: Job, customer_name: str = "", location: str = "") -> dict[str, Any]:
     start = getattr(job, "scheduled_at", None)
     if isinstance(start, datetime):
         aware_start = start if start.tzinfo is not None else start.replace(tzinfo=timezone.utc)
     else:
         aware_start = _utcnow()
     end = aware_start + timedelta(hours=1)
-    description_parts: list[str] = []
+    body_parts: list[str] = []
     if getattr(job, "description", None):
-        description_parts.append(str(job.description))
+        body_parts.append(str(job.description))
     if customer_name:
-        description_parts.append(f"Customer: {customer_name}")
-    description_parts.append(f"Job: {getattr(job, 'title', '')} ({getattr(job, 'id', '')})")
+        body_parts.append(f"Customer: {customer_name}")
+    body_parts.append(f"Job: {getattr(job, 'title', '')} ({getattr(job, 'id', '')})")
     return {
-        "summary": getattr(job, "title", None) or "VoiceField Job",
-        "description": "\n".join(description_parts),
-        "location": location or "",
+        "subject": getattr(job, "title", None) or "VoiceField Job",
+        "body": {"contentType": "text", "content": "\n".join(body_parts)},
+        "location": {"displayName": location or ""},
         "start": {"dateTime": aware_start.isoformat(), "timeZone": "Europe/London"},
         "end": {"dateTime": end.isoformat(), "timeZone": "Europe/London"},
     }
@@ -221,11 +237,10 @@ def _build_google_event(job: Job, customer_name: str = "", location: str = "") -
 async def _upsert_calendar_sync(
     db: AsyncSession, user: User, access_token: str, refresh_token: str, expires_at: datetime
 ) -> None:
-    """Best-effort durable persist of tokens to CalendarSync (never raises)."""
     try:
         result = await db.execute(
             select(CalendarSync).where(
-                CalendarSync.user_id == user.id, CalendarSync.provider == "google"
+                CalendarSync.user_id == user.id, CalendarSync.provider == "outlook"
             )
         )
         row = result.scalar_one_or_none()
@@ -233,7 +248,7 @@ async def _upsert_calendar_sync(
         if row is None:
             row = CalendarSync(
                 user_id=user.id,
-                provider="google",
+                provider="outlook",
                 access_token=access_token,
                 refresh_token=refresh_token,
                 token_expires=naive_expires,
@@ -253,44 +268,32 @@ async def _upsert_calendar_sync(
             pass
 
 
-def _google_connected(user_id: str) -> bool:
-    entry = _GOOGLE_TOKENS.get(str(user_id))
-    return bool(entry and entry.get("access_token"))
-
-
-# ─── OAuth ────────────────────────────────────────────────────────────
-
-def _build_google_auth_url() -> str:
+def _build_auth_url() -> str:
     try:
         settings = get_settings()
-        client_id = str(getattr(settings, "GOOGLE_CLIENT_ID", "") or "")
+        client_id = str(getattr(settings, "MS_CLIENT_ID", "") or "")
     except Exception:
         client_id = ""
     params = {
         "client_id": client_id,
-        "redirect_uri": _google_redirect_uri(),
+        "redirect_uri": _ms_redirect_uri(),
         "response_type": "code",
-        "scope": GOOGLE_SCOPES,
-        "access_type": "offline",
-        "prompt": "consent",
+        "response_mode": "query",
+        "scope": MS_SCOPES,
     }
-    return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
+    return f"{_authorize_url()}?{urlencode(params)}"
 
 
-@router.get("/google/auth")
-async def google_auth() -> dict[str, str]:
-    """Return the Google OAuth consent URL (works keyless; never calls Google)."""
-    return {"auth_url": _build_google_auth_url()}
+# ─── OAuth ────────────────────────────────────────────────────────────
+
+@router.get("/auth")
+async def outlook_auth() -> dict[str, str]:
+    """Return the Microsoft OAuth consent URL (works keyless; never calls Microsoft)."""
+    return {"auth_url": _build_auth_url()}
 
 
-# Legacy alias: original route was POST /google/auth.
-@router.post("/google/auth", include_in_schema=False)
-async def google_auth_legacy() -> dict[str, str]:
-    return {"auth_url": _build_google_auth_url()}
-
-
-@router.get("/google/callback")
-async def google_callback(
+@router.get("/callback")
+async def outlook_callback(
     code: str,
     state: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
@@ -312,49 +315,49 @@ async def google_callback(
     if current_user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    _require_google_usable()
+    _require_ms_usable()
 
     settings = get_settings()
-    client_id = str(getattr(settings, "GOOGLE_CLIENT_ID", "") or "")
-    client_secret = str(getattr(settings, "GOOGLE_CLIENT_SECRET", "") or "")
+    client_id = str(getattr(settings, "MS_CLIENT_ID", "") or "")
+    client_secret = str(getattr(settings, "MS_CLIENT_SECRET", "") or "")
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             token_response = await client.post(
-                GOOGLE_TOKEN_URL,
+                _token_url(),
                 data={
                     "grant_type": "authorization_code",
                     "code": code,
-                    "redirect_uri": _google_redirect_uri(),
+                    "redirect_uri": _ms_redirect_uri(),
                     "client_id": client_id,
                     "client_secret": client_secret,
+                    "scope": MS_SCOPES,
                 },
             )
     except httpx.HTTPError:
-        raise HTTPException(status_code=502, detail="Google token exchange failed")
+        raise HTTPException(status_code=502, detail="Microsoft token exchange failed")
     except Exception:
-        raise HTTPException(status_code=502, detail="Google token exchange failed")
+        raise HTTPException(status_code=502, detail="Microsoft token exchange failed")
 
     if token_response.status_code != 200:
-        raise HTTPException(status_code=502, detail="Google token exchange failed")
+        raise HTTPException(status_code=502, detail="Microsoft token exchange failed")
     try:
         tokens = token_response.json()
         access_token = tokens["access_token"]
         refresh_token = tokens.get("refresh_token", "")
         expires_in = int(tokens.get("expires_in", 3600))
     except Exception:
-        raise HTTPException(status_code=502, detail="Google token exchange failed")
+        raise HTTPException(status_code=502, detail="Microsoft token exchange failed")
 
     if not refresh_token:
-        # offline access should yield a refresh token; keep entry usable anyway
-        existing = _GOOGLE_TOKENS.get(str(current_user.id), {})
+        existing = _OUTLOOK_TOKENS.get(str(current_user.id), {})
         refresh_token = str(existing.get("refresh_token", "") or "")
 
     expires_at = _utcnow() + timedelta(seconds=expires_in)
-    _GOOGLE_TOKENS[str(current_user.id)] = {
+    _OUTLOOK_TOKENS[str(current_user.id)] = {
         "access_token": str(access_token),
         "refresh_token": str(refresh_token),
         "expires_at": expires_at,
-        "last_synced": _GOOGLE_TOKENS.get(str(current_user.id), {}).get("last_synced"),
+        "last_synced": _OUTLOOK_TOKENS.get(str(current_user.id), {}).get("last_synced"),
     }
     await _upsert_calendar_sync(db, current_user, str(access_token), str(refresh_token), expires_at)
     return {"connected": True}
@@ -363,16 +366,13 @@ async def google_callback(
 # ─── Sync ─────────────────────────────────────────────────────────────
 
 @router.post("/sync")
-async def sync_calendar(
-    provider: str = "google",
+async def sync_outlook(
     db: AsyncSession = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_optional_bearer),
 ) -> dict[str, Any]:
-    """Push upcoming scheduled jobs to Google Calendar (provider=google)."""
-    if (provider or "").lower() != "google":
-        raise HTTPException(status_code=400, detail="Unsupported provider (use google)")
+    """Push upcoming scheduled jobs to the Microsoft calendar."""
     # Usability gate first so keyless callers always see 503 (even unauthenticated).
-    _require_google_usable()
+    _require_ms_usable()
     current_user = await _require_user(credentials, db)
 
     try:
@@ -384,11 +384,11 @@ async def sync_calendar(
         raise HTTPException(status_code=404, detail="Business not found")
 
     user_key = str(current_user.id)
-    entry = _GOOGLE_TOKENS.get(user_key)
+    entry = _OUTLOOK_TOKENS.get(user_key)
     if not entry or not entry.get("access_token"):
         raise HTTPException(status_code=400, detail=NOT_AUTHORISED_DETAIL)
 
-    access_token = await _get_google_token(user_key)
+    access_token = await _get_ms_token(user_key)
 
     now = datetime.utcnow()
     window_end = now + timedelta(days=30)
@@ -417,7 +417,7 @@ async def sync_calendar(
     try:
         http_client = httpx.AsyncClient(timeout=20)
     except Exception:
-        raise HTTPException(status_code=502, detail="Google sync failed")
+        raise HTTPException(status_code=502, detail="Outlook sync failed")
 
     async with http_client:
         for job in jobs:
@@ -443,9 +443,9 @@ async def sync_calendar(
             except Exception:
                 pass
             try:
-                payload = _build_google_event(job, customer_name, location)
+                payload = _build_graph_event(job, customer_name, location)
                 resp = await http_client.post(
-                    GOOGLE_EVENTS_URL,
+                    GRAPH_EVENTS_URL,
                     headers={
                         "Authorization": f"Bearer {access_token}",
                         "Content-Type": "application/json",
@@ -453,22 +453,22 @@ async def sync_calendar(
                     json=payload,
                 )
             except httpx.HTTPError:
-                errors.append({"job": str(job.id), "error": "Google request failed"})
+                errors.append({"job": str(job.id), "error": "Microsoft request failed"})
                 continue
             except Exception:
-                errors.append({"job": str(job.id), "error": "Google request failed"})
+                errors.append({"job": str(job.id), "error": "Microsoft request failed"})
                 continue
             if resp.status_code in (200, 201):
                 try:
                     body = resp.json()
                     event_id = body.get("id")
                     if event_id:
-                        job.google_calendar_event_id = str(event_id)
+                        job.outlook_calendar_event_id = str(event_id)
                     synced += 1
                 except Exception:
                     errors.append({"job": str(job.id), "error": "Local mark-synced failed"})
             else:
-                errors.append({"job": str(job.id), "error": f"Google rejected event ({resp.status_code})"})
+                errors.append({"job": str(job.id), "error": f"Microsoft rejected event ({resp.status_code})"})
 
     try:
         await db.commit()
@@ -484,7 +484,7 @@ async def sync_calendar(
     try:
         sync_result = await db.execute(
             select(CalendarSync).where(
-                CalendarSync.user_id == current_user.id, CalendarSync.provider == "google"
+                CalendarSync.user_id == current_user.id, CalendarSync.provider == "outlook"
             )
         )
         row = sync_result.scalar_one_or_none()
@@ -503,62 +503,54 @@ async def sync_calendar(
 # ─── Status / disconnect ──────────────────────────────────────────────
 
 @router.get("/status")
-async def calendar_status(
+async def outlook_status(
     db: AsyncSession = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_optional_bearer),
 ) -> dict[str, Any]:
-    """Connection state for google (+outlook mirror); never calls Google."""
+    """Connection state; never calls Microsoft."""
     try:
         current_user = await _resolve_user(credentials, db)
         if current_user is None:
-            return {"google": False, "outlook": False, "connected": False, "last_synced": None}
-        google_on = _google_connected(str(current_user.id))
-        last_synced: Any = _GOOGLE_TOKENS.get(str(current_user.id), {}).get("last_synced")
-        outlook_on = False
+            return {"connected": False, "outlook": False, "google": False, "last_synced": None}
+        entry = _OUTLOOK_TOKENS.get(str(current_user.id))
+        connected = bool(entry and entry.get("access_token"))
+        last_synced: Any = (entry or {}).get("last_synced")
         try:
             result = await db.execute(
-                select(CalendarSync).where(CalendarSync.user_id == current_user.id)
+                select(CalendarSync).where(
+                    CalendarSync.user_id == current_user.id, CalendarSync.provider == "outlook"
+                )
             )
-            syncs = list(result.scalars().all())
-            for s in syncs:
-                if s.provider == "google" and s.sync_enabled and s.access_token:
-                    google_on = True
-                    if s.last_synced_at and last_synced is None:
-                        last_synced = s.last_synced_at.isoformat() if isinstance(s.last_synced_at, datetime) else s.last_synced_at
-                if s.provider in ("outlook", "microsoft") and s.sync_enabled and s.access_token:
-                    outlook_on = True
-        except Exception:
-            pass
-        # Mirror live outlook module dict when available (same process).
-        try:
-            from app.routes import outlook as _outlook_mod  # type: ignore
-
-            entry = _outlook_mod._OUTLOOK_TOKENS.get(str(current_user.id))
-            if entry and entry.get("access_token"):
-                outlook_on = True
+            row = result.scalar_one_or_none()
+            if row is not None and row.sync_enabled and row.access_token:
+                connected = True
+                if last_synced is None and row.last_synced_at:
+                    last_synced = row.last_synced_at.isoformat() if isinstance(row.last_synced_at, datetime) else row.last_synced_at
         except Exception:
             pass
         return {
-            "google": google_on,
-            "outlook": outlook_on,
-            "connected": google_on,
+            "connected": connected,
+            "outlook": connected,
+            "google": False,
             "last_synced": last_synced,
         }
     except HTTPException:
         raise
     except Exception:
-        return {"google": False, "outlook": False, "connected": False, "last_synced": None}
+        return {"connected": False, "outlook": False, "google": False, "last_synced": None}
 
 
-async def _do_disconnect(provider: str, current_user: User, db: AsyncSession) -> dict[str, Any]:
-    provider = (provider or "google").lower()
-    if provider not in ("google",):
-        raise HTTPException(status_code=400, detail="Unsupported provider (use google)")
-    _GOOGLE_TOKENS.pop(str(current_user.id), None)
+@router.post("/disconnect")
+async def outlook_disconnect(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Clear the caller's Microsoft tokens."""
+    _OUTLOOK_TOKENS.pop(str(current_user.id), None)
     try:
         result = await db.execute(
             select(CalendarSync).where(
-                CalendarSync.user_id == current_user.id, CalendarSync.provider == "google"
+                CalendarSync.user_id == current_user.id, CalendarSync.provider == "outlook"
             )
         )
         row = result.scalar_one_or_none()
@@ -573,21 +565,3 @@ async def _do_disconnect(provider: str, current_user: User, db: AsyncSession) ->
         except Exception:
             pass
     return {"connected": False, "disconnected": True}
-
-
-@router.post("/disconnect")
-async def calendar_disconnect(
-    provider: str = "google",
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Clear the caller's Google tokens (provider=google)."""
-    return await _do_disconnect(provider, current_user, db)
-
-
-@router.post("/google/disconnect", include_in_schema=False)
-async def google_disconnect_alias(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    return await _do_disconnect("google", current_user, db)

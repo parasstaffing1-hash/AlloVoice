@@ -32,7 +32,10 @@ def _connect_args(url: str) -> dict:
 
 # Strip libpq-style query params (e.g. ?sslmode=require); asyncpg takes ssl via connect_args.
 _clean_url = settings.DATABASE_URL.split("?")[0]
-_engine_kwargs: dict = {"echo": False, "connect_args": _connect_args(settings.DATABASE_URL)}
+_engine_kwargs: dict = {"echo": False, "connect_args": _connect_args(settings.DATABASE_URL),
+                       # Aiven closes idle connections; verify before use or
+                       # requests randomly 500 with "connection is closed".
+                       "pool_pre_ping": True, "pool_recycle": 300}
 if _os.getenv("TESTING") == "1":
     # TestClient runs each test on a fresh event loop; pooled asyncpg
     # connections stay bound to the first loop ("Event loop is closed" /

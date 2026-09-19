@@ -7,10 +7,11 @@ reviews.list, reviews.reply) with local Review rows as the source of truth.
 Trustpilot endpoints mirror the Trustpilot Invitation API flow.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -23,6 +24,7 @@ from app.routes.auth import get_current_user
 router = APIRouter(prefix="/api/review-platforms", tags=["review-platforms"])
 
 LOCALE = "en-GB"
+TRUSTPILOT_INVITATIONS_BASE = "https://invitations-api.trustpilot.com/v1/private/business-units"
 
 # ─── Module-level state (in production: persisted per-business + OAuth tokens) ─
 
@@ -69,6 +71,8 @@ class TrustpilotInviteRequest(BaseModel):
     customer_id: UUID
     job_id: UUID
     email: str = Field(..., min_length=3)
+    recipient_name: Optional[str] = None
+    template_id: Optional[str] = None
 
 
 class AutoRequestBody(BaseModel):
@@ -92,6 +96,57 @@ async def _get_owned_business_ids(
         select(Business.id).where(Business.owner_id == current_user.id)
     )
     return list(result.scalars().all())
+
+
+def _trustpilot_creds() -> tuple[Optional[str], Optional[str]]:
+    """Return (api_key, business_unit_id) when connected, else (None, None)."""
+    if not _trustpilot_state.get("connected"):
+        return None, None
+    api_key = _trustpilot_state.get("api_key") or ""
+    unit_id = (_trustpilot_state.get("business_unit_id") or "").strip()
+    if not str(api_key).strip() or not unit_id:
+        return None, None
+    return str(api_key).strip(), unit_id
+
+
+async def _send_trustpilot_invitation(
+    *,
+    api_key: str,
+    business_unit_id: str,
+    recipient_email: str,
+    recipient_name: str,
+    reference_id: str,
+    template_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """POST a real Trustpilot email invitation. Never raises — returns ok/error dict."""
+    url = (
+        f"{TRUSTPILOT_INVITATIONS_BASE}/{business_unit_id}/email-invitations"
+    )
+    payload: Dict[str, Any] = {
+        "recipientEmail": recipient_email,
+        "recipientName": recipient_name or recipient_email,
+        "referenceId": reference_id,
+        "locale": "en-GB",
+        "serviceReviewInvitation": {
+            "preferredSendTime": datetime.now(timezone.utc).isoformat(),
+        },
+    }
+    if (template_id or "").strip():
+        payload["templateId"] = template_id.strip()
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                url, auth=(api_key, ""), json=payload
+            )
+        if resp.status_code in (200, 201, 202):
+            try:
+                data = resp.json()
+            except Exception:
+                data = {}
+            return {"ok": True, "response": data}
+        return {"ok": False, "error": f"Trustpilot HTTP {resp.status_code}: {resp.text[:500]}"}
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
 # ─── Google Business Profile ───
@@ -298,6 +353,7 @@ async def trustpilot_connect(
     _trustpilot_state.update(
         {
             "connected": True,
+            "api_key": data.api_key.strip(),
             "api_key_masked": _mask_key(data.api_key),
             "business_unit_id": data.business_unit_id.strip(),
         }
@@ -311,26 +367,87 @@ async def trustpilot_invite(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a Trustpilot review invitation for a completed job customer."""
-    # In production this would call the Trustpilot Invitation API:
-    # POST https://invitations-api.trustpilot.com/v1/private/business-units/
-    #   {businessUnitId}/email-invitations with locale en-GB.
+    """Create a Trustpilot review invitation for a completed job customer.
+
+    Real Trustpilot Invitation API when connected (key + business unit id):
+      POST https://invitations-api.trustpilot.com/v1/private/business-units/
+        {businessUnitId}/email-invitations (basic auth api_key:)
+    Keyless: records status "simulated". Failures: status "failed" + error, never 500.
+    """
     business_unit_id: Optional[str] = _trustpilot_state.get("business_unit_id")
+    api_key, unit_id = _trustpilot_creds()
+
+    # Resolve recipient name from DB customer where possible (en-GB display).
+    recipient_name = (data.recipient_name or "").strip() or data.email
+    try:
+        cust_result = await db.execute(
+            select(Customer).where(Customer.id == data.customer_id)
+        )
+        customer = cust_result.scalar_one_or_none()
+        if customer is not None and (customer.full_name or "").strip():
+            if not (data.recipient_name or "").strip():
+                recipient_name = customer.full_name.strip()
+    except Exception:
+        pass
 
     invitation_id = str(uuid4())
-    record: Dict[str, Any] = {
+    if api_key is None or unit_id is None:
+        record: Dict[str, Any] = {
+            "invitation_id": invitation_id,
+            "business_unit_id": business_unit_id,
+            "customer_id": str(data.customer_id),
+            "job_id": str(data.job_id),
+            "email": data.email,
+            "locale": LOCALE,
+            "status": "simulated",
+            "owner_id": str(current_user.id),
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        _trustpilot_invitations[invitation_id] = record
+        return {"invitation_id": invitation_id, "status": "simulated"}
+
+    try:
+        result = await _send_trustpilot_invitation(
+            api_key=api_key,
+            business_unit_id=unit_id,
+            recipient_email=data.email,
+            recipient_name=recipient_name,
+            reference_id=str(data.job_id),
+            template_id=data.template_id,
+        )
+    except Exception as exc:
+        result = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    if result.get("ok"):
+        status_value = "sent"
+        record = {
+            "invitation_id": invitation_id,
+            "business_unit_id": unit_id,
+            "customer_id": str(data.customer_id),
+            "job_id": str(data.job_id),
+            "email": data.email,
+            "locale": LOCALE,
+            "status": status_value,
+            "owner_id": str(current_user.id),
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        _trustpilot_invitations[invitation_id] = record
+        return {"invitation_id": invitation_id, "status": status_value}
+
+    record = {
         "invitation_id": invitation_id,
-        "business_unit_id": business_unit_id,
+        "business_unit_id": unit_id,
         "customer_id": str(data.customer_id),
         "job_id": str(data.job_id),
         "email": data.email,
         "locale": LOCALE,
-        "status": "sent",
+        "status": "failed",
+        "error": str(result.get("error") or "Trustpilot invite failed")[:1000],
         "owner_id": str(current_user.id),
         "created_at": datetime.utcnow().isoformat(),
     }
     _trustpilot_invitations[invitation_id] = record
-    return {"invitation_id": invitation_id, "status": "sent"}
+    return {"invitation_id": invitation_id, "status": "failed", "error": record["error"]}
 
 
 @router.get("/trustpilot/invitations")
@@ -373,10 +490,11 @@ async def auto_request(
     if _google_state.get("connected"):
         queued.append("google")
 
-    # Trustpilot invite — queue an invitation record alongside the email.
+    # Trustpilot invite — attempt the real invite when connected.
     if _trustpilot_state.get("connected"):
         queued.append("trustpilot")
         customer_email: Optional[str] = None
+        customer_name: Optional[str] = None
         if job.customer_id is not None:
             cust = await db.execute(
                 select(Customer).where(Customer.id == job.customer_id)
@@ -384,19 +502,46 @@ async def auto_request(
             customer = cust.scalar_one_or_none()
             if customer is not None:
                 customer_email = customer.email
+                customer_name = (customer.full_name or "").strip() or None
         invitation_id = str(uuid4())
-        _trustpilot_invitations[invitation_id] = {
+        api_key_auto, unit_id_auto = _trustpilot_creds()
+        if (
+            api_key_auto is not None
+            and unit_id_auto is not None
+            and (customer_email or "").strip()
+        ):
+            try:
+                auto_result = await _send_trustpilot_invitation(
+                    api_key=api_key_auto,
+                    business_unit_id=unit_id_auto,
+                    recipient_email=customer_email.strip(),
+                    recipient_name=customer_name or customer_email.strip(),
+                    reference_id=str(job.id),
+                )
+            except Exception as exc:
+                auto_result = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+            invite_status = "sent" if auto_result.get("ok") else "failed"
+            invite_error = None if auto_result.get("ok") else str(
+                auto_result.get("error") or "Trustpilot invite failed"
+            )[:1000]
+        else:
+            invite_status = "simulated"
+            invite_error = None
+        invitation_record: Dict[str, Any] = {
             "invitation_id": invitation_id,
             "business_unit_id": _trustpilot_state.get("business_unit_id"),
             "customer_id": str(job.customer_id) if job.customer_id else None,
             "job_id": str(job.id),
             "email": customer_email,
             "locale": LOCALE,
-            "status": "sent",
+            "status": invite_status,
             "owner_id": str(current_user.id),
             "created_at": datetime.utcnow().isoformat(),
             "source": "auto-request",
         }
+        if invite_error:
+            invitation_record["error"] = invite_error
+        _trustpilot_invitations[invitation_id] = invitation_record
 
     # Transactional email with review links (en-GB template) always queued.
     queued.append("email")

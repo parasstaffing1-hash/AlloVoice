@@ -26,6 +26,8 @@ import {
   Briefcase,
   X,
   Loader2,
+  CreditCard,
+  Smartphone,
 } from "lucide-react";
 
 interface Task {
@@ -73,6 +75,13 @@ export default function CompleteJobPage() {
   const [engineerSignature, setEngineerSignature] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [doorstepInvoice, setDoorstepInvoice] = useState<any>(null);
+  const [doorstepLoading, setDoorstepLoading] = useState(true);
+  const [doorstepStatus, setDoorstepStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [doorstepMsg, setDoorstepMsg] = useState("");
+  const [stripeDisabled, setStripeDisabled] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState<
     { id: number; x: number; color: string; delay: number }[]
   >([]);
@@ -83,6 +92,113 @@ export default function CompleteJobPage() {
     loadInventory();
     loadPhotos();
   }, [token, jobId]);
+
+  useEffect(() => {
+    if (!token || !jobId) return;
+    setDoorstepLoading(true);
+    api.invoices
+      .list(token!)
+      .then((r: any) => {
+        const list: any[] = Array.isArray(r) ? r : [];
+        const found =
+          list.find(
+            (inv: any) =>
+              inv.job_id === jobId || inv.jobId === jobId || inv.job === jobId
+          ) ?? null;
+        setDoorstepInvoice(found);
+        setDoorstepLoading(false);
+      })
+      .catch((e: any) => {
+        console.error(e);
+        setDoorstepInvoice(null);
+        setDoorstepLoading(false);
+      });
+  }, [token, jobId]);
+
+  const handleTextPayLink = () => {
+    if (!token || !doorstepInvoice || doorstepStatus === "sending") return;
+    const inv = doorstepInvoice;
+    setDoorstepStatus("sending");
+    setDoorstepMsg("");
+    const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    fetch(`${API}/api/payments/create-checkout-session?invoice_id=${inv.id}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r: any) => {
+        if (r.status === 503) throw new Error("STRIPE_DISABLED");
+        if (!r.ok)
+          throw new Error("Could not create a pay link. Please try again.");
+        return r.json();
+      })
+      .then((r: any) => {
+        const checkoutUrl = r?.checkout_url;
+        if (!checkoutUrl)
+          throw new Error("No pay link was returned. Please try again.");
+        const text = `Hi ${job?.customer_name || "there"}, your invoice ${
+          inv.invoice_number
+        } for £${inv.total} is ready: ${checkoutUrl}`;
+        const sendText = (phone: string) =>
+          fetch(
+            `${API}/api/sms/send?to_phone=${encodeURIComponent(
+              phone
+            )}&message=${encodeURIComponent(text)}`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+            .then((r: any) => r.json())
+            .then((r: any) => {
+              if (r && (r.success === true || r.sid)) {
+                setDoorstepStatus("sent");
+                setDoorstepMsg("Pay link sent by text.");
+              } else {
+                setDoorstepStatus("error");
+                setDoorstepMsg(r?.error || "Text failed to send. Please try again.");
+              }
+            })
+            .catch((e: any) => {
+              setDoorstepStatus("error");
+              setDoorstepMsg(e?.message || "Text failed to send. Please try again.");
+            });
+        const directPhone: string | null =
+          job?.customer_phone || job?.phone || null;
+        if (directPhone) {
+          sendText(directPhone);
+          return;
+        }
+        if (job?.customer_id) {
+          api.customers
+            .get(job.customer_id, token!)
+            .then((r: any) => {
+              if (r?.phone) sendText(r.phone);
+              else {
+                setDoorstepStatus("error");
+                setDoorstepMsg("No phone on file for this customer.");
+              }
+            })
+            .catch((e: any) => {
+              console.error(e);
+              setDoorstepStatus("error");
+              setDoorstepMsg("No phone on file for this customer.");
+            });
+          return;
+        }
+        setDoorstepStatus("error");
+        setDoorstepMsg("No phone on file for this customer.");
+      })
+      .catch((e: any) => {
+        if (e?.message === "STRIPE_DISABLED") {
+          setStripeDisabled(true);
+          setDoorstepStatus("error");
+          setDoorstepMsg("Card payments not enabled — take bank transfer");
+        } else {
+          setDoorstepStatus("error");
+          setDoorstepMsg(e?.message || "Something went wrong. Please try again.");
+        }
+      });
+  };
 
   const loadJob = async () => {
     try {
@@ -223,7 +339,7 @@ export default function CompleteJobPage() {
     setIsSubmitting(true);
     try {
       if (customerSignature) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/photos/upload/${jobId}?photo_type=customer_signature`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/photos/upload/${jobId}?photo_type=customer_signature`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -234,7 +350,7 @@ export default function CompleteJobPage() {
       }
 
       if (engineerSignature) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/photos/upload/${jobId}?photo_type=engineer_signature`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/photos/upload/${jobId}?photo_type=engineer_signature`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -639,6 +755,76 @@ export default function CompleteJobPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Doorstep Payment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-emerald-500" />
+            Get paid on the doorstep
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {doorstepLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Checking for an invoice…
+            </p>
+          ) : !doorstepInvoice ? (
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>No invoice linked to this job yet.</p>
+              <a
+                href="/invoices"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                Create invoice first
+              </a>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">
+                  Invoice {doorstepInvoice.invoice_number}
+                </span>
+                <span className="text-lg font-bold">
+                  {formatCurrency(doorstepInvoice.total)}
+                </span>
+              </div>
+              {stripeDisabled ? (
+                <p className="text-sm text-amber-500">
+                  Card payments not enabled — take bank transfer
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Text the customer a card pay link for this invoice.
+                </p>
+              )}
+              <Button
+                onClick={handleTextPayLink}
+                disabled={doorstepStatus === "sending" || stripeDisabled}
+                className="gap-2"
+              >
+                {doorstepStatus === "sending" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="h-4 w-4" />
+                    Text pay link to customer
+                  </>
+                )}
+              </Button>
+              {doorstepStatus === "sent" && (
+                <p className="text-sm text-emerald-500">{doorstepMsg}</p>
+              )}
+              {doorstepStatus === "error" && (
+                <p className="text-sm text-destructive">{doorstepMsg}</p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Complete Button */}
       <div className="flex justify-end gap-3 pt-4 pb-8">

@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -290,10 +290,18 @@ export const api = {
   },
   calendar: {
     status: (token: string) => request("/api/calendar/status", { token }),
-    googleAuth: (token: string) => request("/api/calendar/google/auth", { method: "POST", token }),
-    outlookAuth: (token: string) => request("/api/calendar/outlook/auth", { method: "POST", token }),
+    googleAuth: (token: string) => request("/api/calendar/google/auth", { token }),
+    outlookAuth: (token: string) => request("/api/outlook/auth", { token }),
     sync: (provider: string, token: string) =>
       request(`/api/calendar/sync?provider=${provider}`, { method: "POST", token }),
+  },
+  outlook: {
+    auth: (token: string) => request("/api/outlook/auth", { token }),
+    callback: (code: string, token: string) =>
+      request(`/api/outlook/callback?code=${encodeURIComponent(code)}`, { token }),
+    status: (token: string) => request("/api/outlook/status", { token }),
+    sync: (token: string) => request("/api/outlook/sync", { method: "POST", token }),
+    disconnect: (token: string) => request("/api/outlook/disconnect", { method: "POST", token }),
   },
   contracts: {
     list: (token: string) => request("/api/contracts/", { token }),

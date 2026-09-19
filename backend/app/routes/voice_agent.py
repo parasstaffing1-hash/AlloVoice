@@ -6,10 +6,11 @@ Prefix: /api/voice-agent
 import asyncio
 import base64
 import binascii
+import time
 import uuid
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.models.models import User
@@ -42,8 +43,22 @@ CHAT_SYSTEM_PROMPT = (
     "customers with creating accounts, documents needed (ID, proof of address, "
     "Gas Safe certificates and EICR certificates for engineers, company details "
     "for quotes), bookings and plans. Use a professional British customer-support "
-    "tone. Be concise and use plain English."
+    "tone. Be concise and use plain English. "
+    "IMPORTANT: reply in at most 2 short sentences — this is read aloud."
 )
+
+
+def _spoken_excerpt(text: str, limit: int = 280) -> str:
+    """First ~2 sentences for TTS so replies start playing fast."""
+    import re
+    parts = re.split(r"(?<=[.!?])\s+", (text or "").strip())
+    out = ""
+    for p in parts[:3]:
+        candidate = (out + " " + p).strip()
+        if len(candidate) > limit and out:
+            break
+        out = candidate
+    return out or (text or "")[:limit]
 
 
 # ---------------------------------------------------------------------------
@@ -205,7 +220,15 @@ async def speak(
             provider = EdgeTTSVoice(primary=primary_voice)
         else:
             provider = get_tts()
-        mp3_bytes, voice_used = await provider.speak(text)
+        # Vocalize the excerpt only — full text already shown in chat.
+        speak_text = _spoken_excerpt(text)
+        cache_key, cached = _tts_cache_get(primary_voice or "default", speak_text)
+        if cached is not None:
+            mp3_bytes, voice_used = cached
+        else:
+            mp3_bytes, voice_used = await provider.speak(speak_text)
+            if mp3_bytes:
+                _tts_cache_put(cache_key, (mp3_bytes, voice_used))
     except NotImplementedError:
         raise
     except Exception as e:
@@ -234,7 +257,7 @@ async def chat(
     reply: str = ""
     if llm_service.is_configured():
         try:
-            recent = history[-6:]
+            recent = history[-2:]
             convo = "\n".join(
                 f"{'Customer' if h['role'] == 'user' else 'Assistant'}: {h['content']}"
                 for h in recent
@@ -248,7 +271,7 @@ async def chat(
                 await llm_service.complete(
                     prompt,
                     system=CHAT_SYSTEM_PROMPT,
-                    max_tokens=400,
+                    max_tokens=180,
                     temperature=0.3,
                 )
             ).strip()
@@ -268,4 +291,111 @@ async def voices():
         "primary": PRIMARY_VOICE,
         "fallback": FALLBACK_VOICE,
         "provider": "edge-tts",
+    }
+
+
+# ─── Public demo (no login) — strict per-IP rate limits ──────────
+# Demo abuse costs real money (LLM) or compute (TTS), so these are
+# throttled hard. Authenticated endpoints above are unaffected.
+
+_DEMO_WINDOW_S = 60.0
+_DEMO_MAX_CALLS = 10
+_demo_hits: Dict[str, List[float]] = {}
+_demo_sessions: Dict[str, List[dict]] = {}
+
+# ─── TTS cache: repeat phrases play instantly ───────────────────
+# Keyed by voice+text hash, LRU-capped. Demo greetings and common
+# replies repeat constantly — no reason to re-synthesize them.
+_TTS_CACHE: Dict[str, tuple] = {}
+_TTS_CACHE_MAX = 100
+
+
+def _tts_cache_get(voice: str, text: str):
+    import hashlib
+    key = hashlib.sha256(f"{voice}|{text}".encode("utf-8")).hexdigest()
+    return key, _TTS_CACHE.get(key)
+
+
+def _tts_cache_put(key: str, value: tuple) -> None:
+    _TTS_CACHE[key] = value
+    while len(_TTS_CACHE) > _TTS_CACHE_MAX:
+        _TTS_CACHE.pop(next(iter(_TTS_CACHE)))
+
+
+def _demo_allow(ip: str) -> bool:
+    now = time.monotonic()
+    hits = [t for t in _demo_hits.get(ip, []) if now - t < _DEMO_WINDOW_S]
+    if len(hits) >= _DEMO_MAX_CALLS:
+        return False
+    hits.append(now)
+    _demo_hits[ip] = hits
+    return True
+
+
+def _demo_ip(request: Request) -> str:
+    try:
+        return (request.client.host if request.client else "unknown") or "unknown"
+    except Exception:
+        return "unknown"
+
+
+class DemoChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+
+
+class DemoSpeakRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=300)
+
+
+@router.post("/demo-chat")
+async def demo_chat(data: DemoChatRequest, request: Request):
+    """Public demo chat — 10 calls/min per IP, short replies."""
+    if not _demo_allow(_demo_ip(request)):
+        raise HTTPException(status_code=429, detail="Demo limit reached — try again in a minute")
+    message = data.message.strip()
+    ip = _demo_ip(request)
+    history = _demo_sessions.get(ip, [])[-2:]
+    reply = ""
+    if llm_service.is_configured():
+        try:
+            convo = "\n".join(
+                f"{'Customer' if h['role'] == 'user' else 'Assistant'}: {h['content']}"
+                for h in history
+            )
+            prompt = f"{convo}\nCustomer: {message}\nAssistant:" if convo else f"Customer: {message}\nAssistant:"
+            reply = (await llm_service.complete(
+                prompt, system=CHAT_SYSTEM_PROMPT, max_tokens=150, temperature=0.3)).strip()
+        except Exception:
+            reply = ""
+    if not reply:
+        reply = rule_based_reply(message)
+    _demo_sessions[ip] = (history + [
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": reply},
+    ])[-20:]
+    return {"reply": reply}
+
+
+@router.post("/demo-speak")
+async def demo_speak(data: DemoSpeakRequest, request: Request):
+    """Public demo TTS — 10 calls/min per IP, 300 chars max."""
+    if not _demo_allow(_demo_ip(request)):
+        raise HTTPException(status_code=429, detail="Demo limit reached — try again in a minute")
+    try:
+        speak_text = _spoken_excerpt(data.text.strip())
+        cache_key, cached = _tts_cache_get("default", speak_text)
+        if cached is not None:
+            mp3_bytes, voice_used = cached
+        else:
+            mp3_bytes, voice_used = await get_tts().speak(speak_text)
+            if mp3_bytes:
+                _tts_cache_put(cache_key, (mp3_bytes, voice_used))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"TTS failed: {e}")
+    if not mp3_bytes:
+        raise HTTPException(status_code=502, detail="TTS returned empty audio")
+    return {
+        "audio_base64": base64.b64encode(mp3_bytes).decode("ascii"),
+        "voice_used": voice_used,
+        "content_type": "audio/mpeg",
     }

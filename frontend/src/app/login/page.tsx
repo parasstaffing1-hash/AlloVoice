@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/store";
-import { Zap, ArrowRight } from "lucide-react";
+import { enterDemo } from "@/lib/demo";
+import { Zap, ArrowRight, Play } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, isLoading } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+  const { login, register, isLoading } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,6 +26,19 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed");
+    }
+  };
+
+  const handleDemo = async () => {
+    setError("");
+    setDemoLoading(true);
+    try {
+      await enterDemo(login, register);
+      router.push("/voice-agent");
+    } catch (err: any) {
+      setError(err.message || "Demo entry failed");
+    } finally {
+      setDemoLoading(false);
     }
   };
 
@@ -65,9 +80,19 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+            <Button type="submit" className="w-full gap-2" disabled={isLoading || demoLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
               <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 border-primary/40"
+              disabled={isLoading || demoLoading}
+              onClick={handleDemo}
+            >
+              <Play className="h-4 w-4" />
+              {demoLoading ? "Preparing demo…" : "Try the live demo — no signup"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}

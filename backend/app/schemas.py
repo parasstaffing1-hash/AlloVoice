@@ -1,7 +1,9 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+
+from app.services.money import CURRENCIES
 
 
 class UserCreate(BaseModel):
@@ -46,6 +48,49 @@ class BusinessCreate(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     zip_code: Optional[str] = None
+    currency: Optional[str] = "GBP"
+    country_code: Optional[str] = "GB"
+    timezone: Optional[str] = "Europe/London"
+    tax_rate: Optional[float] = 20.0
+    tax_name: Optional[str] = "VAT"
+
+    @field_validator("currency")
+    @classmethod
+    def _validate_currency(cls, v):
+        if v is None:
+            return v
+        code = str(v).upper()
+        if code not in CURRENCIES:
+            raise ValueError(f"Unsupported currency '{v}'")
+        return code
+
+    @field_validator("country_code")
+    @classmethod
+    def _validate_country_code(cls, v):
+        if v is None:
+            return v
+        code = str(v).upper()
+        if len(code) != 2 or not code.isalpha():
+            raise ValueError("country_code must be a 2-letter uppercase code")
+        return code
+
+    @field_validator("timezone")
+    @classmethod
+    def _validate_timezone(cls, v):
+        if v is None:
+            return v
+        if not str(v).strip():
+            raise ValueError("timezone must be a non-empty string")
+        return str(v).strip()
+
+    @field_validator("tax_rate")
+    @classmethod
+    def _validate_tax_rate(cls, v):
+        if v is None:
+            return v
+        if float(v) < 0 or float(v) > 40:
+            raise ValueError("tax_rate must be between 0 and 40")
+        return float(v)
 
 
 class BusinessResponse(BaseModel):
@@ -60,7 +105,11 @@ class BusinessResponse(BaseModel):
     city: Optional[str]
     state: Optional[str]
     zip_code: Optional[str]
-    currency: str
+    currency: Optional[str] = None
+    country_code: Optional[str] = None
+    timezone: Optional[str] = None
+    tax_rate: Optional[float] = None
+    tax_name: Optional[str] = None
     is_active: bool
     created_at: datetime
 

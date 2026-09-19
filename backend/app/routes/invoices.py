@@ -149,4 +149,20 @@ async def mark_invoice_paid(
         job.status = "paid"
 
     await db.commit()
+
+    try:
+        from app.services.analytics import capture
+
+        try:
+            amount_value = float(pay_amount)
+        except Exception:
+            amount_value = 0.0
+        capture(
+            "invoice_paid",
+            distinct_id=str(current_user.id),
+            properties={"invoice_id": str(invoice.id), "amount": amount_value},
+        )
+    except Exception:
+        pass
+
     return {"message": "Invoice marked as paid"}
