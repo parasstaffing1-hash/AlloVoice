@@ -1,0 +1,21 @@
+{
+  "api_key": "voicefield-centrifugo-key",
+  "admin": true,
+  "admin_password": "admin",
+  "namespaces": [
+    {
+      "name": "dispatch",
+      "publish": true,
+      "subscribe": true,
+      "presence": true,
+      "join_leave": true,
+      "history_size": 100
+    },
+    {
+      "name": "notifications",
+      "publish": true,
+      "subscribe": true,
+      "presence": true
+    }
+  ]
+}

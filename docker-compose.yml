@@ -1,0 +1,233 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: voicefield
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+  # ─── UK Postcode Lookup ───────────────────────────
+  postcodes:
+    image: ideal/postcodes.io:latest
+    ports:
+      - "3030:3030"
+    environment:
+      - DATABASE_URL=postgres://voicefield:voicefield@postcodes-db:5432/voicefield
+    depends_on:
+      - postcodes-db
+
+  postcodes-db:
+    image: postgis/postgis:14-3.3-alpine
+    environment:
+      POSTGRES_DB: voicefield
+      POSTGRES_USER: voicefield
+      POSTGRES_PASSWORD: voicefield
+    volumes:
+      - postcodesdata:/var/lib/postgresql/data
+
+  # ─── Routing Engine ────────────────────────────────
+  valhalla:
+    image: ghcr.io/valhalla/valhalla:latest
+    ports:
+      - "8002:8002"
+    volumes:
+      - valhalladata:/opt/valhalla/custom_files
+    environment:
+      - tile_dir=/opt/valhalla/tiles
+    # Download UK tiles on first run:
+    # docker exec valhalla curl -o /opt/valhalla/tiles/uk.tar.gz https://download.geofabrik.de/europe/great-britain-northern-ireland-latest.osm.pbf
+
+  # ─── Real-Time Messaging ──────────────────────────
+  centrifugo:
+    image: centrifugo/centrifugo:v5
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./centrifugo:/centrifugo
+    command: centrifugo --config /centrifugo/config.json --insecure
+
+  # ─── Notifications ─────────────────────────────────
+  novu:
+    image: novuhq/novu:latest
+    ports:
+      - "3040:3040"
+    environment:
+      - MONGO_URL=mongodb://novu-mongo:27017/novu
+      - REDIS_URL=redis://novu-redis:6379
+      - STORE_STORAGE_BUCKET_NAME= novu-storage
+    depends_on:
+      - novu-mongo
+      - novu-redis
+
+  novu-mongo:
+    image: mongo:6
+    volumes:
+      - novumongo:/data/db
+
+  novu-redis:
+    image: redis:7-alpine
+    volumes:
+      - novuredis:/data
+
+  # ─── Email Templates ──────────────────────────────
+  react-email:
+    build:
+      context: ./email-templates
+      dockerfile: Dockerfile
+    ports:
+      - "3050:3050"
+
+  # ─── Workflow Automation ──────────────────────────
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=password
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  # ─── Monitoring Stack ─────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3060:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki.yml:/etc/loki/local-config.yaml
+      - lokidata:/loki
+
+  # ─── Search ─────────────────────────────────────────
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=voicefield-meili-key
+      - MEILI_ENV=development
+    volumes:
+      - meilidata:/meili_data
+
+  # ─── Analytics ──────────────────────────────────────
+  posthog:
+    image: posthog/posthog:latest
+    ports:
+      - "8080:8000"
+    environment:
+      - DATABASE_URL=postgres://posthog:posthog@posthog-db:5432/posthog
+      - REDIS_URL=redis://posthog-redis:6379
+    depends_on:
+      - posthog-db
+      - posthog-redis
+
+  posthog-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: posthog
+      POSTGRES_USER: posthog
+      POSTGRES_PASSWORD: posthog
+    volumes:
+      - posthogdb:/var/lib/postgresql/data
+
+  posthog-redis:
+    image: redis:7-alpine
+    volumes:
+      - posthogredis:/data
+
+  # ─── Uptime Monitoring ────────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    ports:
+      - "3070:3001"
+    volumes:
+      - uptimedata:/app/data
+
+volumes:
+  pgdata:
+  redisdata:
+  postcodesdata:
+  valhalladata:
+  novumongo:
+  novuredis:
+  n8n_data:
+  prometheusdata:
+  grafanadata:
+  lokidata:
+  meilidata:
+  posthogdb:
+  posthogredis:
+  uptimedata:

@@ -1,0 +1,59 @@
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+
+class Settings(BaseSettings):
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/voicefield"
+    REDIS_URL: str = "redis://localhost:6379"
+    JWT_SECRET: str = "change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+    SARVAM_API_KEY: str = ""
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = "voicefield"
+    R2_ENDPOINT_URL: str = ""
+    R2_PUBLIC_URL: str = ""
+    NOVU_API_KEY: str = ""
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "VoiceField <onboarding@resend.dev>"
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+    TWILIO_SENDER_ID: str = "VoiceField"
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_STARTER_M: str = ""
+    STRIPE_PRICE_GROWTH_M: str = ""
+    STRIPE_PRICE_TRADE_M: str = ""
+    XERO_CLIENT_ID: str = ""
+    XERO_CLIENT_SECRET: str = ""
+    XERO_REDIRECT_URI: str = ""
+    GOCARDLESS_ACCESS_TOKEN: str = ""
+    GOCARDLESS_ENVIRONMENT: str = "sandbox"
+    N8N_WEBHOOK_URL: str = "http://localhost:5678/webhook"
+    APP_URL: str = "http://localhost:3002"
+    POSTCODES_API_URL: str = "https://api.postcodes.io"
+    VALHALLA_URL: str = "http://localhost:8002"
+    CENTRIFUGO_URL: str = "http://localhost:8003"
+    NOVU_API_URL: str = "http://localhost:3040"
+    WHATSAPP_API_TOKEN: str = ""
+    WHATSAPP_PHONE_NUMBER_ID: str = ""
+    GOOGLE_REVIEW_URL: str = ""
+    LLM_PROVIDER: str = "deepseek"
+    LLM_API_KEY: str = ""
+    LLM_MODEL: str = "deepseek-chat"
+    LLM_FALLBACK_MODEL: str = ""
+    LLM_MODELS: str = ""
+    LLM_BASE_URL: str = ""
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()

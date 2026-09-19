@@ -1,0 +1,57 @@
+# ─── Secrets: NEVER commit ────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+D:\Cloudflare - VoiceField.txt
+Cloudflare - VoiceField.txt
+
+# Scratch / local verification scripts (some contain pasted secrets)
+backend/inspect_aiven.py
+backend/make_voicefield_db.py
+backend/verify_aiven.py
+backend/probe_*.py
+backend/test_r2*.py
+backend/test_openrouter.py
+backend/test_chain.py
+backend/test_ling.py
+backend/test_qwen.py
+backend/test_vision.py
+backend/test_voice_fallback.py
+backend/test_sms_wiring.py
+backend/test_stripe_live.py
+backend/test_resend.py
+backend/test_twilio.py
+backend/test_ai_live.py
+backend/e2e_check.py
+make_client_pdf.py
+make_icons.py
+
+# Logs & local runners
+*.log
+*.bat
+out.log
+
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# ─── Node / Next.js ───────────────────────────────────────────
+node_modules/
+.next/
+out/
+.vercel/
+.open-next/
+*.tsbuildinfo
+next-env.d.ts
+
+# ─── OS / editors ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
