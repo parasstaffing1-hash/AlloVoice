@@ -25,6 +25,8 @@ backend/test_resend.py
 backend/test_twilio.py
 backend/test_ai_live.py
 backend/e2e_check.py
+backend/test_llm_fallback.py
+backend/verify_voice_agent.py
 make_client_pdf.py
 make_icons.py
 

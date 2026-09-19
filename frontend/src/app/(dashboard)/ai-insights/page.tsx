@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/store";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import {
-  AlertTriangle, TrendingDown, Star, MessageSquare, Pound,
+  AlertTriangle, TrendingDown, Star, MessageSquare, PoundSterling,
   Sparkles, Target, ChevronRight, RefreshCw, Send, CheckCircle,
 } from "lucide-react";
 
@@ -320,7 +320,7 @@ export default function AiInsightsPage() {
                     onClick={() => runRetainCampaign([selectedCustomer.id], "discount")}
                     disabled={retentionLoading}
                   >
-                    <Pound className="h-3.5 w-3.5 mr-1" />Send Discount
+                    <PoundSterling className="h-3.5 w-3.5 mr-1" />Send Discount
                   </Button>
                   <Button
                     size="sm"
@@ -534,7 +534,7 @@ export default function AiInsightsPage() {
                           </div>
                         </div>
                         <Button size="sm" variant="outline" className="shrink-0">
-                          <Pound className="h-3.5 w-3.5 mr-1" />Add to Quote
+                          <PoundSterling className="h-3.5 w-3.5 mr-1" />Add to Quote
                         </Button>
                       </div>
                     ))}

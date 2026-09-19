@@ -1,6 +1,6 @@
 "use client";
 
-import ScheduleOptimizer from "@/components/schedule-optimizer";
+import { ScheduleOptimizer } from "@/components/schedule-optimizer";
 import { Calendar } from "lucide-react";
 
 export default function SchedulePage() {
