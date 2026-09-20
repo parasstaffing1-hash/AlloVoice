@@ -55,8 +55,13 @@ def _route(model: str) -> tuple:
         headers["X-Title"] = "VoiceField"
         return "https://openrouter.ai/api/v1", key, headers
     provider = (s.LLM_PROVIDER or "deepseek").lower()
-    base = ((s.LLM_BASE_URL or "").strip()
-            or _DEFAULT_BASES.get(provider, _DEFAULT_BASES["deepseek"]))
+    # NOTE: a stale LLM_BASE_URL must never hijack another provider —
+    # it only applies when the provider actually is OpenRouter/custom.
+    if provider == "openrouter":
+        base = ((s.LLM_BASE_URL or "").strip()
+                or _DEFAULT_BASES["openrouter"])
+    else:
+        base = _DEFAULT_BASES.get(provider, _DEFAULT_BASES["deepseek"])
     key = ((s.GROQ_API_KEY or "").strip()
            if provider == "groq" else s.LLM_API_KEY)
     return base, key, {"Authorization": f"Bearer {key}"}
@@ -199,6 +204,131 @@ async def complete_json(
     if not isinstance(parsed, dict):
         raise RuntimeError("LLM JSON was not an object")
     return parsed
+
+
+async def complete_stream(
+    prompt: str,
+    system: str | None = None,
+    max_tokens: int = 180,
+    temperature: float = 0.3,
+):
+    """Stream a completion as text deltas (async generator).
+
+    PRIMARY model only (first of _models()). No response_format on stream.
+    Yields ``choices[0].delta.content`` strings parsed from SSE
+    ``data: {...}`` lines (skips ``[DONE]``). Raises RuntimeError on ANY
+    error so callers fall back to non-stream complete().
+    """
+    s = get_settings()
+    if not is_configured():
+        raise RuntimeError("LLM not configured (LLM_API_KEY missing)")
+    models = _models()
+    primary = models[0] if models else _model()
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    payload: dict = {
+        "model": primary,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+    base, _key, headers = _route(primary)
+    if not (_key or "").strip():
+        raise RuntimeError(f"No API key for route of {primary}")
+    try:
+        # Per-chunk read timeout: a stalled free-tier stream must fail
+        # fast (callers finalize the partial reply) instead of hanging.
+        # 45s gaps allowed — first tokens on free queues can take ~25s.
+        _timeout = httpx.Timeout(90.0, connect=15.0, read=45.0,
+                                 write=15.0, pool=15.0)
+        async with httpx.AsyncClient(timeout=_timeout) as client:
+            async with client.stream(
+                "POST",
+                f"{base}/chat/completions",
+                headers=headers,
+                json=payload,
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line:
+                        continue
+                    stripped = line.strip()
+                    if not stripped.startswith("data:"):
+                        continue
+                    data_str = stripped[5:].strip()
+                    if not data_str or data_str == "[DONE]":
+                        continue
+                    try:
+                        chunk = json.loads(data_str)
+                    except Exception:
+                        continue
+                    try:
+                        choices = chunk.get("choices") or []
+                        if not choices:
+                            continue
+                        delta = (choices[0].get("delta") or {}).get("content")
+                        if delta:
+                            yield delta
+                    except Exception:
+                        continue
+    except RuntimeError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f"LLM stream failed: {e}") from e
+
+
+async def complete_with_tools(
+    messages: list,
+    tools: list,
+    max_tokens: int = 300,
+) -> dict:
+    """Tool-calling completion on the PRIMARY model only.
+
+    POSTs ``messages`` + ``tools`` (tool_choice=auto) and returns the raw
+    chat/completions body dict so callers can inspect
+    ``choices[0].message.tool_calls``. Raises RuntimeError on ANY error
+    so callers fall back to plain complete()/groq_chat().
+    """
+    if not is_configured():
+        raise RuntimeError("LLM not configured (LLM_API_KEY missing)")
+    if not messages:
+        raise RuntimeError("complete_with_tools: empty messages")
+    if not tools:
+        raise RuntimeError("complete_with_tools: empty tools")
+    models = _models()
+    primary = models[0] if models else _model()
+    base, _key, headers = _route(primary)
+    if not (_key or "").strip():
+        raise RuntimeError(f"No API key for route of {primary}")
+    payload: dict = {
+        "model": primary,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+        "temperature": 0.1,
+        "max_tokens": max_tokens,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.post(
+                f"{base}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except RuntimeError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f"LLM tools call failed: {e}") from e
+    try:
+        _ = data["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError) as e:
+        raise RuntimeError(f"Unexpected LLM tools response shape: {e}")
+    return data
 
 
 async def describe_image(

@@ -28,7 +28,12 @@ async function request<T>(endpoint: string, options: FetchOptions = {}): Promise
   return response.json();
 }
 
+export async function apiRequest<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  return request<T>(endpoint, options);
+}
+
 export const api = {
+  request: apiRequest,
   auth: {
     login: (data: { email: string; password: string }) =>
       request("/api/auth/login", { method: "POST", body: JSON.stringify(data) }),

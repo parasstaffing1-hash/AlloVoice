@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/store";
 
 interface FGasCertificate {
   id: string;
@@ -93,7 +94,13 @@ interface GasSafetyCertificate {
   created_at: string;
 }
 
-const API_BASE = "/api/compliance";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/compliance`;
+
+function parseList<T>(data: any): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (data && Array.isArray(data.certificates)) return data.certificates as T[];
+  return [];
+}
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
@@ -128,6 +135,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function ComplianceDashboard() {
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [fgasCerts, setFGasCerts] = useState<FGasCertificate[]>([]);
   const [gasSafetyCerts, setGasSafetyCerts] = useState<GasSafetyCertificate[]>([]);
@@ -174,22 +182,25 @@ export default function ComplianceDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const headers: Record<string, string> = token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
       const [fgasList, gasList, fgasExp, gasExp] = await Promise.all([
-        fetch(`${API_BASE}/fgas/list`).then((r) => r.json()),
-        fetch(`${API_BASE}/gas-safety/list`).then((r) => r.json()),
-        fetch(`${API_BASE}/fgas/expiring`).then((r) => r.json()),
-        fetch(`${API_BASE}/gas-safety/expiring`).then((r) => r.json()),
+        fetch(`${API_BASE}/fgas/list`, { headers }).then((r: any) => r.json()),
+        fetch(`${API_BASE}/gas-safety/list`, { headers }).then((r: any) => r.json()),
+        fetch(`${API_BASE}/fgas/expiring`, { headers }).then((r: any) => r.json()),
+        fetch(`${API_BASE}/gas-safety/expiring`, { headers }).then((r: any) => r.json()),
       ]);
-      setFGasCerts(fgasList);
-      setGasSafetyCerts(gasList);
-      setExpiringFGas(fgasExp);
-      setExpiringGas(gasExp);
+      setFGasCerts(parseList<FGasCertificate>(fgasList));
+      setGasSafetyCerts(parseList<GasSafetyCertificate>(gasList));
+      setExpiringFGas(parseList<FGasCertificate>(fgasExp));
+      setExpiringGas(parseList<GasSafetyCertificate>(gasExp));
     } catch (err) {
       console.error("Failed to fetch compliance data:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchData();
@@ -200,7 +211,10 @@ export default function ComplianceDashboard() {
     try {
       const res = await fetch(`${API_BASE}/fgas/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           ...fgasForm,
           quantity_kg: parseFloat(fgasForm.quantity_kg),
@@ -220,7 +234,10 @@ export default function ComplianceDashboard() {
     try {
       const res = await fetch(`${API_BASE}/gas-safety/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(gasForm),
       });
       if (res.ok) {
@@ -236,6 +253,7 @@ export default function ComplianceDashboard() {
     try {
       const res = await fetch(`${API_BASE}/gas-safety/generate-pdf?cert_id=${certId}`, {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
       const byteChars = atob(data.pdf_base64);
@@ -641,7 +659,7 @@ export default function ComplianceDashboard() {
                             <StatusBadge status={cert.status} />
                           </td>
                           <td className="p-3">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(cert.id)}>
                               <Download className="w-4 h-4" />
                             </Button>
                           </td>

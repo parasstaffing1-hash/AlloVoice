@@ -287,7 +287,7 @@ export default function CalendarPage() {
                   right: "dayGridMonth,timeGridWeek",
                 }}
                 events={events as any}
-                eventClick={(info: any) => router.push(`/jobs/${info.event.id}`)}
+                eventClick={(info: any) => router.push(`/jobs/${info.event.id}/complete`)}
                 height="auto"
               />
             </div>

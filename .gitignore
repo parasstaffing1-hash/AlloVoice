@@ -27,6 +27,17 @@ backend/test_ai_live.py
 backend/e2e_check.py
 backend/test_llm_fallback.py
 backend/verify_voice_agent.py
+backend/bench_*.py
+backend/check_biz_cols.py
+backend/list_groq_models.py
+backend/test_demo*.py
+backend/test_field_tools.py
+backend/test_groq.py
+backend/test_keys.py
+backend/test_locale.py
+backend/test_ratelimit.py
+backend/test_tcp.py
+backend/test_xero_*.py
 make_client_pdf.py
 make_icons.py
 

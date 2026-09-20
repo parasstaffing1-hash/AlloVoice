@@ -92,13 +92,15 @@ class EdgeTTSVoice(TTSProvider):
             PRIMARY_VOICE if primary == FALLBACK_VOICE else FALLBACK_VOICE
         )
 
-    async def _speak_with_voice(self, text: str, voice: str) -> bytes:
+    async def _speak_with_voice(self, text: str, voice: str,
+                                rate: str = "+0%", pitch: str = "+0Hz") -> bytes:
         import edge_tts
 
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
             path = f.name
         try:
-            await edge_tts.Communicate(text, voice=voice).save(path)
+            await edge_tts.Communicate(text, voice=voice,
+                                       rate=rate, pitch=pitch).save(path)
             with open(path, "rb") as fh:
                 return fh.read()
         finally:
@@ -107,17 +109,18 @@ class EdgeTTSVoice(TTSProvider):
             except OSError:
                 pass
 
-    async def speak(self, text: str) -> tuple[bytes, str]:
+    async def speak(self, text: str, rate: str = "+0%",
+                    pitch: str = "+0Hz") -> tuple[bytes, str]:
         text = (text or "").strip()[:MAX_TTS_CHARS]
         if not text:
             return b"", self.primary
         try:
-            data = await self._speak_with_voice(text, self.primary)
+            data = await self._speak_with_voice(text, self.primary, rate, pitch)
             if data:
                 return data, self.primary
             raise RuntimeError("primary TTS returned empty audio")
         except Exception:
-            data = await self._speak_with_voice(text, self.fallback)
+            data = await self._speak_with_voice(text, self.fallback, rate, pitch)
             return data, self.fallback
 
 

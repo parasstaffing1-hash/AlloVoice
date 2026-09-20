@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/store";
-import { api } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,7 +87,7 @@ export function VoiceJobNotes({ jobId }: { jobId: string }) {
     if (!token || !transcript.trim()) return;
     setStructuring(true);
     try {
-      const result: any = await api.request("/api/voice-notes/transcribe-job", {
+      const result: any = await apiRequest("/api/voice-notes/transcribe-job", {
         method: "POST",
         body: JSON.stringify({ transcript, job_id: jobId }),
         token,
@@ -107,7 +107,7 @@ export function VoiceJobNotes({ jobId }: { jobId: string }) {
     if (!token || !transcript.trim()) return;
     setRefining(true);
     try {
-      const result: any = await api.request("/api/voice-notes/refine", {
+      const result: any = await apiRequest("/api/voice-notes/refine", {
         method: "POST",
         body: JSON.stringify({ transcript, style }),
         token,
@@ -130,7 +130,7 @@ export function VoiceJobNotes({ jobId }: { jobId: string }) {
         follow_up_required: followUp,
         follow_up_details: followUpDetails,
       };
-      await api.request("/api/voice-notes/save", {
+      await apiRequest("/api/voice-notes/save", {
         method: "POST",
         body: JSON.stringify({ job_id: jobId, notes }),
         token,

@@ -108,6 +108,14 @@ const QUICK_LINKS = [
   { label: "Reports", href: "/reports", Icon: BarChart3 },
 ];
 
+function getItemHref(key: keyof GroupedResults, id: string): string {
+  if (key === "jobs") return `/jobs/${id}/complete`;
+  if (key === "quotes") return `/quotes/${id}/present`;
+  if (key === "customers") return "/customers";
+  if (key === "invoices") return "/invoices";
+  return `/${key}/${id}`;
+}
+
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -250,7 +258,7 @@ export default function CommandPalette() {
                     <Command.Item
                       key={`${key}-${item.id}`}
                       value={`${label} ${item.title} ${item.subtitle ?? ""} ${item.id}`}
-                      onSelect={() => navigate(`${route}/${item.id}`)}
+                      onSelect={() => navigate(getItemHref(key, item.id))}
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-200 aria-selected:bg-zinc-800"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-zinc-500" />

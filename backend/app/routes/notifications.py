@@ -17,6 +17,8 @@ settings = get_settings()
 
 NOVU_FALLBACK_URL = "https://api.novu.co"
 
+NOT_CONFIGURED_DETAIL = "Novu API key missing — notification not sent"
+
 
 def _novu_creds():
     """Return (api_key, base_url). Key blank => keyless/simulated mode."""
@@ -34,7 +36,11 @@ def _novu_creds():
 async def _trigger_novu(
     *, event_name: str, subscriber_id: str, payload: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """Trigger a Novu workflow. Never raises; keyless => simulated."""
+    """Trigger a Novu workflow. Never raises; keyless => simulated.
+
+    Endpoints translate "simulated" into an honest not_configured response
+    (nothing is sent); "sent" carries the provider transaction id.
+    """
     api_key, base_url = _novu_creds()
     if not api_key:
         return {"status": "simulated", "event": event_name}
@@ -56,7 +62,12 @@ async def _trigger_novu(
                 data = resp.json()
             except Exception:
                 data = {}
-            return {"status": "sent", "event": event_name, "response": data}
+            return {
+                "status": "sent",
+                "event": event_name,
+                "id": _novu_transaction_id(data),
+                "response": data,
+            }
         return {
             "status": "failed",
             "event": event_name,
@@ -70,6 +81,48 @@ async def _trigger_novu(
         }
 
 
+def _novu_transaction_id(data: Any) -> Optional[str]:
+    """Best-effort extraction of the provider transaction id."""
+    if not isinstance(data, dict):
+        return None
+    nested = data.get("data")
+    if isinstance(nested, dict):
+        for key in ("transactionId", "_id", "id"):
+            if nested.get(key):
+                return str(nested[key])
+    for key in ("_id", "id", "transactionId"):
+        if data.get(key):
+            return str(data[key])
+    return None
+
+
+def _honest_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Map a _trigger_novu outcome to the honest public shape.
+
+    - keyless ("simulated") → success False / not_configured (nothing sent)
+    - sent → success True / sent + provider id
+    - provider error → success False / failed + error (never raises/500s)
+    """
+    status_value = str(result.get("status") or "simulated")
+    if status_value == "simulated":
+        return {
+            "success": False,
+            "status": "not_configured",
+            "detail": NOT_CONFIGURED_DETAIL,
+        }
+    if status_value == "failed":
+        return {
+            "success": False,
+            "status": "failed",
+            "error": str(result.get("error") or "Novu trigger failed")[:1000],
+        }
+    return {
+        "success": True,
+        "status": "sent",
+        "id": result.get("id"),
+    }
+
+
 @router.post("/send")
 async def send_notification(
     recipient_id: UUID,
@@ -79,7 +132,8 @@ async def send_notification(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Send a notification via Novu (real trigger when NOVU_API_KEY set, else simulated)."""
+    """Send a notification via Novu (honest statuses: not_configured when
+    NOVU_API_KEY is missing, sent on success, failed on provider error)."""
     event_name = (channel or "in_app").strip() or "in_app"
     try:
         result = await _trigger_novu(
@@ -89,17 +143,15 @@ async def send_notification(
         )
     except Exception as exc:
         result = {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
-    status_value = str(result.get("status") or "simulated")
-    response = {
-        "success": True,
-        "channel": channel,
-        "recipient_id": str(recipient_id),
-        "title": title,
-        "message": message,
-        "status": status_value,
-    }
-    if status_value == "failed":
-        response["error"] = str(result.get("error") or "Novu trigger failed")[:1000]
+    response = _honest_result(result)
+    response.update(
+        {
+            "channel": channel,
+            "recipient_id": str(recipient_id),
+            "title": title,
+            "message": message,
+        }
+    )
     return response
 
 
@@ -136,13 +188,15 @@ async def notify_job_completion(
     except Exception as exc:
         novu_result = {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
 
-    return {
-        "success": True,
-        "channels": ["email", "sms", "whatsapp"],
-        "customer": customer.full_name,
-        "job": job.title,
-        "status": str(novu_result.get("status") or "simulated"),
-    }
+    response = _honest_result(novu_result)
+    response.update(
+        {
+            "channels": ["email", "sms", "whatsapp"],
+            "customer": customer.full_name,
+            "job": job.title,
+        }
+    )
+    return response
 
 
 @router.post("/review-request")
@@ -175,12 +229,14 @@ async def send_review_request(
     except Exception as exc:
         novu_result = {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
 
-    return {
-        "success": True,
-        "customer": customer.full_name,
-        "review_link": "https://g.page/r/YOUR_BUSINESS/review",
-        "status": str(novu_result.get("status") or "simulated"),
-    }
+    response = _honest_result(novu_result)
+    response.update(
+        {
+            "customer": customer.full_name,
+            "review_link": "https://g.page/r/YOUR_BUSINESS/review",
+        }
+    )
+    return response
 
 
 @router.post("/invoice-reminder")
@@ -198,8 +254,10 @@ async def send_invoice_reminder(
         )
     except Exception as exc:
         novu_result = {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
-    return {
-        "success": True,
-        "message": "Invoice reminder sent",
-        "status": str(novu_result.get("status") or "simulated"),
-    }
+    response = _honest_result(novu_result)
+    response["message"] = (
+        "Invoice reminder sent"
+        if response.get("success")
+        else response.get("detail") or response.get("error") or "Invoice reminder not sent"
+    )
+    return response

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/store";
-import { api } from "@/lib/api";
+import { api, apiRequest } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +71,7 @@ export function ScheduleOptimizer() {
     if (!token) return;
     setLoading(true);
     try {
-      const res: any = await api.request("/api/scheduling/auto-assign", {
+      const res: any = await apiRequest("/api/scheduling/auto-assign", {
         method: "POST",
         token,
       });
@@ -88,7 +88,7 @@ export function ScheduleOptimizer() {
     if (!token || !selectedJob) return;
     setLoading(true);
     try {
-      const res: any = await api.request("/api/scheduling/optimize", {
+      const res: any = await apiRequest("/api/scheduling/optimize", {
         method: "POST",
         body: JSON.stringify({
           job_id: selectedJob,
