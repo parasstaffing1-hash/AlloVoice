@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "VoiceField - AI-Powered Field Service Management",
+  title: "Allo - AI-Powered Field Service Management",
   description: "Manage your field service business with AI voice quotes, dispatch, invoicing, and more.",
   manifest: "/manifest.json",
 };

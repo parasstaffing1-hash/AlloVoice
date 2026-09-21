@@ -375,7 +375,7 @@ async def generate_retention_campaign(
 
         if data.campaign_type == "discount":
             message = (
-                f"Hi {first_name}, we've missed you at VoiceField! "
+                f"Hi {first_name}, we've missed you at Allo! "
                 f"As a valued customer, we'd like to offer you 15% off your next job. "
                 f"Use code WELCOME15 when booking. Offer valid for 30 days."
             )
@@ -440,7 +440,7 @@ async def _get_business_name_for_review(user: User, db) -> str:
             return str(business.name)
     except Exception:
         pass
-    return "VoiceField"
+    return "Allo"
 
 
 def analyze_sentiment(text: str, rating: int) -> str:
@@ -490,7 +490,7 @@ def generate_review_response(review_text: str, rating: int, customer_name: str) 
     else:
         response = (
             f"We're truly sorry to hear about your experience, {first_name}. "
-            f"This is not the standard we strive for at VoiceField. "
+            f"This is not the standard we strive for at Allo. "
             f"We'd like to make this right — please contact us directly on 0800 123 4567 "
             f"so we can resolve this matter promptly. Your satisfaction is our priority."
         )
@@ -546,12 +546,12 @@ async def bulk_respond_to_reviews(
 ):
     responses = []
     llm_available = llm.is_configured()
-    business_name = "VoiceField"
+    business_name = "Allo"
     if llm_available:
         try:
             business_name = await _get_business_name_for_review(current_user, db)
         except Exception:
-            business_name = "VoiceField"
+            business_name = "Allo"
             llm_available = False
     for review in data.reviews:
         fallback = generate_review_response(review.review_text, review.rating, review.customer_name)

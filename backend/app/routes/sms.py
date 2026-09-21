@@ -23,7 +23,7 @@ def _twilio_creds() -> tuple[str, str]:
 def _twilio_from() -> str:
     s = get_settings()
     return ((s.TWILIO_PHONE_NUMBER or "").strip()
-            or (s.TWILIO_SENDER_ID or "VoiceField").strip())
+            or (s.TWILIO_SENDER_ID or "Allo").strip())
 
 
 @router.post("/send")
@@ -89,7 +89,7 @@ async def send_otp(
     import pyotp
     totp = pyotp.TOTP(pyotp.random_base32())
     code = totp.now()
-    message = f"Your VoiceField verification code is: {code}. Valid for 5 minutes."
+    message = f"Your Allo verification code is: {code}. Valid for 5 minutes."
 
     return await send_sms(to_phone, message, current_user, db)
 

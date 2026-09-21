@@ -210,7 +210,7 @@ def _build_google_event(job: Job, customer_name: str = "", location: str = "") -
         description_parts.append(f"Customer: {customer_name}")
     description_parts.append(f"Job: {getattr(job, 'title', '')} ({getattr(job, 'id', '')})")
     return {
-        "summary": getattr(job, "title", None) or "VoiceField Job",
+        "summary": getattr(job, "title", None) or "Allo Job",
         "description": "\n".join(description_parts),
         "location": location or "",
         "start": {"dateTime": aware_start.isoformat(), "timeZone": "Europe/London"},

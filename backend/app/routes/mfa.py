@@ -26,7 +26,7 @@ async def setup_mfa(
     totp = pyotp.TOTP(secret)
     provisioning_uri = totp.provisioning_uri(
         name=current_user.email,
-        issuer_name="VoiceField"
+        issuer_name="Allo"
     )
 
     # Generate QR code

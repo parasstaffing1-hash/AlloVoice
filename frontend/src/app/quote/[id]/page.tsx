@@ -399,7 +399,7 @@ export default function PublicQuotePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-center">
-          <span className="text-xl font-bold gradient-text">VoiceField</span>
+          <span className="text-xl font-bold gradient-text">Allo</span>
         </div>
       </header>
 
@@ -499,7 +499,7 @@ export default function PublicQuotePage() {
       </main>
 
       <footer className="border-t border-border/50 py-6 text-center text-xs text-muted-foreground">
-        Powered by VoiceField — AI-Powered Field Service Management
+        Powered by Allo — AI-Powered Field Service Management
       </footer>
     </div>
   );

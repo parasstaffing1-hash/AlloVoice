@@ -43,7 +43,7 @@ _VOICE_ALIASES = {
 }
 
 CHAT_SYSTEM_PROMPT = (
-    "You are the VoiceField support assistant, a UK trades SaaS helping "
+    "You are the Allo support assistant, a UK trades SaaS helping "
     "customers with creating accounts, documents needed (ID, proof of address, "
     "Gas Safe certificates and EICR certificates for engineers, company details "
     "for quotes), bookings and plans. Use a professional British customer-support "
@@ -98,17 +98,17 @@ def rule_based_reply(message: str) -> str:
             "documents, bookings or plans, just let me know."
         )
     if any(w in t for w in ["goodbye", "bye", "see you", "cheers"]):
-        return "Goodbye, and thanks for using VoiceField! Get in touch any time you need help."
+        return "Goodbye, and thanks for using Allo! Get in touch any time you need help."
     if any(w in t for w in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"]):
         return (
-            "Hello! I'm the VoiceField support assistant. I can help with creating "
+            "Hello! I'm the Allo support assistant. I can help with creating "
             "your account, documents you'll need, bookings and plans. "
             "What would you like help with?"
         )
     if any(k in t for k in ["document", "documents", "id", "proof of address",
                             "gas safe", "eicr", "certificate", "cert"]):
         return (
-            "For VoiceField you'll normally need: (1) photo ID such as a passport or "
+            "For Allo you'll normally need: (1) photo ID such as a passport or "
             "driving licence, (2) proof of address such as a utility bill or bank "
             "statement, (3) engineer certificates where relevant — Gas Safe "
             "registration for gas work and EICR qualifications for electrical work, "
@@ -118,7 +118,7 @@ def rule_based_reply(message: str) -> str:
     if any(k in t for k in ["create account", "creating account", "new account",
                             "sign up", "signup", "register", "account"]):
         return (
-            "To create your VoiceField account: 1) Register with your name, email and "
+            "To create your Allo account: 1) Register with your name, email and "
             "password. 2) Verify your email. 3) Add your business details under "
             "Settings. 4) Invite engineers and upload any certificates. "
             "Would you like help with any of these steps?"
@@ -132,7 +132,7 @@ def rule_based_reply(message: str) -> str:
     if any(k in t for k in ["plan", "plans", "pricing", "price", "subscription",
                             "cost", "membership"]):
         return (
-            "VoiceField plans cover job management, dispatch, quotes and invoicing. "
+            "Allo plans cover job management, dispatch, quotes and invoicing. "
             "Tell me about your team size and workload and I can point you to the "
             "most suitable plan — or I can help with billing questions."
         )

@@ -616,7 +616,7 @@ async def sync_invoices(
                     "CustomerRef": {"value": qb_customer_id, "name": qb_customer_name},
                     "Line": lines,
                     "DocNumber": inv.invoice_number,
-                    "PrivateNote": f"VoiceField {inv.invoice_number}",
+                    "PrivateNote": f"Allo {inv.invoice_number}",
                     "CurrencyRef": {"value": (getattr(business, "currency", None) or "GBP")},
                 }
                 due = getattr(inv, "due_date", None)
@@ -794,7 +794,7 @@ async def sync_payments(
                 payload: dict[str, Any] = {
                     "CustomerRef": {"value": qb_customer_id, "name": qb_customer_name},
                     "TotalAmt": round(total, 2),
-                    "PrivateNote": f"VoiceField payment {pay.id}",
+                    "PrivateNote": f"Allo payment {pay.id}",
                     "CurrencyRef": {"value": (getattr(pay, "currency", None) or getattr(business, "currency", None) or "GBP")},
                 }
                 resp = await http_client.post(

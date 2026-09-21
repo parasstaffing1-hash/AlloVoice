@@ -5,7 +5,7 @@ export default function Loading() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-3">
         <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Loading VoiceField…</p>
+        <p className="text-sm text-muted-foreground">Loading Allo…</p>
       </div>
     </div>
   );

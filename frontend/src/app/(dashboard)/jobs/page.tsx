@@ -67,7 +67,7 @@ export default function JobsPage() {
       { hour: "2-digit", minute: "2-digit" }
     );
     const buildAndSend = (phone: string, name: string) => {
-      const text = `Hi ${name}, your VoiceField engineer is running ~${mins} late. New ETA ${eta}. Reply to this text if that doesn't work.`;
+      const text = `Hi ${name}, your Allo engineer is running ~${mins} late. New ETA ${eta}. Reply to this text if that doesn't work.`;
       fetch(
         `${API}/api/sms/send?to_phone=${encodeURIComponent(
           phone

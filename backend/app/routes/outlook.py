@@ -226,7 +226,7 @@ def _build_graph_event(job: Job, customer_name: str = "", location: str = "") ->
         body_parts.append(f"Customer: {customer_name}")
     body_parts.append(f"Job: {getattr(job, 'title', '')} ({getattr(job, 'id', '')})")
     return {
-        "subject": getattr(job, "title", None) or "VoiceField Job",
+        "subject": getattr(job, "title", None) or "Allo Job",
         "body": {"contentType": "text", "content": "\n".join(body_parts)},
         "location": {"displayName": location or ""},
         "start": {"dateTime": aware_start.isoformat(), "timeZone": "Europe/London"},

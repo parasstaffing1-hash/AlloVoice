@@ -99,10 +99,10 @@ export default function PublicMembershipsPage() {
             <Users className="h-3 w-3" /> Membership Plans
           </Badge>
           <h1 className="text-4xl font-bold mb-4">
-            Protect Your Home with a <span className="text-primary">VoiceField</span> Plan
+            Protect Your Home with a <span className="text-primary">Allo</span> Plan
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of homeowners who trust VoiceField for reliable, ongoing property maintenance.
+            Join thousands of homeowners who trust Allo for reliable, ongoing property maintenance.
             Save money and never miss essential servicing.
           </p>
 
@@ -186,7 +186,7 @@ export default function PublicMembershipsPage() {
         </div>
 
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Why Join a VoiceField Membership?</h2>
+          <h2 className="text-2xl font-bold mb-4">Why Join an Allo Membership?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="p-3 bg-green-500/10 rounded-xl w-fit mx-auto mb-3">
@@ -286,7 +286,7 @@ export default function PublicMembershipsPage() {
               <div className="p-4 bg-green-500/10 rounded-full w-fit mx-auto mb-4">
                 <Check className="h-10 w-10 text-green-500" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Welcome to VoiceField!</h2>
+              <h2 className="text-xl font-bold mb-2">Welcome to Allo!</h2>
               <p className="text-muted-foreground mb-6">
                 Your {plans.find((p) => p.id === enrolling)?.name} membership is now active.
                 We&apos;ll be in touch shortly to schedule your first service.

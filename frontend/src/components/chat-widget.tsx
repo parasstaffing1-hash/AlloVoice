@@ -19,7 +19,7 @@ const FALLBACK_QUICK_REPLIES = [
 ];
 
 const WELCOME_TEXT =
-  "Hi there! Thanks for visiting VoiceField. I can help with services, pricing, availability or booking a visit. What do you need help with today?";
+  "Hi there! Thanks for visiting Allo. I can help with services, pricing, availability or booking a visit. What do you need help with today?";
 
 function makeSessionId(): string {
   return (
@@ -133,7 +133,7 @@ export default function ChatWidget() {
               <MessageCircle className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">VoiceField Assistant</p>
+              <p className="truncate text-sm font-semibold">Allo Assistant</p>
               <p className="flex items-center gap-1.5 text-xs text-orange-100">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-300" />
                 Online — replies instantly

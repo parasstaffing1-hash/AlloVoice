@@ -1,4 +1,4 @@
-# VoiceField — AI-powered field service management (UK)
+# Allo — AI-powered field service management (UK)
 
 Quotes from voice, 24/7 AI voice agent, dispatch, certificates (Gas Safety CP12, F-Gas, EICR),
 invoicing with Stripe + GoCardless, Xero/QuickBooks sync, and full UK compliance (GDPR, CIS).
@@ -56,7 +56,7 @@ Prerequisites: Cloudflare account + `npx wrangler login`.
 
 ```bash
 cd frontend
-npm run deploy      # build + deploy to Workers (worker name: voicefield)
+npm run deploy      # build + deploy to Workers (worker name: allo)
 npm run preview     # same, but preview locally in workerd first
 ```
 

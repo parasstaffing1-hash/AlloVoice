@@ -199,7 +199,7 @@ export default function AvatarStudioPage() {
     try {
       const base = origin || "{origin}";
       const q = vrmUrl.trim() ? `?vrm=${encodeURIComponent(vrmUrl.trim())}` : "";
-      return `<iframe src="${base}/embed/avatar${q}" width="380" height="640" style="border:0;border-radius:16px" allow="microphone; autoplay" title="VoiceField avatar"></iframe>`;
+      return `<iframe src="${base}/embed/avatar${q}" width="380" height="640" style="border:0;border-radius:16px" allow="microphone; autoplay" title="Allo avatar"></iframe>`;
     } catch {
       return "";
     }

@@ -24,13 +24,13 @@ const FONT_OPTIONS = ["Inter", "System", "Georgia"];
 const HEX_RE = /^#([0-9a-fA-F]{6})$/;
 
 const DEFAULT_KIT = {
-  brand_name: "VoiceField",
+  brand_name: "Allo",
   logo_url: "",
   primary_color: "#4f46e5",
   secondary_color: "#0f172a",
   accent_color: "#22c55e",
   font_family: "Inter",
-  email_footer: "Thanks,\nThe VoiceField Team",
+  email_footer: "Thanks,\nThe Allo Team",
   portal_subdomain: "",
   custom_domain: "",
   favicon_url: "",
@@ -293,7 +293,7 @@ export default function BrandingPage() {
                       <span>
                         <span className="font-medium">“Powered by” badge</span>
                         <span className="block text-xs text-muted-foreground">
-                          Show “Powered by VoiceField” on your portal
+                          Show “Powered by Allo” on your portal
                         </span>
                       </span>
                       <button
@@ -469,7 +469,7 @@ export default function BrandingPage() {
                       className="flex h-7 w-7 items-center justify-center rounded text-xs font-bold text-white"
                       style={{ backgroundColor: kit.primary_color }}
                     >
-                      {(kit.brand_name || "V").charAt(0).toUpperCase()}
+                      {(kit.brand_name || "A").charAt(0).toUpperCase()}
                     </div>
                   )}
                   <span className="font-semibold text-white text-sm">
@@ -535,7 +535,7 @@ export default function BrandingPage() {
 
               {kit.powered_by_visible && (
                 <p className="text-center text-[11px] text-muted-foreground">
-                  Powered by VoiceField
+                  Powered by Allo
                 </p>
               )}
             </CardContent>

@@ -158,7 +158,7 @@ export default function VoiceDemoPage() {
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="font-bold gradient-text">VoiceField</span>
+            <span className="font-bold gradient-text">Allo</span>
             <span className="text-xs text-muted-foreground">· voice demo</span>
           </div>
           <Link href="/register"><Button size="sm">Get started</Button></Link>

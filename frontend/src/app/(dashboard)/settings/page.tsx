@@ -485,7 +485,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader><CardTitle>Team Members</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">Manage who has access to your VoiceField account.</p>
+            <p className="text-sm text-muted-foreground mb-4">Manage who has access to your Allo account.</p>
             <Button className="gap-1"><Users className="h-3.5 w-3.5" />Invite Team Member</Button>
           </CardContent>
         </Card>

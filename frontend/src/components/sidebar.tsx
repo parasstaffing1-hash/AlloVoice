@@ -64,7 +64,7 @@ export function Sidebar() {
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-2 border-b border-border px-6 py-5">
           <Zap className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold gradient-text">VoiceField</span>
+          <span className="text-xl font-bold gradient-text">Allo</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">

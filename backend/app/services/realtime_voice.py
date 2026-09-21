@@ -21,7 +21,7 @@ _GROQ_TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 _GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 CHAT_SYSTEM_PROMPT = (
-    "You are the VoiceField support assistant for UK trades engineers. "
+    "You are the Allo support assistant for UK trades engineers. "
     "Be concise: reply in at most 2 short sentences, plain British English."
 )
 

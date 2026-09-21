@@ -221,7 +221,7 @@ async def create_checkout(data: CheckoutRequest, current_user=Depends(get_curren
                         "currency": "gbp",
                         "unit_amount": int(amount_gbp * 100),
                         "recurring": {"interval": interval},
-                        "product_data": {"name": f"VoiceField {plan['name']} ({data.billing_cycle})"},
+                        "product_data": {"name": f"Allo {plan['name']} ({data.billing_cycle})"},
                     },
                     "quantity": data.seats,
                 }

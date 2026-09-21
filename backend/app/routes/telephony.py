@@ -347,16 +347,16 @@ async def voice_webhook(request: Request):
 # ─── GET /outbound-twiml: one-shot announcement (NO auth — Twilio calls it) ──
 
 @router.get("/outbound-twiml")
-async def outbound_twiml(message: str = "Hello from VoiceField."):
+async def outbound_twiml(message: str = "Hello from Allo."):
     """Simple <Say> announcement for POST /call callbacks.
 
     Full-agent outbound (live conversation) should point the Twilio call's
     Url at POST /voice instead so the caller gets the realtime agent.
     """
     try:
-        text = (message or "").strip() or "Hello from VoiceField."
+        text = (message or "").strip() or "Hello from Allo."
     except Exception:
-        text = "Hello from VoiceField."
+        text = "Hello from Allo."
     return _twiml(
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response><Say>" + _xml_attr(text)[:1600] + "</Say></Response>"
@@ -529,7 +529,7 @@ async def media_stream(websocket: WebSocket):
 
                     reply = (await _llm_complete(
                         f"Caller: {text}",
-                        system=("You are the VoiceField support assistant. "
+                        system=("You are the Allo support assistant. "
                                 "Be concise: at most 2 short sentences."),
                         max_tokens=150, temperature=0.3,
                     ) or "").strip()
@@ -750,9 +750,9 @@ async def start_outbound_call(body: OutboundCallBody,
         raise HTTPException(status_code=400,
                             detail="no Twilio number — buy one")
     try:
-        message = (body.message or "").strip() or "Hello from VoiceField."
+        message = (body.message or "").strip() or "Hello from Allo."
     except Exception:
-        message = "Hello from VoiceField."
+        message = "Hello from Allo."
     callback_url = (_http_base() + "/api/telephony/outbound-twiml?message="
                     + quote(message[:1600], safe=""))
     try:

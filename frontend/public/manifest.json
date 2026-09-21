@@ -1,6 +1,6 @@
 {
-  "name": "VoiceField",
-  "short_name": "VoiceField",
+  "name": "Allo",
+  "short_name": "Allo",
   "description": "AI-powered field service management",
   "start_url": "/",
   "display": "standalone",

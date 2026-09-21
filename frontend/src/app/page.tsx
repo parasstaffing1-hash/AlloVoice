@@ -52,7 +52,7 @@ const plans = [
 ];
 
 const faqs = [
-  { q: "Do my customers need to install anything?", a: "No. Quotes, tracking links and payment pages open in any browser. Engineers use VoiceField on any phone or tablet — nothing to install." },
+  { q: "Do my customers need to install anything?", a: "No. Quotes, tracking links and payment pages open in any browser. Engineers use Allo on any phone or tablet — nothing to install." },
   { q: "How does the voice quoting work?", a: "Tap the mic, describe the job in plain English. Speech is transcribed locally in your browser, our AI builds an itemised quote, and a UK voice reads the total back to you." },
   { q: "Is my data safe?", a: "UK GDPR compliant with data processing agreements, encrypted storage, EU/UK data residency on managed infrastructure, and full export/erase tools built in." },
   { q: "Can it handle Gas Safety and F-Gas paperwork?", a: "Yes — CP12, F-Gas logbooks and EICR records are first-class citizens, with PDFs, signatures and renewal reminders." },
@@ -171,7 +171,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold gradient-text">VoiceField</span>
+            <span className="text-xl font-bold gradient-text">Allo</span>
           </div>
           <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">Features</a>
@@ -214,7 +214,7 @@ export default function LandingPage() {
             <span className="vf-gradient-text">answered in your own voice</span>
           </h1>
           <p className="vf-rise mx-auto mb-10 max-w-2xl text-lg text-muted-foreground" style={{ animationDelay: "0.24s" }}>
-            VoiceField is the AI voice assistant for UK field service. It quotes jobs from speech,
+            Allo is the AI voice assistant for UK field service. It quotes jobs from speech,
             answers customers 24/7 in a British voice, and handles dispatch, certificates and payments.
           </p>
           <div className="vf-rise mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center" style={{ animationDelay: "0.36s" }}>
@@ -375,9 +375,9 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-muted-foreground">
           <div className="mb-4 flex items-center justify-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            <span className="font-semibold gradient-text">VoiceField</span>
+            <span className="font-semibold gradient-text">Allo</span>
           </div>
-          <p>&copy; 2026 VoiceField. Built for UK field service businesses.</p>
+          <p>&copy; 2026 Allo. Built for UK field service businesses.</p>
         </div>
       </footer>
     </div>

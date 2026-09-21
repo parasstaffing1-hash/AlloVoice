@@ -63,9 +63,9 @@ class EscalateRequest(BaseModel):
 # Config / constants
 # ---------------------------------------------------------------------------
 
-BUSINESS_NAME = "VoiceField"
+BUSINESS_NAME = "Allo"
 WELCOME_MESSAGE = (
-    "Hi there! Thanks for visiting VoiceField. "
+    "Hi there! Thanks for visiting Allo. "
     "I can help with services, pricing, availability or booking a visit. "
     "What do you need help with today?"
 )

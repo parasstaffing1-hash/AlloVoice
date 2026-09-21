@@ -296,7 +296,7 @@ export default function QuotePresentPage() {
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xl font-bold gradient-text">VoiceField</span>
+            <span className="text-xl font-bold gradient-text">Allo</span>
             <span className="text-muted-foreground">|</span>
             <span className="text-sm text-muted-foreground">{quote.quote_number}</span>
           </div>
@@ -352,7 +352,7 @@ export default function QuotePresentPage() {
       </main>
 
       <footer className="border-t border-border/50 py-6 text-center text-xs text-muted-foreground">
-        Powered by VoiceField — AI-Powered Field Service Management
+        Powered by Allo — AI-Powered Field Service Management
       </footer>
     </div>
   );

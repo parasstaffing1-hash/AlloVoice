@@ -302,7 +302,7 @@ async def _send_escalation_sms(to_phone: str, message: str) -> bool:
         if not sid or not token:
             return False
         sender = ((getattr(s, "TWILIO_PHONE_NUMBER", "") or "").strip()
-                  or (getattr(s, "TWILIO_SENDER_ID", "") or "VoiceField").strip())
+                  or (getattr(s, "TWILIO_SENDER_ID", "") or "Allo").strip())
         try:
             from app.services.phone import normalize_uk_phone
 
@@ -398,7 +398,7 @@ async def transfer_call(
         try:
             sms_sent = await _send_escalation_sms(
                 data.oncall_phone.strip(),
-                f"VoiceField escalation: {data.reason} (call {call_id})",
+                f"Allo escalation: {data.reason} (call {call_id})",
             )
         except Exception:
             sms_sent = False

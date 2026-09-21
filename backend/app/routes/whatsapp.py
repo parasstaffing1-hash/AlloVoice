@@ -271,8 +271,8 @@ async def send_quote_via_whatsapp(
         f"Hi {customer.full_name},\n\n"
         f"Your quote {quote.quote_number} is ready! "
         f"Total: {_gbp(quote.total)}.\n\n"
-        f"View your quote here: {link}\n\n"
-        f"Best regards,\nVoiceField Team"
+         f"View your quote here: {link}\n\n"
+        f"Best regards,\nAllo Team"
     )
     message_id = await _wa_post("messages", _text_payload(to, message))
     return {
@@ -321,8 +321,8 @@ async def send_invoice_via_whatsapp(
         f"Your invoice {invoice.invoice_number} is ready for payment. "
         f"Total: {_gbp(invoice.total)}, balance due: {_gbp(balance)}.\n\n"
         f"View and pay your invoice here: {link}\n\n"
-        f"Thank you for your business!\n\n"
-        f"Best regards,\nVoiceField Team"
+         f"Thank you for your business!\n\n"
+        f"Best regards,\nAllo Team"
     )
     message_id = await _wa_post("messages", _text_payload(to, message))
     return {
@@ -366,8 +366,8 @@ async def send_job_update_whatsapp(
     message = (
         f"Hi {customer.full_name},\n\n"
         f"{status_text}.\n\n"
-        f"Track your job: {app_url}/track/{job_id}\n\n"
-        f"Best regards,\nVoiceField Team"
+         f"Track your job: {app_url}/track/{job_id}\n\n"
+        f"Best regards,\nAllo Team"
     )
     message_id = await _wa_post("messages", _text_payload(to, message))
     return {

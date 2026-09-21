@@ -47,7 +47,7 @@ def _get_brevo_sender_email(default: str = "") -> str:
     return (os.getenv("BREVO_SENDER_EMAIL") or default or "").strip()
 
 
-def _get_brevo_sender_name(default: str = "VoiceField") -> str:
+def _get_brevo_sender_name(default: str = "Allo") -> str:
     try:
         settings = get_settings()
         configured = (getattr(settings, "BREVO_SENDER_NAME", "") or "").strip()
@@ -55,7 +55,7 @@ def _get_brevo_sender_name(default: str = "VoiceField") -> str:
             return configured
     except Exception:
         pass
-    return (os.getenv("BREVO_SENDER_NAME") or default or "VoiceField").strip() or "VoiceField"
+    return (os.getenv("BREVO_SENDER_NAME") or default or "Allo").strip() or "Allo"
 
 
 def _brevo_headers() -> dict:
@@ -364,7 +364,7 @@ async def create_campaign(
         sender_email = configured_sender
     if "@" not in sender_email:
         sender_email = f"noreply@{business.slug}.voicefield.co.uk" if business.slug else "noreply@voicefield.co.uk"
-    sender_name = business.name or "VoiceField"
+    sender_name = business.name or "Allo"
     configured_sender_name = _get_brevo_sender_name(default=sender_name)
     if configured_sender_name:
         sender_name = configured_sender_name
@@ -444,7 +444,7 @@ async def winback_campaign(
     recent_str = {str(x) for x in recent_ids if x is not None}
     targets = [c for c in customers if str(c.id) not in recent_str]
 
-    business_name = business.name or "VoiceField"
+    business_name = business.name or "Allo"
     subject = f"We miss you — 10% off your next {business_name} service"
     preview_text = (
         f"Hi from {business_name}! It's been over 6 months since your last visit. "

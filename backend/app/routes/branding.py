@@ -22,7 +22,7 @@ LOGO_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg")
 
 def _default_kit() -> dict:
     return {
-        "brand_name": "VoiceField",
+        "brand_name": "Allo",
         "logo_url": None,
         "primary_color": "#f97316",
         "secondary_color": "#1e293b",
@@ -197,6 +197,6 @@ async def get_portal_theme(subdomain: Optional[str] = Query(default=None)):
 # ── Reset to defaults ────────────────────────────────────────────────────
 @router.post("/reset")
 async def reset_branding(current_user=Depends(get_current_user)):
-    """Reset the brand kit to VoiceField defaults."""
+    """Reset the brand kit to Allo defaults."""
     BRAND_KITS[_business_key(current_user)] = _default_kit()
     return copy.deepcopy(BRAND_KITS[_business_key(current_user)])
