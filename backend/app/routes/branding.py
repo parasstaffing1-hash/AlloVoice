@@ -33,6 +33,8 @@ def _default_kit() -> dict:
         "custom_domain": None,
         "favicon_url": None,
         "powered_by_visible": True,
+        "avatar_glb_url": None,
+        "avatar_voice": "sonia",
     }
 
 
@@ -69,6 +71,8 @@ class BrandKitUpdate(BaseModel):
     custom_domain: Optional[str] = None
     favicon_url: Optional[str] = None
     powered_by_visible: Optional[bool] = None
+    avatar_glb_url: Optional[str] = None
+    avatar_voice: Optional[str] = None
 
 
 class LogoUpload(BaseModel):
@@ -95,6 +99,18 @@ async def update_branding(
     for colour_field in ("primary_color", "secondary_color", "accent_color"):
         if colour_field in updates:
             _validate_hex(colour_field, updates[colour_field])
+    if "avatar_glb_url" in updates and updates["avatar_glb_url"] is not None:
+        if not updates["avatar_glb_url"].startswith("https://"):
+            raise HTTPException(
+                status_code=400,
+                detail="avatar_glb_url must start with https://",
+            )
+    if "avatar_voice" in updates and updates["avatar_voice"] is not None:
+        if updates["avatar_voice"] not in ("sonia", "ryan", "default"):
+            raise HTTPException(
+                status_code=400,
+                detail="avatar_voice must be one of: sonia, ryan, default",
+            )
     for key, value in updates.items():
         kit[key] = value
     return copy.deepcopy(kit)
@@ -161,6 +177,8 @@ async def get_portal_theme(subdomain: Optional[str] = Query(default=None)):
                     "logo_url": theme.get("logo_url"),
                     "favicon_url": theme.get("favicon_url"),
                     "font_family": theme.get("font_family"),
+                    "avatar_glb_url": theme.get("avatar_glb_url"),
+                    "avatar_voice": theme.get("avatar_voice"),
                 }
     defaults = _default_kit()
     return {
@@ -171,6 +189,8 @@ async def get_portal_theme(subdomain: Optional[str] = Query(default=None)):
         "logo_url": defaults["logo_url"],
         "favicon_url": defaults["favicon_url"],
         "font_family": defaults["font_family"],
+        "avatar_glb_url": defaults["avatar_glb_url"],
+        "avatar_voice": defaults["avatar_voice"],
     }
 
 

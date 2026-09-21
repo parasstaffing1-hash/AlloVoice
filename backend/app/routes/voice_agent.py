@@ -6,14 +6,18 @@ Prefix: /api/voice-agent
 import asyncio
 import base64
 import binascii
+import re
 import time
 import uuid
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import User
+from app.core.database import get_db
+from app.models.models import KnowledgeBaseArticle, User
 from app.routes.auth import get_current_user
 from app.services import llm as llm_service
 from app.services.speech import (
@@ -153,6 +157,54 @@ def _append_turn(session_id: str, role: str, content: str) -> None:
     # Cap at last 20 entries.
     if len(history) > 20:
         del history[: len(history) - 20]
+
+
+async def _kb_context(
+    query: str,
+    db,
+    business_id=None,
+    limit: int = 3,
+) -> List[dict]:
+    """RAG-lite keyword retrieval over published KB articles (demo-chat use).
+
+    Splits the query into 3+ letter tokens, scores title hits ×3 plus
+    content hits ×1, returns top `limit` hits as [{title, excerpt}].
+    Never raises — returns [] on any failure (demo must never 500).
+    """
+    try:
+        tokens = re.findall(r"[a-z]{3,}", (query or "").lower())
+        if not tokens or db is None:
+            return []
+        stmt = select(KnowledgeBaseArticle).where(
+            KnowledgeBaseArticle.is_published == True  # noqa: E712
+        )
+        if business_id is not None:
+            stmt = stmt.where(KnowledgeBaseArticle.business_id == business_id)
+        result = await db.execute(stmt)
+        articles = result.scalars().all()
+        if not articles:
+            return []
+        scored: List[tuple] = []
+        for article in articles:
+            title_lower = (article.title or "").lower()
+            content_lower = (article.content or "").lower()
+            score = 0
+            for token in tokens:
+                score += title_lower.count(token) * 3 + content_lower.count(token) * 1
+            if score > 0:
+                scored.append(
+                    (
+                        score,
+                        {
+                            "title": article.title,
+                            "excerpt": (article.content or "")[:300],
+                        },
+                    )
+                )
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [hit for _, hit in scored[:limit]]
+    except Exception:
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -348,13 +400,26 @@ class DemoSpeakRequest(BaseModel):
 
 
 @router.post("/demo-chat")
-async def demo_chat(data: DemoChatRequest, request: Request):
+async def demo_chat(
+    data: DemoChatRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
     """Public demo chat — 10 calls/min per IP, short replies."""
     if not _demo_allow(_demo_ip(request)):
         raise HTTPException(status_code=429, detail="Demo limit reached — try again in a minute")
     message = data.message.strip()
     ip = _demo_ip(request)
     history = _demo_sessions.get(ip, [])[-2:]
+    # RAG-lite: never 500 — fall back to no context on any failure.
+    try:
+        kb_hits = await _kb_context(message, db, limit=3)
+    except Exception:
+        kb_hits = []
+    kb_block = ""
+    if kb_hits:
+        kb_lines = "\n".join(f"- {h['title']}: {h['excerpt']}" for h in kb_hits)
+        kb_block = f"Relevant company knowledge:\n{kb_lines}\n"
     reply = ""
     if llm_service.is_configured():
         try:
@@ -362,13 +427,19 @@ async def demo_chat(data: DemoChatRequest, request: Request):
                 f"{'Customer' if h['role'] == 'user' else 'Assistant'}: {h['content']}"
                 for h in history
             )
-            prompt = f"{convo}\nCustomer: {message}\nAssistant:" if convo else f"Customer: {message}\nAssistant:"
+            prompt = f"{convo}\n{kb_block}Customer: {message}\nAssistant:" if convo else f"{kb_block}Customer: {message}\nAssistant:"
             reply = (await llm_service.complete(
                 prompt, system=CHAT_SYSTEM_PROMPT, max_tokens=150, temperature=0.3)).strip()
         except Exception:
             reply = ""
     if not reply:
-        reply = rule_based_reply(message)
+        rule_reply = rule_based_reply(message)
+        if kb_hits and rule_reply.startswith("Thanks for getting in touch."):
+            top = kb_hits[0]
+            rule_reply = (
+                f"{top['title']}: {top['excerpt']} Want me to book you in?"
+            )
+        reply = rule_reply
     _demo_sessions[ip] = (history + [
         {"role": "user", "content": message},
         {"role": "assistant", "content": reply},

@@ -308,6 +308,21 @@ export const api = {
     sync: (token: string) => request("/api/outlook/sync", { method: "POST", token }),
     disconnect: (token: string) => request("/api/outlook/disconnect", { method: "POST", token }),
   },
+  telephony: {
+    status: (token: string) => request("/api/telephony/status", { token }),
+    call: (toPhone: string, message: string | undefined, token: string) =>
+      request("/api/telephony/call", {
+        method: "POST",
+        body: JSON.stringify({ to_phone: toPhone, message }),
+        token,
+      }),
+    hangup: (callSid: string, token: string) =>
+      request("/api/telephony/hangup", {
+        method: "POST",
+        body: JSON.stringify({ call_sid: callSid }),
+        token,
+      }),
+  },
   contracts: {
     list: (token: string) => request("/api/contracts/", { token }),
     create: (data: any, token: string) =>

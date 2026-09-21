@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.models import Business, Customer, Job, JobStatus, User
+from app.models.models import Business, Customer, Job, JobStatus, KnowledgeBaseArticle, User
 from app.routes.auth import get_current_user
 from app.services import llm
 from app.services.phone import is_valid_uk_mobile
@@ -225,6 +225,56 @@ def _detect_intent(text: str) -> Optional[str]:
     return None
 
 
+async def _kb_context(
+    query: str,
+    db,
+    business_id=None,
+    limit: int = 3,
+) -> List[dict]:
+    """RAG-lite keyword retrieval over published KB articles.
+
+    Splits the query into 3+ letter tokens, scores title hits ×3 plus
+    content hits ×1, and returns the top `limit` hits as
+    [{title, excerpt (~300 chars)}]. Articles carry business_id, so scope
+    by it when provided; otherwise search all published articles.
+    Never raises — returns [] on any failure (chat must never 500).
+    """
+    try:
+        tokens = re.findall(r"[a-z]{3,}", (query or "").lower())
+        if not tokens or db is None:
+            return []
+        stmt = select(KnowledgeBaseArticle).where(
+            KnowledgeBaseArticle.is_published == True  # noqa: E712
+        )
+        if business_id is not None:
+            stmt = stmt.where(KnowledgeBaseArticle.business_id == business_id)
+        result = await db.execute(stmt)
+        articles = result.scalars().all()
+        if not articles:
+            return []
+        scored: List[tuple] = []
+        for article in articles:
+            title_lower = (article.title or "").lower()
+            content_lower = (article.content or "").lower()
+            score = 0
+            for token in tokens:
+                score += title_lower.count(token) * 3 + content_lower.count(token) * 1
+            if score > 0:
+                scored.append(
+                    (
+                        score,
+                        {
+                            "title": article.title,
+                            "excerpt": (article.content or "")[:300],
+                        },
+                    )
+                )
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [hit for _, hit in scored[:limit]]
+    except Exception:
+        return []
+
+
 INTENT_REPLIES: Dict[str, str] = {
     "pricing": (
         "Our standard call-out is £75 + VAT (Mon–Fri, 8–6), which includes the first 30 minutes "
@@ -304,11 +354,24 @@ CHAT_LLM_SYSTEM = (
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(payload: ChatRequest) -> ChatResponse:
+async def chat(
+    payload: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+) -> ChatResponse:
     message = payload.message.strip()
     session = _get_session(payload.session_id)
     if payload.page_url:
         session["page_url"] = payload.page_url
+
+    # RAG-lite: never 500 — fall back to no context on any failure.
+    try:
+        kb_hits = await _kb_context(message, db, limit=3)
+    except Exception:
+        kb_hits = []
+    kb_block = ""
+    if kb_hits:
+        kb_lines = "\n".join(f"- {h['title']}: {h['excerpt']}" for h in kb_hits)
+        kb_block = f"Relevant company knowledge:\n{kb_lines}\n"
 
     if session["stage"] == "greeting":
         session["stage"] = "qualifying"
@@ -322,6 +385,7 @@ async def chat(payload: ChatRequest) -> ChatResponse:
                 f"Business name: {BUSINESS_NAME}\n"
                 f"Opening hours: {OPENING_HOURS}\n"
                 f"Support phone: {SUPPORT_PHONE}\n"
+                f"{kb_block}"
                 f"Conversation stage: {session.get('stage')}\n"
                 f"Collected so far: service={session.get('service')!r}, "
                 f"postcode={session.get('postcode')!r}, "
@@ -528,6 +592,13 @@ async def chat(payload: ChatRequest) -> ChatResponse:
     if intent and intent in INTENT_REPLIES:
         base = INTENT_REPLIES[intent].format(phone=SUPPORT_PHONE, hours=OPENING_HOURS)
         quick_replies = INTENT_QUICK_REPLIES.get(intent, DEFAULT_QUICK_REPLIES)
+    elif kb_hits:
+        top = kb_hits[0]
+        base = (
+            f"From our help centre — {top['title']}: {top['excerpt']} "
+            "Want me to book you in?"
+        )
+        quick_replies = list(DEFAULT_QUICK_REPLIES)
     else:
         base = (
             "Thanks — I've noted that. To point you to the right engineer, "

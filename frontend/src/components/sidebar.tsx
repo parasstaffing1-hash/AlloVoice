@@ -8,7 +8,7 @@ import {
   Settings, LogOut, Zap, Shield, Calendar, Package, Truck, BarChart3,
   BookOpen, Globe, CreditCard, PenTool, DollarSign, LayoutGrid, UsersRound,
   AlertTriangle, ClipboardCheck, FileCheck, Search as SearchIcon, Sparkles,
-  Plug, Trophy, Warehouse, Clock, Siren, Palette, Wrench, PhoneCall, Headset,
+  Plug, Trophy, Warehouse, Clock, Siren, Palette, Wrench, PhoneCall, Headset, Smile,
 } from "lucide-react";
 import { useAuth } from "@/lib/store";
 
@@ -34,6 +34,7 @@ const operations = [
   { name: "Schedule", href: "/schedule", icon: LayoutGrid },
   { name: "Voice Agent", href: "/voice-agent", icon: Mic },
   { name: "Live Talk", href: "/talk", icon: PhoneCall },
+  { name: "Avatar Studio", href: "/avatar-studio", icon: Smile },
   { name: "Call Log", href: "/calls", icon: Headset },
   { name: "Fault Codes", href: "/fault-codes", icon: Wrench },
   { name: "RAMS", href: "/rams", icon: ClipboardCheck },

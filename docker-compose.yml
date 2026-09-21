@@ -216,6 +216,97 @@ services:
     volumes:
       - uptimedata:/app/data
 
+  # ─── CHATBOTS (self-hosted website chat infra) ─────────────
+  # chatwoot ......... customer-messaging inbox (website live-chat widget + shared inbox). License: MIT.
+  # chatwoot-db/-redis  dedicated postgres/redis for Chatwoot (isolated from core voicefield db).
+  # typebot-builder .. chatbot flow builder UI (create/edit bots). License: Fair Source — NOT OSI open
+  #                     source; commercial use needs a Typebot commercial/self-hosted licence. Flag before prod use.
+  # typebot-viewer .... serves published bots to website visitors (embed via JS snippet).
+  # typebot-db ........ dedicated postgres for Typebot (separate volume).
+  # NOTE: MinIO/S3 is omitted — core bot building + chatting boots without it; file uploads inside
+  #   Typebot need S3-compatible storage (set S3_* env later) or use Typebot Cloud instead.
+  #
+  # FIRST BOOT — Chatwoot (one time, prepares the database):
+  #   docker compose up -d chatwoot-db chatwoot-redis
+  #   docker compose run --rm chatwoot bundle exec rails db:prepare
+  #   docker compose up -d chatwoot            # then open http://localhost:3031
+  # Generate a real secret first: docker compose run --rm chatwoot bundle exec rails secret
+  #   and put it in SECRET_KEY_BASE below (the placeholder will boot but is NOT safe for prod).
+  chatwoot:
+    image: chatwoot/chatwoot:v4
+    # Pinned to major tag v4 (no patch version verified here — pin an exact
+    # v4.x tag before production use).
+    ports:
+      # container 3000 → host 3031 (host 3000-pattern clashes: 3030=postcodes, 3002=frontend)
+      - "3031:3000"
+    environment:
+      - RAILS_ENV=production
+      - SECRET_KEY_BASE=replace-me-generate-with-rails-secret
+      - FRONTEND_URL=http://localhost:3031
+      - REDIS_URL=redis://chatwoot-redis:6379
+      - DATABASE_URL=postgres://chatwoot:chatwoot@chatwoot-db:5432/chatwoot
+    depends_on:
+      - chatwoot-db
+      - chatwoot-redis
+
+  chatwoot-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatwoot
+      POSTGRES_USER: chatwoot
+      POSTGRES_PASSWORD: chatwoot
+    volumes:
+      - chatwootdb:/var/lib/postgresql/data
+
+  chatwoot-redis:
+    image: redis:7-alpine
+    volumes:
+      - chatwootredis:/data
+
+  # ─── Typebot (builder + viewer + dedicated postgres) ───────
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    ports:
+      # container 3000 → host 4111 (4111/4112/4113 all free in this file)
+      - "4111:3000"
+    environment:
+      - DATABASE_URL=postgresql://typebot:typebot@typebot-db:5432/typebot
+      - REDIS_URL=redis://typebot-redis:6379
+      - NEXTAUTH_URL=http://localhost:4111
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:4112
+      - ENCRYPTION_SECRET=replace-me-32-char-min-secret
+    depends_on:
+      - typebot-db
+      - typebot-redis
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    ports:
+      # container 3000 → host 4112
+      - "4112:3000"
+    environment:
+      - DATABASE_URL=postgresql://typebot:typebot@typebot-db:5432/typebot
+      - REDIS_URL=redis://typebot-redis:6379
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:4112
+      - NEXTAUTH_URL=http://localhost:4111
+    depends_on:
+      - typebot-db
+      - typebot-redis
+
+  typebot-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: typebot
+      POSTGRES_USER: typebot
+      POSTGRES_PASSWORD: typebot
+    volumes:
+      - typebotdb:/var/lib/postgresql/data
+
+  typebot-redis:
+    image: redis:7-alpine
+    volumes:
+      - typebotredis:/data
+
 volumes:
   pgdata:
   redisdata:
@@ -231,3 +322,7 @@ volumes:
   posthogdb:
   posthogredis:
   uptimedata:
+  chatwootdb:
+  chatwootredis:
+  typebotdb:
+  typebotredis:
