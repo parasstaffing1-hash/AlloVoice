@@ -29,6 +29,10 @@ backend/test_llm_fallback.py
 backend/verify_voice_agent.py
 backend/bench_*.py
 backend/check_biz_cols.py
+backend/check_tenant_cols.py
+backend/test_tenancy.py
+backend/test_avatar_backend.py
+backend/test_telephony_live.py
 backend/list_groq_models.py
 backend/test_demo*.py
 backend/test_field_tools.py

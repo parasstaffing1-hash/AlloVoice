@@ -34,8 +34,7 @@ async def list_quotes(
     business_id = await get_business_id(current_user, db)
     result = await db.execute(
         select(Quote)
-        .join(Job)
-        .where(Job.business_id == business_id)
+        .where(Quote.business_id == business_id)
         .order_by(Quote.created_at.desc())
     )
     quotes = result.scalars().all()
@@ -43,6 +42,7 @@ async def list_quotes(
     for q in quotes:
         items_result = await db.execute(select(QuoteItem).where(QuoteItem.quote_id == q.id))
         items = [QuoteItemResponse.model_validate(i) for i in items_result.scalars().all()]
+        q.__dict__["items"] = items
         quote_data = QuoteResponse.model_validate(q)
         quote_data.items = items
         response.append(quote_data)
@@ -55,6 +55,12 @@ async def create_quote(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    business_id = await get_business_id(current_user, db)
+    job_check = await db.execute(
+        select(Job).where(Job.id == data.job_id, Job.business_id == business_id)
+    )
+    if not job_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Job not found")
     subtotal = sum(item.quantity * item.unit_price for item in data.items)
     tax_amount = subtotal * (data.tax_rate / 100)
     total = subtotal + tax_amount
@@ -62,6 +68,7 @@ async def create_quote(
     quote = Quote(
         job_id=data.job_id,
         customer_id=data.customer_id,
+        business_id=business_id,
         quote_number=generate_quote_number(),
         title=data.title,
         subtotal=subtotal,
@@ -96,6 +103,9 @@ async def create_quote(
 
     items_result = await db.execute(select(QuoteItem).where(QuoteItem.quote_id == quote.id))
     items = [QuoteItemResponse.model_validate(i) for i in items_result.scalars().all()]
+    # Pre-seed relationship: validating QuoteResponse reads .items, which
+    # would lazy-load (MissingGreenlet) under async SQLAlchemy.
+    quote.__dict__["items"] = items
     response = QuoteResponse.model_validate(quote)
     response.items = items
     return response
@@ -107,12 +117,16 @@ async def get_quote(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Quote).where(Quote.id == quote_id))
+    business_id = await get_business_id(current_user, db)
+    result = await db.execute(
+        select(Quote).where(Quote.id == quote_id, Quote.business_id == business_id)
+    )
     quote = result.scalar_one_or_none()
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     items_result = await db.execute(select(QuoteItem).where(QuoteItem.quote_id == quote.id))
     items = [QuoteItemResponse.model_validate(i) for i in items_result.scalars().all()]
+    quote.__dict__["items"] = items
     response = QuoteResponse.model_validate(quote)
     response.items = items
     return response
@@ -124,7 +138,10 @@ async def accept_quote(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Quote).where(Quote.id == quote_id))
+    business_id = await get_business_id(current_user, db)
+    result = await db.execute(
+        select(Quote).where(Quote.id == quote_id, Quote.business_id == business_id)
+    )
     quote = result.scalar_one_or_none()
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")

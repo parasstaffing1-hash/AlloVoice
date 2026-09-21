@@ -95,6 +95,17 @@ async def upload_job_photo(
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
+    # Job must belong to the caller's business (no cross-tenant uploads).
+    biz_result = await db.execute(select(Business).where(Business.owner_id == current_user.id))
+    business = biz_result.scalar_one_or_none()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    job_check = await db.execute(
+        select(Job).where(Job.id == job_id, Job.business_id == business.id)
+    )
+    if not job_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Job not found")
+
     contents = await file.read()
 
     # Validate file size (max 20MB)
@@ -112,6 +123,7 @@ async def upload_job_photo(
     # Save to database (flush first to get photo.id for the R2 key)
     photo = JobPhoto(
         job_id=job_id,
+        business_id=business.id,
         url=f"local://{file.filename}",
         r2_key=f"jobs/{job_id}/photos/{file.filename}",
         photo_type=photo_type,
@@ -150,9 +162,13 @@ async def list_job_photos(
     db: AsyncSession = Depends(get_db)
 ):
     """List all photos for a job"""
+    biz_result = await db.execute(select(Business).where(Business.owner_id == current_user.id))
+    business = biz_result.scalar_one_or_none()
+    if not business:
+        return []
     result = await db.execute(
         select(JobPhoto)
-        .where(JobPhoto.job_id == job_id)
+        .where(JobPhoto.job_id == job_id, JobPhoto.business_id == business.id)
         .order_by(JobPhoto.taken_at.desc())
     )
     photos = result.scalars().all()
@@ -176,7 +192,13 @@ async def analyze_photo(
     db: AsyncSession = Depends(get_db)
 ):
     """AI vision analysis of a job photo (condition, issues, cost estimate)"""
-    result = await db.execute(select(JobPhoto).where(JobPhoto.id == photo_id))
+    biz_result = await db.execute(select(Business).where(Business.owner_id == current_user.id))
+    business = biz_result.scalar_one_or_none()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    result = await db.execute(
+        select(JobPhoto).where(JobPhoto.id == photo_id, JobPhoto.business_id == business.id)
+    )
     photo = result.scalar_one_or_none()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")

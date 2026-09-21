@@ -34,8 +34,7 @@ async def list_invoices(
     business_id = await get_business_id(current_user, db)
     result = await db.execute(
         select(Invoice)
-        .join(Job)
-        .where(Job.business_id == business_id)
+        .where(Invoice.business_id == business_id)
         .order_by(Invoice.created_at.desc())
     )
     invoices = result.scalars().all()
@@ -43,6 +42,7 @@ async def list_invoices(
     for inv in invoices:
         items_result = await db.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == inv.id))
         items = [InvoiceItemResponse.model_validate(i) for i in items_result.scalars().all()]
+        inv.__dict__["items"] = items
         inv_data = InvoiceResponse.model_validate(inv)
         inv_data.items = items
         response.append(inv_data)
@@ -55,6 +55,13 @@ async def create_invoice(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    business_id = await get_business_id(current_user, db)
+    # Job must belong to the caller's business (no cross-tenant invoices).
+    job_check = await db.execute(
+        select(Job).where(Job.id == data.job_id, Job.business_id == business_id)
+    )
+    if not job_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Job not found")
     subtotal = sum(item.quantity * item.unit_price for item in data.items)
     tax_amount = subtotal * (data.tax_rate / 100)
     total = subtotal + tax_amount
@@ -62,6 +69,7 @@ async def create_invoice(
     invoice = Invoice(
         job_id=data.job_id,
         customer_id=data.customer_id,
+        business_id=business_id,
         invoice_number=generate_invoice_number(),
         subtotal=subtotal,
         tax_rate=data.tax_rate,
@@ -95,6 +103,9 @@ async def create_invoice(
 
     items_result = await db.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
     items = [InvoiceItemResponse.model_validate(i) for i in items_result.scalars().all()]
+    # Pre-seed relationship: validating InvoiceResponse reads .items, which
+    # would lazy-load (MissingGreenlet) under async SQLAlchemy.
+    invoice.__dict__["items"] = items
     response = InvoiceResponse.model_validate(invoice)
     response.items = items
     return response
@@ -106,12 +117,16 @@ async def get_invoice(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
+    business_id = await get_business_id(current_user, db)
+    result = await db.execute(
+        select(Invoice).where(Invoice.id == invoice_id, Invoice.business_id == business_id)
+    )
     invoice = result.scalar_one_or_none()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     items_result = await db.execute(select(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
     items = [InvoiceItemResponse.model_validate(i) for i in items_result.scalars().all()]
+    invoice.__dict__["items"] = items
     response = InvoiceResponse.model_validate(invoice)
     response.items = items
     return response
@@ -125,7 +140,10 @@ async def mark_invoice_paid(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
+    business_id = await get_business_id(current_user, db)
+    result = await db.execute(
+        select(Invoice).where(Invoice.id == invoice_id, Invoice.business_id == business_id)
+    )
     invoice = result.scalar_one_or_none()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
