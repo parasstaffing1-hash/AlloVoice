@@ -19,7 +19,7 @@ from app.routes import (
     quickbooks, review_platforms, marketing, chatbot, performance,
     warehouses, attendance, safety, branding, billing, voice_agent,
     gocardless, outlook, fault_codes, rams, realtime_voice, calls,
-    telephony,
+    telephony, agents,
 )
 
 # Sentry (guarded inside init_sentry — no-op without DSN)
@@ -152,6 +152,7 @@ app.include_router(rams.router)
 app.include_router(realtime_voice.router)
 app.include_router(calls.router)
 app.include_router(telephony.router)
+app.include_router(agents.router)
 
 # ─── Tier 5: Premium ──────────────────────────────────────
 app.include_router(performance.router)

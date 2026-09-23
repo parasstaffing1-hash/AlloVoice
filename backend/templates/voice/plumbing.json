@@ -1,0 +1,89 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#0E7CFF",
+  "demo_script": [
+    {
+      "expect_contains": "emergency",
+      "user": "I have water pouring through my ceiling, what do I do?"
+    },
+    {
+      "expect_contains": "Â£95",
+      "user": "How much is an emergency callout?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, my postcode is SW1A 1AA and my number is 07700 900123"
+    }
+  ],
+  "escalation": "If water is pouring, gas is smelling, or the boiler shows an error code with no heat or hot water: isolate the stopcock/boiler, then call our 24/7 emergency line immediately. Otherwise leave your details and we confirm a slot within 30 minutes in hours.",
+  "faqs": [
+    {
+      "a": "Turn off your stopcock (usually under the kitchen sink), switch off the boiler if affected, put buckets/towels down, and call our 24/7 line. Burst pipe repairs are priced on application (Â£POA) after inspection because damage varies so much.",
+      "q": "What should I do if a pipe bursts?"
+    },
+    {
+      "a": "Our emergency callout is Â£95 including the first hour in hours, Â£120 out of hours. Parts are extra and always quoted before work starts.",
+      "q": "How much is an emergency plumber callout?"
+    },
+    {
+      "a": "Yes â€” fault diagnosis from Â£110. Most common faults (pressure loss, ignition, diverter valves, condensate) are fixed same visit. If parts are needed we quote upfront.",
+      "q": "Do you repair boilers?"
+    },
+    {
+      "a": "Try repressurising to 1-1.5 bar and bleeding radiators. If pressure keeps dropping or the boiler locks out, book a visit â€” it often means a leak or faulty vessel.",
+      "q": "My boiler has low pressure, what can I try?"
+    },
+    {
+      "a": "Small leaks from traps, washers, taps and toilets are usually fixed same visit from Â£75. Mains or concealed leaks need tracing and are quoted after inspection.",
+      "q": "Can you fix a leaking tap or toilet?"
+    },
+    {
+      "a": "Most blockages are cleared same visit from Â£90 with rods or wet-vac. If the blockage is in the shared drain we will advise on contacting the water company.",
+      "q": "Do you unblock drains?"
+    },
+    {
+      "q": "How much is an annual boiler service?",
+      "a": "Our annual boiler service is £90 including a full safety check and service record. Book in with your postcode and we'll confirm a slot."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our plumbing team â€” 24/7 help for leaks, blockages and boiler trouble. How can I help?",
+  "hours": "Monâ€“Fri 08:00â€“18:00, Sat 09:00â€“13:00, plus 24/7 emergency line",
+  "id": "voice-plumbing-uk",
+  "industry": "plumbing",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Plumbing Receptionist â€” UK",
+  "services": [
+    {
+      "name": "Emergency callout (incl. first hour)",
+      "price_from_gbp": 95
+    },
+    {
+      "name": "Burst pipe repair (POA after inspection)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Boiler repair / fault diagnosis",
+      "price_from_gbp": 110
+    },
+    {
+      "name": "Tap, toilet & leak fix",
+      "price_from_gbp": 75
+    },
+    {
+      "name": "Drain unblock",
+      "price_from_gbp": 90
+    },
+    {
+      "name": "Annual boiler service",
+      "price_from_gbp": 90
+    }
+  ],
+  "system_prompt": "You are the 24/7 receptionist for a UK plumbing firm. Duties: triage emergencies (burst pipes, major leaks, no heat/hot water), give safety advice (stopcock off, electrics off if water near sockets), quote guide prices, collect name/phone/postcode/problem for bookings, and escalate floods or boiler lockouts to the on-call engineer. Use British English, be calm and concise, keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

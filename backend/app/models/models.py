@@ -733,3 +733,29 @@ class CalendarSync(Base):
     sync_enabled = Column(Boolean, default=True)
     last_synced_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AgentTemplate(Base):
+    __tablename__ = "agent_templates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    kind = Column(String(16), nullable=False, default="voice")
+    industry = Column(String(64), nullable=False, default="")
+    locale = Column(String(16), nullable=False, default="en-GB")
+    name = Column(String(255), nullable=False, default="")
+    version = Column(Integer, nullable=False, default=1)
+    is_public = Column(Boolean, nullable=False, default=True)
+    config = Column(JSONB, nullable=False, default={})
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CustomAgent(Base):
+    __tablename__ = "custom_agents"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=True)
+    template_id = Column(String(128), nullable=False, default="")
+    overrides = Column(JSONB, nullable=False, default={})
+    status = Column(String(32), nullable=False, default="draft")
+    created_at = Column(DateTime, default=datetime.utcnow)

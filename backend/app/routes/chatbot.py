@@ -372,6 +372,17 @@ async def chat(
         kb_hits = await _kb_context(message, db, limit=3)
     except Exception:
         kb_hits = []
+    # pgvector semantic retrieval (additive): RAG hits first, dedupe by title.
+    try:
+        from app.services import rag as _rag
+
+        rag_hits = await _rag.retrieve(db, message, limit=3)
+        if rag_hits:
+            _seen = {h.get("title") for h in rag_hits}
+            kb_hits = list(rag_hits) + [h for h in kb_hits if h.get("title") not in _seen]
+            kb_hits = kb_hits[:3]
+    except Exception:
+        pass
     kb_block = ""
     if kb_hits:
         kb_lines = "\n".join(f"- {h['title']}: {h['excerpt']}" for h in kb_hits)

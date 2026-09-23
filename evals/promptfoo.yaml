@@ -1,0 +1,47 @@
+# Voice-agent template QA gate (pre-publish).
+#
+# What: 9 scripted probes (3 per trade template) sent to the voice-agent
+#   chat endpoint. ALL 9 must pass before a template version is published.
+#
+# Run from THIS directory with the backend up and templates seeded:
+#   promptfoo eval -c promptfoo.yaml
+# Quick schema check only (no backend needed):
+#   promptfoo validate -c promptfoo.yaml
+#
+# Backend contract (built in parallel — endpoint may 404 until it lands):
+#   POST http://127.0.0.1:8000/api/agents/chat
+#   {template_id, message, session_id?} -> {reply, quick_replies, stage, lead_reference}
+
+description: Voice-agent template pre-publish QA — 9 scripted probes across plumbing/HVAC/electrician templates
+
+providers:
+  - id: http
+    label: voice-agents-chat
+    config:
+      url: http://127.0.0.1:8000/api/agents/chat
+      method: POST
+      headers:
+        Content-Type: application/json
+      body:
+        template_id: "{{template_id}}"
+        message: "{{prompt}}"
+      # Response parse: reply text becomes the eval `output`.
+      # NOTE: this intentionally exposes only `reply` to assertions, so all
+      # `contains`/`icontains` checks run against the reply text. The single
+      # `javascript` assertion per template therefore treats lead capture as
+      # "booking reference present in reply" (the API returns lead_reference
+      # alongside the reply, and the agent quotes the reference back, e.g.
+      # "Your booking reference is BK-XXXXXX"). If you ever need to assert on
+      # the raw JSON (e.g. `output.lead_reference != null`), drop
+      # transformResponse and use per-assertion `transform: output.reply`.
+      transformResponse: "json.reply"
+
+# Passthrough: each test supplies its user message via the `prompt` var;
+# the provider sends the rendered prompt as `message` (see body above).
+prompts:
+  - "{{prompt}}"
+
+tests:
+  - file://tests-plumbing.yaml
+  - file://tests-hvac.yaml
+  - file://tests-electrician.yaml

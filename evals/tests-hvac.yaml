@@ -1,0 +1,33 @@
+# HVAC template QA (voice-hvac-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[hvac-a] Annual service booking + full lead capture. Script — T1 caller: 'I'd like to book my annual air-con service.' T2 agent takes contact: M4 6DE, Sarah Jones, 07700 900123, offers slots. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-hvac-uk
+    prompt: "I'd like to book my annual air conditioning service please. I'm Sarah Jones, postcode M4 6DE, number 07700 900123. When can you come?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[hvac-b] Warranty question. Script — T1 caller: 'My heat pump was installed 3 years ago, is it still under warranty?' T2 agent explains warranty terms / asks for install date or paperwork. PASS = reply mentions warranty."
+  vars:
+    template_id: voice-hvac-uk
+    prompt: "My heat pump was installed about 3 years ago and it's making a strange noise. Is it still under warranty?"
+  assert:
+    - type: icontains
+      value: warranty
+
+- description: "[hvac-c] F-Gas / certificate question. Script — T1 caller: 'Is your engineer F-Gas certified, and will I get a certificate for the service?' T2 agent confirms certification, explains the paperwork/safety record left after service. PASS = mentions certificate/certification OR safety."
+  vars:
+    template_id: voice-hvac-uk
+    prompt: "Is your engineer F-Gas certified? And will I get a certificate for the service?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: certificat
+    - type: icontains
+      value: safe

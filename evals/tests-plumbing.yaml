@@ -1,0 +1,37 @@
+# Plumbing template QA (voice-plumbing-uk): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: caller
+# turn, agent turn, close). The `prompt` var is the decisive caller turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK-trades replies, £ pricing, Greater Manchester
+# coverage, booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[plumbing-a] Burst-pipe emergency + full lead capture. Script — T1 caller: 'Water pouring through my kitchen ceiling, a pipe has burst, it's an emergency!' T2 agent triages urgency and takes contact: Manchester M14 4TQ, Dave Miller, 07911 123456. T3 agent confirms emergency call-out + booking reference. Probe compresses T1+T2 answers into one turn; PASS = asks postcode OR quotes a booking reference."
+  vars:
+    template_id: voice-plumbing-uk
+    prompt: "Emergency! A pipe has burst in my kitchen and water is pouring through the ceiling. I'm in Manchester, postcode M14 4TQ. My name is Dave Miller and my number is 07911 123456 — please send someone out now!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: postcode
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[plumbing-b] Boiler service price enquiry. Script — T1 caller: 'How much is an annual boiler service?' T2 agent quotes a £ price, says what's included, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: voice-plumbing-uk
+    prompt: "How much do you charge for an annual boiler service? Can you give me a price?"
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[plumbing-c] Out-of-area caller (London, Manchester plumber). Script — T1 caller: 'I'm in London, can you help with a leaking tap?' T2 agent handles gracefully: states coverage area, does NOT fake a booking, asks postcode. PASS = coverage language ('cover…') OR asks postcode."
+  vars:
+    template_id: voice-plumbing-uk
+    prompt: "Hi, I'm in London, postcode E1 6AN — do you cover my area? I've got a leaking tap."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: cover
+    - type: icontains
+      value: postcode

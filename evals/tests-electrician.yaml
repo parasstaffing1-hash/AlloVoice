@@ -1,0 +1,35 @@
+# Electrician template QA (voice-electrician-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[electrician-a] EICR landlord booking + full lead capture. Script — T1 caller (landlord): 'I need an EICR for a rental property.' T2 agent takes contact: M20 2RQ, Priya Shah, 07890 123456, explains access needed. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-electrician-uk
+    prompt: "I'm a landlord and I need an EICR certificate for a rental flat. I'm Priya Shah, postcode M20 2RQ, number 07890 123456. Can you book me in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[electrician-b] Consumer unit price enquiry. Script — T1 caller: 'How much to replace a consumer unit in a 3-bed house?' T2 agent gives £ ballpark, notes a visit/photos needed for a fixed quote, asks postcode. PASS = reply names a £ price."
+  vars:
+    template_id: voice-electrician-uk
+    prompt: "How much would it cost to replace the consumer unit (fuse box) in a 3-bed house? Rough price is fine."
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[electrician-c] Emergency: sparking socket. Script — T1 caller: 'My socket is sparking and smells like burning!' T2 agent shows urgency AND gives safety advice (don't touch, switch off at the consumer unit if safe, call out now). PASS = any 2 of: switch-off instruction, power warning, safety/emergency language."
+  vars:
+    template_id: voice-electrician-uk
+    prompt: "Help — my socket is sparking and there's a burning smell! What should I do?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: switch off
+    - type: icontains
+      value: power
+    - type: icontains
+      value: safe
