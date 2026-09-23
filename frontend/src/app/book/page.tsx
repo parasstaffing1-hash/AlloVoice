@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/store";
 import { COUNTRIES } from "@/lib/money";
 
 interface Service {
@@ -129,6 +130,7 @@ function formatUKDate(d: Date): string {
 
 export default function BookingPage() {
   const draft = getStoredDraft();
+  const { token } = useAuth();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<BookingData>({
     service: draft?.service || "",
@@ -153,12 +155,68 @@ export default function BookingPage() {
   const [postcodeSuggestions, setPostcodeSuggestions] = useState<PostcodeSuggestion[]>([]);
   const [lookingUp, setLookingUp] = useState(false);
 
-  const timeSlots = generateTimeSlots();
+  // Live availability: GET /api/scheduling/availability?start_date=X&end_date=Y
+  // (auth required). Returns { slots: [{ date, available_hours, booked_hours,
+  // utilization_pct }]} — daily granularity. Public/demo visitors have no token
+  // or the backend is unreachable → graceful fallback to all-available.
+  const [availabilityByDate, setAvailabilityByDate] = useState<Record<string, any>>({});
+  const [availLoading, setAvailLoading] = useState(false);
+
+  const baseSlots = generateTimeSlots();
   const availableDates = generateWeekdays(new Date());
+
+  useEffect(() => {
+    if (availableDates.length === 0 || !token) return;
+    const start = availableDates[0].toISOString().split("T")[0];
+    const end = availableDates[availableDates.length - 1].toISOString().split("T")[0];
+    setAvailLoading(true);
+    api.scheduling
+      .availability(start, end, token)
+      .then((r: any) => {
+        const slots = Array.isArray((r as any)?.slots) ? (r as any).slots : [];
+        const map: Record<string, any> = {};
+        slots.forEach((s: any) => {
+          const key = String(s?.date ?? "").split("T")[0];
+          if (key) map[key] = s;
+        });
+        setAvailabilityByDate(map);
+      })
+      .catch(() => setAvailabilityByDate({}))
+      .finally(() => setAvailLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // Merge live daily utilization into per-slot availability. Backend has no
+  // per-hour slots, so a fully-booked day disables all slots; a partially
+  // booked day disables the earliest N slots proportional to utilization.
+  const timeSlots: TimeSlot[] = (() => {
+    const dayInfo = data.date ? availabilityByDate[data.date] : null;
+    if (!dayInfo) return baseSlots;
+    const total = baseSlots.length;
+    const utilization = Number(dayInfo?.utilization_pct ?? 0);
+    const availableHours = Number(dayInfo?.available_hours ?? total);
+    if (availableHours <= 0 || utilization >= 100) {
+      return baseSlots.map((s) => ({ ...s, available: false }));
+    }
+    if (utilization <= 0) return baseSlots;
+    const bookedCount = Math.min(total, Math.round((utilization / 100) * total));
+    return baseSlots.map((s, i) => ({ ...s, available: i >= bookedCount }));
+  })();
 
   useEffect(() => {
     if (step >= 0) saveDraft(data);
   }, [data, step]);
+
+  // If live availability marks the chosen time unavailable, clear it so the
+  // user must pick a genuinely free slot.
+  useEffect(() => {
+    if (!data.date || !data.time) return;
+    const slot = timeSlots.find((s) => s.time === data.time);
+    if (slot && !slot.available) {
+      setData((prev) => ({ ...prev, time: "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.date, availabilityByDate]);
 
   const update = <K extends keyof BookingData>(key: K, value: BookingData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -528,7 +586,9 @@ export default function BookingPage() {
 
                 {data.date && (
                   <div>
-                    <label className="block text-sm font-medium mb-3">Select a Time</label>
+                    <label className="block text-sm font-medium mb-3">
+                      Select a Time{availLoading ? " (checking live availability…)" : ""}
+                    </label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {timeSlots.map((slot) => (
                         <button

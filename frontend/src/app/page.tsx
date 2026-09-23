@@ -378,6 +378,13 @@ export default function LandingPage() {
             <span className="font-semibold gradient-text">Allo</span>
           </div>
           <p>&copy; 2026 Allo. Built for UK field service businesses.</p>
+          <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+            <Link href="/terms" className="hover:text-foreground hover:underline">Terms</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/privacy" className="hover:text-foreground hover:underline">Privacy</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/privacy#cookies" className="hover:text-foreground hover:underline">Cookies</Link>
+          </div>
         </div>
       </footer>
     </div>

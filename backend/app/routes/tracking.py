@@ -6,7 +6,8 @@ from uuid import UUID
 
 import httpx
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from app.core.rate_limit import limiter
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -117,7 +118,10 @@ async def calc_eta(
 
 
 @router.get("/{job_id}/status", response_model=TrackingStatusResponse)
-async def get_job_status(job_id: str, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def get_job_status(
+    job_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
     job = await resolve_job(db, job_id)
 
     tech_name = None
@@ -163,7 +167,10 @@ async def get_job_status(job_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{job_id}/eta", response_model=ETAResponse)
-async def get_job_eta(job_id: str, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def get_job_eta(
+    job_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
     job = await resolve_job(db, job_id)
 
     if not job.technician_id:
@@ -233,8 +240,9 @@ async def generate_share_link(
 
 
 @router.get("/share/{tracking_code}", response_model=SharedTrackingResponse)
+@limiter.limit("30/minute")
 async def get_shared_tracking(
-    tracking_code: str, db: AsyncSession = Depends(get_db)
+    tracking_code: str, request: Request, db: AsyncSession = Depends(get_db)
 ):
     raw = await redis_client.get(f"track:code:{tracking_code}")
     if not raw:

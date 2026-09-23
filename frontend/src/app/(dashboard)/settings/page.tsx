@@ -50,7 +50,7 @@ export default function SettingsPage() {
     if (!token) return;
     api.xero.status(token).then((r: any) => setXeroStatus(r)).catch(() => {});
     api.calendar.status(token).then((r: any) => setCalendarStatus(r)).catch(() => {});
-    api.mfa.status(token).then((r: any) => setMfaStatus(r)).catch(() => {});
+    // No backend MFA status route — MFA state is derived from the verify response.
     api.auth.getBusiness(token)
       .then((r: any) => {
         setBusiness(r);
@@ -86,15 +86,16 @@ export default function SettingsPage() {
   };
 
   const handleMfaVerify = () => {
-    if (!token) return;
+    if (!token || !mfaSetup?.secret) return;
     setMfaLoading(true);
     setMfaMessage(null);
-    api.mfa.verify(mfaCode, token)
-      .then((r: any) => {
+    // Backend verifies via query params: POST /api/mfa/verify?code=&secret=
+    api.mfa.verify(mfaCode, mfaSetup.secret, token)
+      .then(() => {
         setMfaMessage({ type: "ok", text: "Two-factor authentication enabled" });
         setMfaSetup(null);
         setMfaCode("");
-        setMfaStatus(r);
+        setMfaStatus({ enabled: true });
       })
       .catch((e: any) => setMfaMessage({ type: "err", text: e?.message || "Invalid code" }))
       .finally(() => setMfaLoading(false));

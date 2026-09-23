@@ -194,6 +194,14 @@ def update_material(
     return materials_db[material_id]
 
 
+@router.delete("/materials/{material_id}")
+def delete_material(material_id: str, current_user: User = Depends(get_current_user)):
+    if material_id not in materials_db:
+        raise HTTPException(status_code=404, detail="Material not found")
+    del materials_db[material_id]
+    return {"message": "Material deleted"}
+
+
 @router.get("/markups")
 def get_markups(current_user: User = Depends(get_current_user)):
     return markup_rules.model_dump()

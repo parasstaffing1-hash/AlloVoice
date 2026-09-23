@@ -1,7 +1,8 @@
 from typing import Optional
 
 import stripe
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from app.core.rate_limit import limiter
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
@@ -20,7 +21,9 @@ settings = get_settings()
 
 
 @router.post("/auth")
+@limiter.limit("20/minute")
 async def portal_auth(
+    request: Request,
     email: str,
     token: str = None,
     db: AsyncSession = Depends(get_db)
@@ -283,7 +286,10 @@ class PortalReviewRequest(BaseModel):
 
 
 @router.post("/login")
-async def portal_login(data: PortalLoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("20/minute")
+async def portal_login(
+    request: Request, data: PortalLoginRequest, db: AsyncSession = Depends(get_db)
+):
     """Customer portal login via short access code.
 
     ACCESS CODE SCHEME (documented contract): the access code is the first

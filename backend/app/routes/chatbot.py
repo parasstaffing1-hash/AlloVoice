@@ -10,7 +10,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from app.core.rate_limit import limiter
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -354,7 +356,9 @@ CHAT_LLM_SYSTEM = (
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit("10/minute")
 async def chat(
+    request: Request,
     payload: ChatRequest,
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:

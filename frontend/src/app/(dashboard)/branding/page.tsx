@@ -448,7 +448,7 @@ export default function BrandingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" /> Live Preview
-                <Badge className="ml-auto bg-green-500/20 text-green-400">live</Badge>
+                <Badge className="ml-auto bg-amber-500/20 text-amber-400">Preview</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -485,13 +485,21 @@ export default function BrandingPage() {
                   </p>
                   <div className="flex gap-2">
                     <button
-                      className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                      type="button"
+                      disabled
+                      title="Preview only — no action"
+                      aria-disabled="true"
+                      className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-default disabled:opacity-90"
                       style={{ backgroundColor: kit.primary_color }}
                     >
                       Book a job
                     </button>
                     <button
-                      className="rounded-lg px-4 py-2 text-sm font-medium text-white border"
+                      type="button"
+                      disabled
+                      title="Preview only — no action"
+                      aria-disabled="true"
+                      className="rounded-lg px-4 py-2 text-sm font-medium text-white border disabled:cursor-default"
                       style={{
                         borderColor: kit.accent_color,
                         color: kit.accent_color,

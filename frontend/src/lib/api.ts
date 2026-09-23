@@ -127,8 +127,11 @@ export const api = {
     autocomplete: (query: string) => request(`/api/postcodes/autocomplete/${query}`),
     nearest: (lat: number, lng: number) =>
       request(`/api/postcodes/nearest?latitude=${lat}&longitude=${lng}`),
+    // Backend is GET /api/postcodes/bulk?postcodes=A&postcodes=B (query list).
     bulk: (postcodes: string[]) =>
-      request("/api/postcodes/bulk", { method: "POST", body: JSON.stringify(postcodes) }),
+      request(
+        `/api/postcodes/bulk?${postcodes.map((p) => `postcodes=${encodeURIComponent(p)}`).join("&")}`
+      ),
   },
   photos: {
     upload: async (jobId: string, file: File, photoType: string, token: string) => {
@@ -212,36 +215,56 @@ export const api = {
     mandates: (token: string) => request("/api/gocardless/mandates", { token }),
   },
   emails: {
-    send: (data: any, token: string) =>
-      request("/api/emails/send", { method: "POST", body: JSON.stringify(data), token }),
+    // Backend takes query params: POST /api/emails/send?to=&subject=&html=
+    send: (data: { to: string; subject: string; html: string }, token: string) =>
+      request(
+        `/api/emails/send?to=${encodeURIComponent(data.to)}&subject=${encodeURIComponent(data.subject)}&html=${encodeURIComponent(data.html)}`,
+        { method: "POST", token }
+      ),
     sendInvoice: (invoiceId: string, token: string) =>
-      request(`/api/emails/invoice/${invoiceId}`, { method: "POST", token }),
+      request(`/api/emails/send-invoice/${invoiceId}`, { method: "POST", token }),
     sendQuote: (quoteId: string, token: string) =>
-      request(`/api/emails/quote/${quoteId}`, { method: "POST", token }),
+      request(`/api/emails/send-quote/${quoteId}`, { method: "POST", token }),
     logs: (token: string) => request("/api/emails/logs", { token }),
   },
   sms: {
-    send: (data: any, token: string) =>
-      request("/api/sms/send", { method: "POST", body: JSON.stringify(data), token }),
-    sendJobReminder: (jobId: string, token: string) =>
-      request(`/api/sms/job-reminder/${jobId}`, { method: "POST", token }),
+    // Backend takes query params: POST /api/sms/send?to_phone=&message=
+    send: (data: { to_phone: string; message: string }, token: string) =>
+      request(
+        `/api/sms/send?to_phone=${encodeURIComponent(data.to_phone)}&message=${encodeURIComponent(data.message)}`,
+        { method: "POST", token }
+      ),
+    // Backend: POST /api/sms/send-otp?to_phone= (no job-reminder route exists).
+    sendOtp: (toPhone: string, token: string) =>
+      request(`/api/sms/send-otp?to_phone=${encodeURIComponent(toPhone)}`, { method: "POST", token }),
     logs: (token: string) => request("/api/sms/logs", { token }),
   },
   gdpr: {
-    consent: (data: any, token: string) =>
-      request("/api/gdpr/consent", { method: "POST", body: JSON.stringify(data), token }),
-    exportData: (customerId: string, token: string) =>
-      request(`/api/gdpr/export/${customerId}`, { token }),
-    requestErasure: (data: any, token: string) =>
-      request("/api/gdpr/erasure-request", { method: "POST", body: JSON.stringify(data), token }),
+    // Backend: POST /api/gdpr/consent?consent_type=&granted= (records for current user).
+    consent: (data: { consent_type: string; granted: boolean }, token: string) =>
+      request(
+        `/api/gdpr/consent?consent_type=${encodeURIComponent(data.consent_type)}&granted=${data.granted}`,
+        { method: "POST", token }
+      ),
+    // Backend: POST /api/gdpr/export-data/{user_id} (own user id or a customer id).
+    exportData: (userId: string, token: string) =>
+      request(`/api/gdpr/export-data/${userId}`, { method: "POST", token }),
+    // Backend: POST /api/gdpr/erasure-request?customer_id= (query, optional).
+    requestErasure: (data: { customer_id?: string }, token: string) =>
+      request(
+        `/api/gdpr/erasure-request${data?.customer_id ? `?customer_id=${encodeURIComponent(data.customer_id)}` : ""}`,
+        { method: "POST", token }
+      ),
     dataMap: (token: string) => request("/api/gdpr/data-map", { token }),
-    consentStatus: (customerId: string, token: string) =>
-      request(`/api/gdpr/consent/${customerId}`, { token }),
+    // Backend: GET /api/gdpr/consent-status (current user only, no id param).
+    consentStatus: (token: string) => request("/api/gdpr/consent-status", { token }),
   },
   audit: {
     logs: (token: string, limit?: number) =>
       request(`/api/audit/logs${limit ? `?limit=${limit}` : ""}`, { token }),
-    search: (params: string, token: string) => request(`/api/audit/search?${params}`, { token }),
+    // No backend /search route — /logs supports the same filters
+    // (entity_type, entity_id, action, limit), so search targets it.
+    search: (params: string, token: string) => request(`/api/audit/logs?${params}`, { token }),
   },
   rbac: {
     roles: (token: string) => request("/api/rbac/roles", { token }),
@@ -250,9 +273,14 @@ export const api = {
   },
   mfa: {
     setup: (token: string) => request("/api/mfa/setup", { method: "POST", token }),
-    verify: (code: string, token: string) =>
-      request("/api/mfa/verify", { method: "POST", body: JSON.stringify({ code }), token }),
-    status: (token: string) => request("/api/mfa/status", { token }),
+    // Backend: POST /api/mfa/verify?code=&secret= (secret comes from the setup response).
+    // No backend GET /status route exists, so status() was removed — derive MFA
+    // state from the verify response instead.
+    verify: (code: string, secret: string, token: string) =>
+      request(
+        `/api/mfa/verify?code=${encodeURIComponent(code)}&secret=${encodeURIComponent(secret)}`,
+        { method: "POST", token }
+      ),
   },
   webhooks: {
     list: (token: string) => request("/api/webhooks/", { token }),
@@ -269,12 +297,23 @@ export const api = {
     global: (q: string, token: string) => request(`/api/search/?q=${encodeURIComponent(q)}`, { token }),
   },
   importExport: {
-    customersCsv: (token: string) => request("/api/import-export/customers/export/csv", { token }),
-    jobsCsv: (token: string) => request("/api/import-export/jobs/export/csv", { token }),
+    customersCsv: (token: string) => request("/api/import-export/export/customers", { token }),
+    jobsCsv: (token: string) => request("/api/import-export/export/jobs", { token }),
+    invoicesCsv: (token: string) => request("/api/import-export/export/invoices", { token }),
     importCustomers: async (file: File, token: string) => {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(`${API_BASE}/api/import-export/customers/import/csv`, {
+      const response = await fetch(`${API_BASE}/api/import-export/import/customers`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      return response.json();
+    },
+    importJobs: async (file: File, token: string) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_BASE}/api/import-export/import/jobs`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -329,50 +368,174 @@ export const api = {
       request("/api/contracts/", { method: "POST", body: JSON.stringify(data), token }),
     get: (id: string, token: string) => request(`/api/contracts/${id}`, { token }),
     pause: (id: string, token: string) =>
-      request(`/api/contracts/${id}/pause`, { method: "POST", token }),
+      request(`/api/contracts/${id}/pause`, { method: "PUT", token }),
+    resume: (id: string, token: string) =>
+      request(`/api/contracts/${id}/resume`, { method: "PUT", token }),
+    // No backend cancel route exists — closest real semantics is pause.
     cancel: (id: string, token: string) =>
-      request(`/api/contracts/${id}/cancel`, { method: "POST", token }),
+      request(`/api/contracts/${id}/pause`, { method: "PUT", token }),
     generateJobs: (id: string, token: string) =>
       request(`/api/contracts/${id}/generate-jobs`, { method: "POST", token }),
   },
   inventory: {
     list: (token: string) => request("/api/inventory/", { token }),
-    create: (data: any, token: string) =>
-      request("/api/inventory/", { method: "POST", body: JSON.stringify(data), token }),
-    adjustStock: (id: string, data: any, token: string) =>
-      request(`/api/inventory/${id}/adjust`, { method: "POST", body: JSON.stringify(data), token }),
-    usage: (jobId: string, data: any, token: string) =>
-      request(`/api/inventory/usage/${jobId}`, { method: "POST", body: JSON.stringify(data), token }),
+    // Backend takes query params: POST /api/inventory/?name=&sku=&quantity=...
+    create: (
+      data: {
+        name: string;
+        sku?: string;
+        unit_price?: number;
+        cost_price?: number;
+        quantity?: number;
+        min_quantity?: number;
+        unit?: string;
+        barcode?: string;
+        location_id?: string;
+      },
+      token: string
+    ) => {
+      const q = new URLSearchParams({ name: data.name });
+      if (data.sku) q.set("sku", data.sku);
+      if (data.unit_price !== undefined) q.set("unit_price", String(data.unit_price));
+      if (data.cost_price !== undefined) q.set("cost_price", String(data.cost_price));
+      if (data.quantity !== undefined) q.set("quantity", String(data.quantity));
+      if (data.min_quantity !== undefined) q.set("min_quantity", String(data.min_quantity));
+      if (data.unit) q.set("unit", data.unit);
+      if (data.barcode) q.set("barcode", data.barcode);
+      if (data.location_id) q.set("location_id", data.location_id);
+      return request(`/api/inventory/?${q.toString()}`, { method: "POST", token });
+    },
+    // Backend: POST /api/inventory/{item_id}/adjust?quantity_change=&job_id=&notes=
+    adjustStock: (
+      id: string,
+      data: { quantity_change: number; job_id?: string; notes?: string },
+      token: string
+    ) => {
+      const q = new URLSearchParams({ quantity_change: String(data.quantity_change) });
+      if (data.job_id) q.set("job_id", data.job_id);
+      if (data.notes) q.set("notes", data.notes);
+      return request(`/api/inventory/${id}/adjust?${q.toString()}`, { method: "POST", token });
+    },
+    // No backend /usage route — usage is recorded via adjust with a negative
+    // quantity_change. Keeps the (jobId, data) signature so existing callers
+    // (job complete page) are unchanged.
+    usage: (
+      jobId: string,
+      data: { inventory_item_id: string; quantity: number; notes?: string },
+      token: string
+    ) => {
+      const q = new URLSearchParams({
+        quantity_change: String(-Math.abs(data.quantity)),
+        job_id: jobId,
+      });
+      if (data.notes) q.set("notes", data.notes);
+      return request(`/api/inventory/${data.inventory_item_id}/adjust?${q.toString()}`, {
+        method: "POST",
+        token,
+      });
+    },
   },
   feedback: {
-    submit: (data: any, token: string) =>
-      request("/api/feedback/", { method: "POST", body: JSON.stringify(data), token }),
+    // Backend takes query params: POST /api/feedback/?rating=&feedback_type=...
+    submit: (
+      data: {
+        rating: number;
+        feedback_type?: string;
+        title?: string;
+        content?: string;
+        job_id?: string;
+        customer_id?: string;
+        nps_score?: number;
+      },
+      token: string
+    ) => {
+      const q = new URLSearchParams({ rating: String(data.rating) });
+      if (data.feedback_type) q.set("feedback_type", data.feedback_type);
+      if (data.title) q.set("title", data.title);
+      if (data.content) q.set("content", data.content);
+      if (data.job_id) q.set("job_id", data.job_id);
+      if (data.customer_id) q.set("customer_id", data.customer_id);
+      if (data.nps_score !== undefined) q.set("nps_score", String(data.nps_score));
+      return request(`/api/feedback/?${q.toString()}`, { method: "POST", token });
+    },
     list: (token: string) => request("/api/feedback/", { token }),
-    report: (token: string) => request("/api/feedback/report", { token }),
+    // Backend route is GET /api/feedback/stats
+    // (returns { average_rating, nps_score, total, csat }).
+    report: (token: string) => request("/api/feedback/stats", { token }),
+    stats: (token: string) => request("/api/feedback/stats", { token }),
   },
   knowledgeBase: {
-    list: (token: string) => request("/api/knowledge-base/", { token }),
-    create: (data: any, token: string) =>
-      request("/api/knowledge-base/", { method: "POST", body: JSON.stringify(data), token }),
-    get: (id: string, token: string) => request(`/api/knowledge-base/${id}`, { token }),
-    search: (q: string, token: string) =>
-      request(`/api/knowledge-base/search?q=${encodeURIComponent(q)}`, { token }),
+    // Backend prefix is /api/kb (no /search route).
+    list: (token: string, category?: string) =>
+      request(`/api/kb/${category ? `?category=${encodeURIComponent(category)}` : ""}`, { token }),
+    // Backend takes query params: POST /api/kb/?title=&content=&category=&tags=
+    create: (
+      data: { title: string; content: string; category?: string; tags?: string[] },
+      token: string
+    ) => {
+      const q = new URLSearchParams({ title: data.title, content: data.content });
+      if (data.category) q.set("category", data.category);
+      (data.tags || []).forEach((t) => q.append("tags", t));
+      return request(`/api/kb/?${q.toString()}`, { method: "POST", token });
+    },
+    // Backend looks up by slug: GET /api/kb/{slug}.
+    get: (slug: string, token: string) =>
+      request(`/api/kb/${encodeURIComponent(slug)}`, { token }),
+    // No backend search endpoint — filter the list client-side.
+    search: async (q: string, token: string) => {
+      const articles: any[] = await request("/api/kb/", { token });
+      const needle = q.toLowerCase();
+      return (Array.isArray(articles) ? articles : []).filter(
+        (a) =>
+          a.title?.toLowerCase().includes(needle) ||
+          a.category?.toLowerCase().includes(needle) ||
+          (Array.isArray(a.tags) && a.tags.some((t: string) => t.toLowerCase().includes(needle)))
+      );
+    },
+    helpful: (articleId: string, token: string) =>
+      request(`/api/kb/${articleId}/helpful`, { method: "POST", token }),
   },
   fleet: {
     list: (token: string) => request("/api/fleet/vehicles", { token }),
-    create: (data: any, token: string) =>
-      request("/api/fleet/vehicles", { method: "POST", body: JSON.stringify(data), token }),
-    updateLocation: (vehicleId: string, data: any, token: string) =>
-      request(`/api/fleet/vehicles/${vehicleId}/location`, { method: "POST", body: JSON.stringify(data), token }),
+    // Backend takes query params: POST /api/fleet/vehicles?registration=&make=&model=&year=
+    create: (
+      data: {
+        registration: string;
+        make?: string;
+        model?: string;
+        year?: number;
+        assigned_technician_id?: string;
+      },
+      token: string
+    ) => {
+      const q = new URLSearchParams({ registration: data.registration });
+      if (data.make) q.set("make", data.make);
+      if (data.model) q.set("model", data.model);
+      if (data.year !== undefined) q.set("year", String(data.year));
+      if (data.assigned_technician_id) q.set("assigned_technician_id", data.assigned_technician_id);
+      return request(`/api/fleet/vehicles?${q.toString()}`, { method: "POST", token });
+    },
+    // Backend: POST /api/fleet/location/update?latitude=&longitude= (technician GPS).
+    updateLocation: (latitude: number, longitude: number, token: string) =>
+      request(`/api/fleet/location/update?latitude=${latitude}&longitude=${longitude}`, {
+        method: "POST",
+        token,
+      }),
+    // Backend: GET /api/fleet/trips/{vehicle_id}.
     trips: (vehicleId: string, token: string) =>
-      request(`/api/fleet/vehicles/${vehicleId}/trips`, { token }),
+      request(`/api/fleet/trips/${vehicleId}`, { token }),
+    positions: (token: string) => request("/api/fleet/positions", { token }),
   },
   reports: {
-    overview: (token: string) => request("/api/reports/overview", { token }),
+    // Real backend routes: /revenue, /technician-performance,
+    // /customer-satisfaction, /job-utilization.
+    // (No /overview, /performance, or /export routes exist.)
     revenue: (params: string, token: string) => request(`/api/reports/revenue?${params}`, { token }),
-    performance: (token: string) => request("/api/reports/performance", { token }),
-    export: (type: string, token: string) =>
-      request(`/api/reports/export/${type}`, { token }),
+    technicianPerformance: (token: string) =>
+      request("/api/reports/technician-performance", { token }),
+    customerSatisfaction: (token: string) =>
+      request("/api/reports/customer-satisfaction", { token }),
+    jobUtilization: (token: string) => request("/api/reports/job-utilization", { token }),
   },
   branches: {
     list: (token: string) => request("/api/branches/", { token }),

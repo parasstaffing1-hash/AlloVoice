@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.models import KnowledgeBaseArticle, User
 from app.routes.auth import get_current_user
 from app.services import llm as llm_service
@@ -213,7 +214,9 @@ async def _kb_context(
 
 
 @router.post("/transcribe")
+@limiter.limit("10/minute")
 async def transcribe(
+    request: Request,
     data: TranscribeRequest,
     current_user: User = Depends(get_current_user),
 ):
@@ -233,7 +236,24 @@ async def transcribe(
         except Exception as e:
             return {"transcript": "", "error": f"Audio conversion failed: {e}"}
         try:
-            transcript = await get_stt().transcribe(wav_bytes)
+            # Fast path: Groq-hosted Whisper first when GROQ_API_KEY is set;
+            # fall back to the configured (default local faster-whisper) STT
+            # on any failure. Response shape unchanged.
+            try:
+                from app.core.config import get_settings as _get_settings
+
+                _groq_key = (_get_settings().GROQ_API_KEY or "").strip()
+            except Exception:
+                _groq_key = ""
+            if _groq_key:
+                try:
+                    from app.services.speech import GroqWhisperSTT
+
+                    transcript = await GroqWhisperSTT().transcribe(wav_bytes)
+                except Exception:
+                    transcript = await get_stt().transcribe(wav_bytes)
+            else:
+                transcript = await get_stt().transcribe(wav_bytes)
         except Exception as e:
             return {"transcript": "", "error": f"Transcription failed: {e}"}
         transcript = (transcript or "").strip()

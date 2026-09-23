@@ -79,6 +79,59 @@ class FasterWhisperSTT(STTProvider):
 
 
 # ---------------------------------------------------------------------------
+# Groq-hosted Whisper STT (fast alternative to local faster-whisper)
+# ---------------------------------------------------------------------------
+
+
+class GroqWhisperSTT(STTProvider):
+    """Groq-hosted Whisper (OpenAI-compatible audio API).
+
+    No local model downloads — POSTs WAV bytes to Groq and returns the
+    transcript string. Requires GROQ_API_KEY in settings/env.
+    Raises on missing key, transport failure, or empty transcript.
+    """
+
+    _URL = "https://api.groq.com/openai/v1/audio/transcriptions"
+    _MODEL = "whisper-large-v3-turbo"
+
+    def _api_key(self) -> str:
+        try:
+            from app.core.config import get_settings
+
+            key = (get_settings().GROQ_API_KEY or "").strip()
+            if key:
+                return key
+        except Exception:
+            pass
+        return os.getenv("GROQ_API_KEY", "").strip()
+
+    async def transcribe(self, wav_bytes: bytes) -> str:
+        if not wav_bytes:
+            return ""
+        api_key = self._api_key()
+        if not api_key:
+            raise RuntimeError("GROQ_API_KEY not configured")
+        import httpx
+
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                resp = await client.post(
+                    self._URL,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+                    data={"model": self._MODEL, "language": "en"},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception as e:
+            raise RuntimeError(f"Groq STT failed: {e}") from e
+        text = (data.get("text") or "").strip() if isinstance(data, dict) else ""
+        if not text:
+            raise RuntimeError("Groq STT returned empty transcript")
+        return text
+
+
+# ---------------------------------------------------------------------------
 # edge-tts TTS
 # ---------------------------------------------------------------------------
 
@@ -130,7 +183,10 @@ class EdgeTTSVoice(TTSProvider):
 
 
 def get_stt(name: str | None = None) -> STTProvider:
+    # VOICE_STT_PROVIDER: faster-whisper (default, local) | groq (hosted) | sarvam (swap-in point)
     provider = (name or os.getenv("VOICE_STT_PROVIDER", "faster-whisper")).strip().lower()
+    if provider == "groq":
+        return GroqWhisperSTT()
     if provider == "sarvam":
         raise NotImplementedError("Sarvam swap-in point")
     if provider in ("faster-whisper", "faster_whisper", "whisper", "local"):

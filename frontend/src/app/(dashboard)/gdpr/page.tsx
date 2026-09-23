@@ -88,42 +88,56 @@ export default function GdprPage() {
   };
 
   // ── Data Map ──
+  // Backend data-map returns { note, data_categories } (no totals), so build the
+  // totals cards from the real list endpoints.
   const loadDataMap = async () => {
     if (!token) return;
     try {
-      const data: any = await api.gdpr.dataMap(token);
-      setDataMap(data);
+      const [customerList, jobList, invoiceList]: any[] = await Promise.all([
+        api.customers.list(token).catch(() => []),
+        api.jobs.list(token).catch(() => []),
+        api.invoices.list(token).catch(() => []),
+      ]);
+      await api.gdpr.dataMap(token).catch(() => null);
+      setDataMap({
+        customers: { total: Array.isArray(customerList) ? customerList.length : 0 },
+        jobs: { total: Array.isArray(jobList) ? jobList.length : 0 },
+        invoices: { total: Array.isArray(invoiceList) ? invoiceList.length : 0 },
+      });
     } catch (e: any) {
       flash(e.message || "Failed to load data map", true);
     }
   };
 
   // ── Consent ──
+  // Backend consent-status is per current (logged-in) user, not per customer —
+  // fetch once and reflect it for every row (customer marketing_consent as fallback).
   const loadCustomersWithConsent = async () => {
     if (!token) return;
     try {
       const list: any = await api.customers.list(token);
-      const withConsent: CustomerWithConsent[] = await Promise.all(
-        list.map(async (c: any) => {
-          try {
-            const res: any = await api.gdpr.consentStatus(c.id, token);
-            return {
-              id: c.id,
-              full_name: c.full_name,
-              email: c.email,
-              consent: res.consent || { marketing: false, analytics: false, third_party: false },
-            };
-          } catch {
-            return {
-              id: c.id,
-              full_name: c.full_name,
-              email: c.email,
-              consent: { marketing: false, analytics: false, third_party: false },
-            };
-          }
-        })
+      const rows = Array.isArray(list) ? list : [];
+      let granted: Record<string, boolean> = {};
+      try {
+        const res: any = await api.gdpr.consentStatus(token);
+        for (const c of res?.consents || []) {
+          if (c?.type) granted[c.type] = !!c.granted;
+        }
+      } catch {
+        granted = {};
+      }
+      setCustomers(
+        rows.map((c: any) => ({
+          id: c.id,
+          full_name: c.full_name,
+          email: c.email,
+          consent: {
+            marketing: granted.marketing ?? !!c.marketing_consent,
+            analytics: granted.analytics ?? false,
+            third_party: granted.third_party ?? false,
+          },
+        }))
       );
-      setCustomers(withConsent);
     } catch (e: any) {
       flash(e.message || "Failed to load customers", true);
     }
@@ -132,8 +146,9 @@ export default function GdprPage() {
   const updateConsent = async (customerId: string, consentType: string, consentGiven: boolean) => {
     if (!token) return;
     try {
+      // Backend records consent for the current user only (no customer id).
       await api.gdpr.consent(
-        { customer_id: customerId, consent_type: consentType, consent_given: consentGiven },
+        { consent_type: consentType, granted: consentGiven },
         token
       );
       setCustomers((prev) =>
@@ -174,7 +189,8 @@ export default function GdprPage() {
     e.preventDefault();
     if (!token) return;
     try {
-      await api.gdpr.requestErasure(erasureForm, token);
+      // Backend takes only customer_id (query); the reason field has no backend counterpart.
+      await api.gdpr.requestErasure({ customer_id: erasureForm.customer_id }, token);
       setErasureForm({ customer_id: "", reason: "" });
       setShowErasureForm(false);
       flash("Erasure request submitted");

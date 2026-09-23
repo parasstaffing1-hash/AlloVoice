@@ -11,24 +11,34 @@ import {
 
 export default function ReportsPage() {
   const { token } = useAuth();
-  const [overview, setOverview] = useState<any>(null);
+  const [revenue, setRevenue] = useState<any>(null);
+  const [techPerf, setTechPerf] = useState<any[]>([]);
+  const [satisfaction, setSatisfaction] = useState<any>(null);
+  const [utilization, setUtilization] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
-    api.reports.overview(token)
-      .then(setOverview)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    // Real backend routes: /revenue, /technician-performance,
+    // /customer-satisfaction, /job-utilization.
+    Promise.allSettled([
+      api.reports.revenue("period=monthly", token).then(setRevenue),
+      api.reports.technicianPerformance(token).then((r: any) => setTechPerf(r?.data || [])),
+      api.reports.customerSatisfaction(token).then(setSatisfaction),
+      api.reports.jobUtilization(token).then(setUtilization),
+    ]).finally(() => setLoading(false));
   }, [token]);
 
+  const revenueRows = Array.isArray(revenue?.data) ? revenue.data : [];
+  const totalRevenue = revenueRows.reduce((sum: number, r: any) => sum + (Number(r.revenue) || 0), 0);
+
   const stats = [
-    { label: "Total Revenue", value: `£${(overview?.revenue?.total || 0).toFixed(2)}`, icon: Banknote, color: "text-green-400" },
-    { label: "Revenue (MTD)", value: `£${(overview?.revenue?.this_month || 0).toFixed(2)}`, icon: TrendingUp, color: "text-blue-400" },
-    { label: "Total Customers", value: overview?.customers?.total || 0, icon: Users, color: "text-purple-400" },
-    { label: "Jobs Completed", value: overview?.jobs?.completed || 0, icon: Briefcase, color: "text-yellow-400" },
-    { label: "Completion Rate", value: `${(overview?.jobs?.completion_rate || 0).toFixed(0)}%`, icon: BarChart3, color: "text-emerald-400" },
-    { label: "Avg Revenue/Customer", value: `£${(overview?.revenue?.avg_per_customer || 0).toFixed(2)}`, icon: Calendar, color: "text-orange-400" },
+    { label: "Total Revenue", value: `£${totalRevenue.toFixed(2)}`, icon: Banknote, color: "text-green-400" },
+    { label: "Jobs Completed", value: utilization?.completed ?? 0, icon: Briefcase, color: "text-yellow-400" },
+    { label: "Completion Rate", value: `${(Number(utilization?.completion_rate) || 0).toFixed(0)}%`, icon: BarChart3, color: "text-emerald-400" },
+    { label: "Avg Rating", value: (Number(satisfaction?.average_rating) || 0).toFixed(1), icon: Users, color: "text-purple-400" },
+    { label: "Total Reviews", value: satisfaction?.total_reviews ?? 0, icon: TrendingUp, color: "text-blue-400" },
+    { label: "NPS", value: (Number(satisfaction?.nps) || 0).toFixed(1), icon: Calendar, color: "text-orange-400" },
   ];
 
   return (
@@ -60,12 +70,12 @@ export default function ReportsPage() {
             <Card>
               <CardHeader><CardTitle>Technician Performance</CardTitle></CardHeader>
               <CardContent>
-                {overview?.technician_performance?.length > 0 ? (
+                {techPerf.length > 0 ? (
                   <div className="space-y-3">
-                    {overview.technician_performance.map((t: any) => (
-                      <div key={t.name} className="flex items-center justify-between text-sm">
-                        <span>{t.name}</span>
-                        <span className="text-muted-foreground">{t.jobs_completed} jobs · £{t.revenue.toFixed(2)}</span>
+                    {techPerf.map((t: any) => (
+                      <div key={t.technician_id} className="flex items-center justify-between text-sm">
+                        <span>{String(t.technician_id).slice(0, 8)}…</span>
+                        <span className="text-muted-foreground">{t.jobs_completed} jobs · ★{(Number(t.average_rating) || 0).toFixed(1)}</span>
                       </div>
                     ))}
                   </div>
@@ -75,19 +85,25 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle>Top Services</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Job Utilization</CardTitle></CardHeader>
               <CardContent>
-                {overview?.top_services?.length > 0 ? (
-                  <div className="space-y-3">
-                    {overview.top_services.map((s: any) => (
-                      <div key={s.title} className="flex items-center justify-between text-sm">
-                        <span>{s.title}</span>
-                        <span className="text-muted-foreground">{s.count} jobs · £{s.revenue.toFixed(2)}</span>
-                      </div>
-                    ))}
+                {utilization ? (
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>Total jobs</span>
+                      <span className="text-muted-foreground">{utilization.total_jobs ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Completed</span>
+                      <span className="text-muted-foreground">{utilization.completed ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Cancelled</span>
+                      <span className="text-muted-foreground">{utilization.cancelled ?? 0}</span>
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No service data yet</p>
+                  <p className="text-sm text-muted-foreground">No utilization data yet</p>
                 )}
               </CardContent>
             </Card>

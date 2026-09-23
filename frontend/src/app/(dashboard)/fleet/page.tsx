@@ -16,7 +16,8 @@ export default function FleetPage() {
   useEffect(() => {
     if (!token) return;
     api.fleet.list(token)
-      .then((r: any) => setVehicles(r.vehicles || []))
+      // Backend returns a bare array (GET /api/fleet/vehicles).
+      .then((r: any) => setVehicles(Array.isArray(r) ? r : r.vehicles || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);
@@ -57,7 +58,7 @@ export default function FleetPage() {
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{v.make} {v.model}</p>
-                <p className="text-sm text-muted-foreground">Assigned to: {v.assigned_to || "—"}</p>
+                <p className="text-sm text-muted-foreground">Assigned to: {v.assigned_to || v.assigned_technician_id || "—"}</p>
                 {v.last_location && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" />

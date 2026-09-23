@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Crown, Star, Shield, Check, Users, Calendar, ArrowRight,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
-const plans = [
+const FALLBACK_PLANS = [
   {
     id: "basic",
     name: "Basic",
@@ -73,6 +74,9 @@ export default function PublicMembershipsPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [enrolling, setEnrolling] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [plans, setPlans] = useState<any[]>(FALLBACK_PLANS);
+  const [plansLive, setPlansLive] = useState(false);
+  const [plansLoading, setPlansLoading] = useState(true);
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -86,6 +90,57 @@ export default function PublicMembershipsPage() {
     setShowForm(true);
   };
 
+  // Live plans: GET /api/billing/plans (public) → { plans: [{ id, name,
+  // monthly_gbp, yearly_gbp, features: string[], most_popular }] }.
+  // Falls back to the hardcoded demo tiers when the backend is unreachable.
+  useEffect(() => {
+    api.billing
+      .plans()
+      .then((r: any) => {
+        const raw = Array.isArray((r as any)?.plans)
+          ? (r as any).plans
+          : Array.isArray(r)
+            ? r
+            : [];
+        if (raw.length === 0) {
+          setPlansLive(false);
+          return;
+        }
+        const icons = [Shield, Star, Crown];
+        const styles = [
+          { color: "text-blue-500", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/20" },
+          { color: "text-amber-500", bgColor: "bg-amber-500/10", borderColor: "border-amber-500/20" },
+          { color: "text-purple-500", bgColor: "bg-purple-500/10", borderColor: "border-purple-500/20" },
+        ];
+        const mapped = raw.map((p: any, i: number) => {
+          const style = styles[i % styles.length];
+          const feats = Array.isArray(p?.features) ? p.features : [];
+          return {
+            id: String(p?.id ?? `plan-${i}`),
+            name: String(p?.name ?? `Plan ${i + 1}`),
+            icon: icons[i % icons.length],
+            price_monthly: Number(p?.monthly_gbp ?? p?.price_monthly ?? 0),
+            price_yearly: Number(p?.yearly_gbp ?? p?.price_yearly ?? 0),
+            description: String(p?.description ?? ""),
+            ...style,
+            popular: Boolean(p?.most_popular ?? p?.popular ?? false),
+            features: feats.map((f: any) => ({
+              text: typeof f === "string" ? f : String(f?.text ?? f),
+              included: typeof f === "string" ? true : Boolean(f?.included ?? true),
+            })),
+          };
+        });
+        setPlans(mapped);
+        setPlansLive(true);
+      })
+      .catch(() => setPlansLive(false))
+      .finally(() => setPlansLoading(false));
+  }, []);
+
+  // NOTE (honest enrollment): api.memberships.enroll(data, token) requires
+  // { customer_id: UUID, plan_id, billing_cycle } + a signed-in business token,
+  // so this public name/email/phone form cannot complete it directly. We keep
+  // the modal as a contact request and never fake an "active membership".
   const handleSubmit = () => {
     setSubmitted(true);
     setShowForm(false);
@@ -104,6 +159,13 @@ export default function PublicMembershipsPage() {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Join thousands of homeowners who trust Allo for reliable, ongoing property maintenance.
             Save money and never miss essential servicing.
+          </p>
+          <p className="text-xs text-muted-foreground mt-3">
+            {plansLoading
+              ? "Loading live plans…"
+              : plansLive
+                ? "Live plans from the API."
+                : "Demo plans shown — backend unreachable, connect the API for live pricing."}
           </p>
 
           <div className="flex items-center justify-center gap-2 mt-8">
@@ -159,7 +221,7 @@ export default function PublicMembershipsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    {plan.features.map((f, i) => (
+                    {plan.features.map((f: any, i: number) => (
                       <div key={i} className="flex items-center gap-2">
                         <Check
                           className={`h-4 w-4 flex-shrink-0 ${
@@ -272,7 +334,9 @@ export default function PublicMembershipsPage() {
                 Complete Enrollment
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                By joining you agree to our terms of service. You can cancel anytime.
+                Demo request only — online enrollment via api.memberships.enroll needs an
+                account (customer_id) and sign-in, so nothing is billed here. By joining
+                you agree to our terms of service. You can cancel anytime.
               </p>
             </CardContent>
           </Card>
@@ -286,10 +350,11 @@ export default function PublicMembershipsPage() {
               <div className="p-4 bg-green-500/10 rounded-full w-fit mx-auto mb-4">
                 <Check className="h-10 w-10 text-green-500" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Welcome to Allo!</h2>
+              <h2 className="text-xl font-bold mb-2">Thanks — request received!</h2>
               <p className="text-muted-foreground mb-6">
-                Your {plans.find((p) => p.id === enrolling)?.name} membership is now active.
-                We&apos;ll be in touch shortly to schedule your first service.
+                Your interest in the {plans.find((p) => p.id === enrolling)?.name} plan
+                has been noted. This demo does not activate billing — we&apos;ll be in
+                touch to complete enrollment and schedule your first service.
               </p>
               <Button onClick={() => setSubmitted(false)}>Done</Button>
             </CardContent>

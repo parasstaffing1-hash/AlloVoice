@@ -18,7 +18,8 @@ export default function ContractsPage() {
   useEffect(() => {
     if (!token) return;
     api.contracts.list(token)
-      .then((r: any) => setContracts(r.contracts || []))
+      // Backend returns a bare array (GET /api/contracts/).
+      .then((r: any) => setContracts(Array.isArray(r) ? r : r.contracts || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);
@@ -58,7 +59,7 @@ export default function ContractsPage() {
                 <div>
                   <p className="font-medium">{c.title}</p>
                   <p className="text-sm text-muted-foreground">
-                    £{c.monthly_amount}/mo · {c.job_frequency}
+                    £{c.monthly_price}/mo · {c.frequency}
                   </p>
                 </div>
                 <Badge className={statusColor[c.status] || "bg-zinc-500/20 text-zinc-400"}>

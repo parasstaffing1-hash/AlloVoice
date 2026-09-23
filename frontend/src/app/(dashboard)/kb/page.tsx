@@ -18,7 +18,8 @@ export default function KnowledgeBasePage() {
   useEffect(() => {
     if (!token) return;
     api.knowledgeBase.list(token)
-      .then((r: any) => setArticles(r.articles || []))
+      // Backend returns a bare array (GET /api/kb/).
+      .then((r: any) => setArticles(Array.isArray(r) ? r : r.articles || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);

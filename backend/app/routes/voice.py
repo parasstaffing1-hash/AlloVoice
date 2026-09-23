@@ -1,6 +1,7 @@
 import base64
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from app.core.rate_limit import limiter
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.config import get_settings
@@ -141,7 +142,9 @@ async def generate_voice_response(quote_data: dict) -> str:
 
 
 @router.post("/transcribe", response_model=VoiceQuoteResponse)
+@limiter.limit("10/minute")
 async def transcribe_and_quote(
+    request: Request,
     data: VoiceQuoteRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -173,6 +176,7 @@ async def text_to_speech(text: str):
 
 
 @router.post("/speech-to-text")
-async def speech_to_text(audio_base64: str):
+@limiter.limit("10/minute")
+async def speech_to_text(request: Request, audio_base64: str):
     transcript = await sarvam_stt(audio_base64)
     return {"transcript": transcript}
