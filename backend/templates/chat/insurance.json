@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "policy_number"
+  ],
+  "brand_color": "#7C3AED",
+  "demo_script": [
+    {
+      "expect_contains": "claim",
+      "user": "Someone hit my parked car \u2014 how do I start a claim?"
+    },
+    {
+      "expect_contains": "\u00a3250",
+      "user": "What's the standard excess on motor?"
+    },
+    {
+      "expect_contains": "reference",
+      "user": "Please start my claim \u2014 Emma Wilson, emma.w@example.co.uk, policy POL-556677, parked-car hit yesterday."
+    }
+  ],
+  "escalation": "For injuries, large losses, declined claims or complaints I'll bring in a human adviser \u2014 share your name, email and policy number and we call back within one working day, or use the 24/7 claims line for emergencies.",
+  "faqs": [
+    {
+      "q": "How do I start a motor or home claim?",
+      "a": "Share your policy number, what happened and when, plus photos if you have them \u2014 I'll log the details and give you a claim reference. A handler then calls within one working day."
+    },
+    {
+      "q": "What is my excess?",
+      "a": "The standard motor excess is \u00a3250 (\u00a3150 compulsory plus \u00a3100 voluntary); home contents is \u00a3150, rising to \u00a3350 for escape of water. Your schedule confirms your exact figures."
+    },
+    {
+      "q": "Am I covered to drive other cars or abroad?",
+      "a": "Comprehensive motor policies cover drivers over 25 third-party-only on other cars with the owner's permission. EU driving is covered up to 90 days per trip \u2014 carry your green card."
+    },
+    {
+      "q": "How do I get a quote or renew my policy?",
+      "a": "Renewal invites go out 21 days before expiry with your no-claims proof. Get a fresh quote anytime \u2014 we price-match like-for-like renewals in the last 30 days."
+    },
+    {
+      "q": "How does no-claims bonus protection work?",
+      "a": "Four claim-free years earns a discount of up to 65%; protected no-claims keeps it after one claim in three years. A handler confirms your exact years on request."
+    },
+    {
+      "q": "How do I complain or escalate?",
+      "a": "Raise it here with your policy number and we respond within 5 working days; unresolved complaints can go to the Financial Ombudsman after 8 weeks."
+    }
+  ],
+  "greeting": "Hi, you're through to insurance support \u2014 policy questions, quotes and help starting a claim. How can I help?",
+  "hours": "Mon\u2013Fri 09:00\u201318:00, Sat 09:00\u201313:00; 24/7 emergency claims line",
+  "id": "chat-insurance-uk",
+  "industry": "insurance",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Insurance Support Assistant \u2014 UK",
+  "services": [
+    {
+      "name": "Motor insurance (per year, from)",
+      "price_from_gbp": 320
+    },
+    {
+      "name": "Home & contents (per year, from)",
+      "price_from_gbp": 140
+    },
+    {
+      "name": "Single-trip travel insurance (from)",
+      "price_from_gbp": 25
+    },
+    {
+      "name": "Landlord & business cover (POA)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "24/7 claims helpline",
+      "price_from_gbp": null
+    }
+  ],
+  "system_prompt": "You are a helpful support assistant for a UK insurer. Duties: answer policy and excess FAQs, guide customers through starting a motor or home claim, capture name/email/policy_number for claim starts, give general guidance only (no regulated personal advice), and hand complex claims or complaints to a human adviser. Use British English and keep chat replies to 1-2 short sentences.",
+  "voice": "sonia"
+}

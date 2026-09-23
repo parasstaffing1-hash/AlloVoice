@@ -1,0 +1,85 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "project_type"
+  ],
+  "brand_color": "#EA580C",
+  "demo_script": [
+    {
+      "expect_contains": "£25",
+      "user": "Roughly how much for a single-storey extension?"
+    },
+    {
+      "expect_contains": "survey",
+      "user": "How do your quotes work — is the survey free?"
+    },
+    {
+      "expect_contains": "quote",
+      "user": "Please quote me — Sarah Jones, 07890 111222, LS6 2AB, single-storey extension."
+    }
+  ],
+  "escalation": "For structural cracks, suspected subsidence, gas smells or water near electrics, stop work and tell us immediately — our site manager calls back the same day in hours. Otherwise leave your phone and postcode and we confirm a survey slot.",
+  "faqs": [
+    {
+      "q": "How much does a single-storey extension cost?",
+      "a": "A single-storey extension typically starts from £25,000 depending on size, spec and groundworks. A free site survey gives you a fixed written quote."
+    },
+    {
+      "q": "How long does a kitchen refit take?",
+      "a": "Most kitchen refits take 2–4 weeks including rip-out, electrics, plumbing and tiling. We agree a day-by-day programme before we start."
+    },
+    {
+      "q": "Do you handle planning permission and building regulations?",
+      "a": "Yes — we handle drawings, permitted-development checks and building-regulations paperwork. Most single-storey rear extensions fall within permitted development."
+    },
+    {
+      "q": "Are you insured and guaranteed?",
+      "a": "We're fully insured with £5 million public liability and give a written guarantee — 5 years on extensions, 2 years on refits and repairs."
+    },
+    {
+      "q": "Do you take on small repairs?",
+      "a": "Yes — repairs and snagging start from £150 including the callout. Send photos and your postcode for a fast estimate."
+    },
+    {
+      "q": "How do your quotes work?",
+      "a": "Free site survey, then a fixed written quote valid for 14 days — no hidden extras. To book, share your name, phone, postcode and project type."
+    },
+    {
+      "q": "Do you cover Glasgow / my area?",
+      "a": "We're based in Leeds covering around 20 miles. Glasgow is outside our patch, but send your postcode and we'll either arrange cover with a travel fee or refer you on."
+    }
+  ],
+  "greeting": "Hello! Planning an extension, a kitchen or bathroom refit, or need repairs? Tell me your postcode and the project.",
+  "hours": "Mon–Fri 08:00–17:30, Sat 09:00–12:00 by appointment",
+  "id": "chat-construction-uk",
+  "industry": "construction",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Building & Extensions Assistant — UK",
+  "services": [
+    {
+      "name": "Free site survey & fixed written quote",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Small repairs & snagging (incl. callout)",
+      "price_from_gbp": 150
+    },
+    {
+      "name": "Bathroom refit (supply & fit, from)",
+      "price_from_gbp": 4500
+    },
+    {
+      "name": "Kitchen refit (supply & fit, from)",
+      "price_from_gbp": 8500
+    },
+    {
+      "name": "Single-storey extension (from)",
+      "price_from_gbp": 25000
+    }
+  ],
+  "system_prompt": "You are a helpful assistant for a UK building firm. Duties: discuss extensions, refits and repairs, give ballpark price ranges, explain surveys and fixed quotes, capture name/phone/postcode/project_type for quote requests, and escalate structural, gas or electrical dangers to the site manager. Use British English and keep chat replies to 1-2 short sentences. Coverage: Leeds and surrounding areas within 20 miles; outside areas considered case-by-case with a travel fee — always state this plainly when asked about coverage.",
+  "voice": "sonia"
+}

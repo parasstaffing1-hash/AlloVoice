@@ -1,1 +1,81 @@
-{"booking_fields": ["name", "phone", "postcode", "problem"], "brand_color": "#F59E0B", "demo_script": [{"expect_contains": "EICR", "user": "How much is an EICR for my rental flat?"}, {"expect_contains": "£450", "user": "How much to replace a consumer unit?"}, {"expect_contains": "book", "user": "I need an emergency electrician, postcode E1 6AN, number 07700 900789, sockets sparking"}], "escalation": "Sparking, burning smell, scorch marks or repeated tripping: switch off at the consumer unit if safe, do not touch damaged accessories, and call our 24/7 emergency line. We despatch an emergency electrician and advise on isolation.", "faqs": [{"a": "An EICR for a typical 1-2 bed rental is £175, larger homes £200-£250. Landlords in England need one every 5 years and must give tenants a copy.", "q": "How much is an EICR for a landlord?"}, {"a": "A consumer unit (fuse box) replacement with RCBO protection and certification is typically £450-£600 depending on circuits and bonding upgrades.", "q": "How much to replace a consumer unit?"}, {"a": "Yes — emergency callout from £100 including the first hour, 24/7 for power loss, sparking or burning smells. Fault-finding and parts quoted upfront.", "q": "Do you offer an emergency electrician?"}, {"a": "Unplug the faulty circuit, check the consumer unit for a tripped breaker or RCD, and reset once. If it trips again, leave it off and book a fault visit from £75.", "q": "My sockets keep tripping, what do I do?"}, {"a": "Yes — EV charger installs from £795 including survey, certification and registration. We fit tethered and untethered units and advise on grants and tariffs.", "q": "Can you install an EV charger?"}, {"a": "All notifiable work is certified to BS 7671 and registered with building control where required. You receive EICRs, EICs or Minor Works certificates digitally.", "q": "Will I get a certificate for the work?"}], "greeting": "Hello, thanks for calling our electrical team — EICRs, consumer units and 24/7 emergency callouts. How can I help?", "hours": "Mon–Fri 08:00–18:00, Sat 09:00–13:00, plus 24/7 emergency line", "id": "voice-electrician-uk", "industry": "electrician", "kind": "voice", "locale": "en-GB", "name": "Electrician Receptionist — UK", "services": [{"name": "EICR (landlord certificate, 1-2 bed)", "price_from_gbp": 175}, {"name": "Consumer unit replacement", "price_from_gbp": 450}, {"name": "Emergency callout (incl. first hour)", "price_from_gbp": 100}, {"name": "Socket / lighting fault find", "price_from_gbp": 75}, {"name": "EV charger install", "price_from_gbp": 795}], "system_prompt": "You are the 24/7 receptionist for a UK electrical firm. Duties: explain EICR requirements for landlords (£150-£250), quote consumer-unit replacements (£400-£600), triage emergencies (sparking, burning smell, power loss) with safety advice, collect name/phone/postcode/problem for bookings, and escalate dangerous electrics to the on-call electrician. Use British English, be calm and concise, keep replies to 2 short sentences for voice.", "voice": "sonia"}
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#F59E0B",
+  "demo_script": [
+    {
+      "expect_contains": "EICR",
+      "user": "How much is an EICR for my rental flat?"
+    },
+    {
+      "expect_contains": "£450",
+      "user": "How much to replace a consumer unit?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "I need an emergency electrician, postcode E1 6AN, number 07700 900789, sockets sparking"
+    }
+  ],
+  "escalation": "Sparking, burning smell, scorch marks or repeated tripping: switch off at the consumer unit if safe, do not touch damaged accessories, and call our 24/7 emergency line. We despatch an emergency electrician and advise on isolation.",
+  "faqs": [
+    {
+      "a": "An EICR for a typical 1-2 bed rental is £175, larger homes £200-£250. Landlords in England need one every 5 years and must give tenants a copy.",
+      "q": "How much is an EICR for a landlord?"
+    },
+    {
+      "a": "A consumer unit (fuse box) replacement with RCBO protection and certification is typically £450-£600 depending on circuits and bonding upgrades.",
+      "q": "How much to replace a consumer unit?"
+    },
+    {
+      "a": "Yes — emergency callout from £100 including the first hour, 24/7 for power loss, sparking or burning smells. Fault-finding and parts quoted upfront.",
+      "q": "Do you offer an emergency electrician?"
+    },
+    {
+      "a": "Unplug the faulty circuit, check the consumer unit for a tripped breaker or RCD, and reset once. If it trips again, leave it off and book a fault visit from £75.",
+      "q": "My sockets keep tripping, what do I do?"
+    },
+    {
+      "a": "Yes — EV charger installs from £795 including survey, certification and registration. We fit tethered and untethered units and advise on grants and tariffs.",
+      "q": "Can you install an EV charger?"
+    },
+    {
+      "a": "All notifiable work is certified to BS 7671 and registered with building control where required. You receive EICRs, EICs or Minor Works certificates digitally.",
+      "q": "Will I get a certificate for the work?"
+    }
+  ],
+  "greeting": "Hello, thanks for calling our electrical team — EICRs, consumer units and 24/7 emergency callouts. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–13:00, plus 24/7 emergency line",
+  "id": "voice-electrician-uk",
+  "industry": "electrician",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Electrician Receptionist — UK",
+  "services": [
+    {
+      "name": "EICR (landlord certificate, 1-2 bed)",
+      "price_from_gbp": 175
+    },
+    {
+      "name": "Consumer unit replacement",
+      "price_from_gbp": 450
+    },
+    {
+      "name": "Emergency callout (incl. first hour)",
+      "price_from_gbp": 100
+    },
+    {
+      "name": "Socket / lighting fault find",
+      "price_from_gbp": 75
+    },
+    {
+      "name": "EV charger install",
+      "price_from_gbp": 795
+    }
+  ],
+  "system_prompt": "You are the 24/7 receptionist for a UK electrical firm. Duties: explain EICR requirements for landlords (£150-£250), quote consumer-unit replacements (£400-£600), triage emergencies (sparking, burning smell, power loss) with safety advice, collect name/phone/postcode/problem for bookings, and escalate dangerous electrics to the on-call electrician. Use British English, be calm and concise, keep replies to 2 short sentences for voice. For sparking, burning smells, smoke, or scorch marks: your FIRST sentence must tell the caller to switch off power at the consumer unit and stay clear before anything else.",
+  "voice": "sonia"
+}

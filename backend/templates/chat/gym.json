@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "goal"
+  ],
+  "brand_color": "#E63946",
+  "demo_script": [
+    {
+      "expect_contains": "trial",
+      "user": "Do you offer a free trial before I join?"
+    },
+    {
+      "expect_contains": "£35",
+      "user": "How much is monthly membership?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book my free trial, I'm Alex Morgan on 07700 900456 and my goal is weight loss"
+    }
+  ],
+  "escalation": "If you feel dizzy, faint, or get chest pain during exercise: stop immediately, tell a member of staff on site, and call 999 in an emergency. For anything else, leave your details and our membership team will call you back within one working day.",
+  "faqs": [
+    {
+      "q": "How much is gym membership?",
+      "a": "Our full monthly membership is £35 with no joining fee, and off-peak (09:00–16:00) is £25 a month. Annual membership is £360, which saves you two months."
+    },
+    {
+      "q": "Do you offer a free trial?",
+      "a": "Yes — every new joiner gets one free trial session including a gym-floor induction with an instructor. Share your name, phone number and fitness goal and we will book you in."
+    },
+    {
+      "q": "How do I book a fitness class?",
+      "a": "Members book classes up to 7 days ahead in the app or at reception. Popular classes like spin and HIIT fill up fast, so booking the evening before is wise. Non-members on a trial can join one class free."
+    },
+    {
+      "q": "Do you offer personal training?",
+      "a": "Yes — one-to-one sessions start from £40 an hour, with blocks of 10 from £350. Your first PT consultation, including a fitness assessment and plan, is free."
+    },
+    {
+      "q": "Can I freeze or cancel my membership?",
+      "a": "You can freeze for 1–3 months for £5 a month, for holidays or injury. Monthly memberships cancel with 30 days notice; annual memberships are non-refundable but transferable once."
+    },
+    {
+      "q": "Can under-16s use the gym?",
+      "a": "Junior members aged 14–15 can use the gym during supervised junior hours with an induction, and under-14s can join weekend family swim and junior classes only. Ages 16+ have full access."
+    }
+  ],
+  "greeting": "Hi, welcome to our gym — I can help with memberships, class bookings and free trials. What is your fitness goal?",
+  "hours": "Mon–Fri 06:00–22:00, Sat–Sun 08:00–20:00",
+  "id": "chat-gym-uk",
+  "industry": "gym",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Gym Assistant — UK",
+  "services": [
+    {
+      "name": "Full monthly membership (no joining fee)",
+      "price_from_gbp": 35
+    },
+    {
+      "name": "Off-peak monthly membership (09:00–16:00)",
+      "price_from_gbp": 25
+    },
+    {
+      "name": "Annual membership",
+      "price_from_gbp": 360
+    },
+    {
+      "name": "Day pass",
+      "price_from_gbp": 10
+    },
+    {
+      "name": "Personal training session (1 hour)",
+      "price_from_gbp": 40
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK gym. Duties: answer membership, class and pricing questions, promote the free trial session, book classes and trial inductions, and collect name/phone/fitness-goal for every lead. Use British English, keep chat replies concise (1–2 short sentences), and always end a lead conversation by confirming the next step. Never give medical clearance to exercise — anyone with a health concern should check with their GP first.",
+  "voice": "sonia"
+}

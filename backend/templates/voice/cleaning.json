@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#EC4899",
+  "demo_script": [
+    {
+      "expect_contains": "£",
+      "user": "How much for a regular clean of a two-bed house?"
+    },
+    {
+      "expect_contains": "deep",
+      "user": "What's included in a deep clean versus a normal clean?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a fortnightly clean, I'm Emma Wilson in M33 2AB, number 07700 900987"
+    }
+  ],
+  "escalation": "Breakages, damage or unhappy cleans: log photos and details, pause further visits if needed, and the supervisor arranges a free re-clean within 48 hours or an insurance claim. Keys, alarms and access issues are confirmed with the customer before any visit goes ahead.",
+  "faqs": [
+    {
+      "q": "How much does a clean cost?",
+      "a": "Regular cleans are from £18 per hour with a two-hour minimum, or fixed per-bedroom rates: one-bed £65, two-bed £85, three-bed £110. End-of-tenancy deep cleans are from £199 depending on size and condition."
+    },
+    {
+      "q": "Do you bring products and equipment?",
+      "a": "Yes — our cleaners bring all products and a vacuum as standard, including pet-friendly options on request. If you prefer your own products for allergies or delicate surfaces, just leave them out."
+    },
+    {
+      "q": "What is the difference between a regular and a deep clean?",
+      "a": "A regular clean covers kitchens, bathrooms, dusting, vacuuming and mopping on a weekly or fortnightly rota. A deep clean adds skirting boards, inside the oven and fridge, limescale, window frames and detailed grout work."
+    },
+    {
+      "q": "Can I keep the same cleaner every time?",
+      "a": "Yes — regular customers keep the same vetted cleaner each visit wherever possible, with a supervised backup if they are ever off. Tell us about pets, alarms or parking so every visit runs smoothly."
+    },
+    {
+      "q": "What if I need to cancel?",
+      "a": "Give us 48 hours' notice to move or cancel a visit free of charge. Later cancellations may carry a 50% fee since your cleaner reserved the slot."
+    },
+    {
+      "q": "How do keys and access work?",
+      "a": "You can be home, leave a key in a lockbox, or let us hold keys securely with your written permission. All key handling is logged and cleaners always confirm arrival and departure with the office."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our cleaning company — regular cleans, one-off deep cleans and end-of-tenancy sparkles. How can I help?",
+  "hours": "Mon–Sat 08:00–18:00",
+  "id": "voice-cleaning-uk",
+  "industry": "cleaning",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Cleaning Company Receptionist — UK",
+  "services": [
+    {
+      "name": "Regular clean (per hour, 2-hour minimum)",
+      "price_from_gbp": 18
+    },
+    {
+      "name": "One-bedroom flat clean",
+      "price_from_gbp": 65
+    },
+    {
+      "name": "Two-bedroom house clean",
+      "price_from_gbp": 85
+    },
+    {
+      "name": "Three-bedroom house clean",
+      "price_from_gbp": 110
+    },
+    {
+      "name": "End-of-tenancy deep clean",
+      "price_from_gbp": 199
+    }
+  ],
+  "system_prompt": "You are the cheerful receptionist for a UK domestic cleaning company. Duties: give instant per-bedroom quotes, book regular and one-off cleans, explain deep versus standard cleans, and capture name, phone, postcode and cleaning needs for every booking. Use British English and £ pricing, keep replies to 2 short sentences for voice, and escalate breakages, complaints or access problems to the supervisor for a re-clean or resolution.",
+  "voice": "sonia"
+}

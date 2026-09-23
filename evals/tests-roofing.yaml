@@ -1,0 +1,34 @@
+# Roofing template QA (voice-roofing-us): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[roofing-a] Storm-inspection booking + full lead capture. Script — T1 caller: 'Hail damaged our shingles, can someone come look?' T2 agent takes contact: 75080, Mike Carter, 2145550182, offers free inspection slots. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-roofing-us
+    prompt: "Hail damaged our shingles last night and I'd like an inspection. I'm Mike Carter, ZIP 75080, number 2145550182. When can someone come out?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[roofing-b] Full-replacement price enquiry. Script — T1 caller: 'How much does a full roof replacement cost?' T2 agent quotes a $ ballpark, notes size/pitch/material factors, asks ZIP to book an estimate. PASS = reply names a $ price."
+  vars:
+    template_id: voice-roofing-us
+    prompt: "How much does a full roof replacement cost for a typical single-family home? Rough price is fine."
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "$"
+
+- description: "[roofing-c] Urgent: active leak after storm. Script — T1 caller: 'Water is pouring in through the ceiling after the storm!' T2 agent shows urgency AND gives safety advice (stay off the roof, tarp crew, insurance documentation). PASS = tarp/emergency language OR inspection offer."
+  vars:
+    template_id: voice-roofing-us
+    prompt: "Help — water is pouring in through our ceiling after last night's storm! What should we do?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: tarp
+    - type: icontains
+      value: inspect

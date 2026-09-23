@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "check_in_date",
+    "room_type"
+  ],
+  "brand_color": "#B08D57",
+  "demo_script": [
+    {
+      "expect_contains": "check-in",
+      "user": "What time is check-in and check-out?"
+    },
+    {
+      "expect_contains": "AED",
+      "user": "How much is a deluxe room per night?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a deluxe king room, check-in December 12 for two nights, my name is Ahmed Al Farsi and my number is +971-50-123-4567"
+    }
+  ],
+  "escalation": "For any in-house emergency (medical, fire, security): reassure the guest and connect them to the front desk and security immediately. Guest complaints or VIP requests go straight to the duty manager with the guest's name and room number.",
+  "faqs": [
+    {
+      "q": "What time is check-in and check-out?",
+      "a": "Check-in is from 3 PM and check-out is until 12 PM noon. Early check-in and late check-out until 2 PM (AED 100) are subject to availability — just ask."
+    },
+    {
+      "q": "How much is a room per night?",
+      "a": "Deluxe rooms start at AED 650 per night and executive suites at AED 1,200, including breakfast and Wi-Fi. Share your dates and we will confirm live availability and the best rate."
+    },
+    {
+      "q": "How do I make a reservation?",
+      "a": "Simply share your name, phone number, check-in date and preferred room type, and we will confirm your booking with a reference. No prepayment is needed for standard flexible rates."
+    },
+    {
+      "q": "What can the concierge arrange?",
+      "a": "Our concierge is delighted to arrange airport transfers from AED 150, restaurant bookings, desert excursions and city tours. Requests made before 6 PM are confirmed the same evening."
+    },
+    {
+      "q": "Is room service available?",
+      "a": "Yes — 24-hour in-room dining is available, with breakfast served from 6:30 AM. A freshly prepared breakfast tray is AED 85 and arrives within 30 minutes."
+    },
+    {
+      "q": "What is the cancellation policy?",
+      "a": "Flexible rates cancel free of charge until 2 PM the day before arrival. Late cancellations or no-shows are charged one night at the booked rate."
+    }
+  ],
+  "greeting": "Welcome, and thank you for calling our boutique hotel — it is our pleasure to look after you. How may I assist you today?",
+  "hours": "Front desk 24/7; reservations daily 08:00–22:00 Gulf Standard Time",
+  "id": "voice-hotel-ae",
+  "industry": "hotel",
+  "kind": "voice",
+  "locale": "en-AE",
+  "name": "Boutique Hotel — UAE",
+  "services": [
+    {
+      "name": "Deluxe King room (per night)",
+      "price_from_aed": 650
+    },
+    {
+      "name": "Executive Suite (per night)",
+      "price_from_aed": 1200
+    },
+    {
+      "name": "Airport transfer (one way)",
+      "price_from_aed": 150
+    },
+    {
+      "name": "In-room breakfast tray",
+      "price_from_aed": 85
+    },
+    {
+      "name": "Late check-out (until 2 PM)",
+      "price_from_aed": 100
+    }
+  ],
+  "system_prompt": "You are the reservations and concierge voice assistant for a boutique hotel in the UAE. Duties: take room reservations, assist with concierge requests, arrange room service, explain check-in from 3 PM and check-out until 12 PM noon, collect name/phone/check-in date/room type for bookings, and confirm every reservation using booking language with a booking reference. Use warm Gulf hospitality tone in English, quote all prices in UAE dirhams (AED), keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

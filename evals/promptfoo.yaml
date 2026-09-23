@@ -1,7 +1,7 @@
-# Voice-agent template QA gate (pre-publish).
+# Voice/chat-agent template QA gate (pre-publish).
 #
-# What: 9 scripted probes (3 per trade template) sent to the voice-agent
-#   chat endpoint. ALL 9 must pass before a template version is published.
+# What: 63 scripted probes (3 per template) sent to the voice-agent
+#   chat endpoint. ALL 63 must pass before a template version is published.
 #
 # Run from THIS directory with the backend up and templates seeded:
 #   promptfoo eval -c promptfoo.yaml
@@ -12,7 +12,7 @@
 #   POST http://127.0.0.1:8000/api/agents/chat
 #   {template_id, message, session_id?} -> {reply, quick_replies, stage, lead_reference}
 
-description: Voice-agent template pre-publish QA — 9 scripted probes across plumbing/HVAC/electrician templates
+description: Voice-agent template pre-publish QA — 63 scripted probes across plumbing/HVAC/electrician/real-estate/dental/cleaning/roofing voice templates and gym/restaurant/travel/education/medical chat templates
 
 providers:
   - id: http
@@ -45,3 +45,21 @@ tests:
   - file://tests-plumbing.yaml
   - file://tests-hvac.yaml
   - file://tests-electrician.yaml
+  - file://tests-saas.yaml
+  - file://tests-ecommerce.yaml
+  - file://tests-recruitment.yaml
+  - file://tests-construction.yaml
+  - file://tests-insurance.yaml
+  - file://tests-lawfirm.yaml
+  - file://tests-autorepair.yaml
+  - file://tests-hotel.yaml
+  - file://tests-crmvoice.yaml
+  - file://tests-real-estate.yaml
+  - file://tests-dental.yaml
+  - file://tests-cleaning.yaml
+  - file://tests-roofing.yaml
+  - file://tests-gym.yaml
+  - file://tests-restaurant.yaml
+  - file://tests-travel.yaml
+  - file://tests-education.yaml
+  - file://tests-medical.yaml

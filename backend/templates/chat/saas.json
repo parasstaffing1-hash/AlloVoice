@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "company"
+  ],
+  "brand_color": "#4F46E5",
+  "demo_script": [
+    {
+      "expect_contains": "trial",
+      "user": "Hi! How does your free trial work — do I need a credit card?"
+    },
+    {
+      "expect_contains": "£79",
+      "user": "How much is the Growth plan per user?"
+    },
+    {
+      "expect_contains": "trial",
+      "user": "Please start my trial — I'm Priya Shah, priya@brightstudio.co.uk, Bright Studio with 12 staff."
+    }
+  ],
+  "escalation": "For outages, suspected data loss or billing disputes I'll bring in a specialist straight away — leave your name, email and company and we reply within one working day, or ask for human help any time in hours.",
+  "faqs": [
+    {
+      "q": "How does the 14-day free trial work?",
+      "a": "You get full Growth-plan features for 14 days with no card required. Add your team, import data and we remind you before it ends — then upgrade, drop to Starter or cancel."
+    },
+    {
+      "q": "How much does it cost per user?",
+      "a": "Starter is £29 per user per month, Growth is £79 and Scale is £149, all billed monthly with 20% off annual plans. Enterprise pricing is on application after a demo."
+    },
+    {
+      "q": "How do we onboard and import our data?",
+      "a": "Import from CSV or connect Xero, Slack and HubSpot in a few clicks, then join a free 30-minute onboarding call. Most teams are live within a day."
+    },
+    {
+      "q": "Is our data secure and GDPR compliant?",
+      "a": "Yes — UK/EU hosting, encryption in transit and at rest, plus SSO and audit logs on Growth and above. We sign a DPA on request."
+    },
+    {
+      "q": "Can we cancel or change plans anytime?",
+      "a": "Monthly plans are rolling — upgrade, downgrade or cancel in two clicks and export everything first. Annual plans can drop to monthly at renewal."
+    },
+    {
+      "q": "What support and training do you offer?",
+      "a": "Live chat support Mon–Fri 09:00–17:30, weekly onboarding webinars and a full help centre. Growth and above get a named success manager."
+    }
+  ],
+  "greeting": "Hi there, and welcome! I can help with product questions, onboarding and starting your free trial. What would you like to do?",
+  "hours": "Mon–Fri 09:00–17:30 UK time (live chat); out-of-hours messages answered next working day",
+  "id": "chat-saas",
+  "industry": "saas",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "SaaS Support Assistant — UK",
+  "services": [
+    {
+      "name": "Starter plan (per user, per month)",
+      "price_from_gbp": 29
+    },
+    {
+      "name": "Growth plan (per user, per month)",
+      "price_from_gbp": 79
+    },
+    {
+      "name": "Scale plan (per user, per month)",
+      "price_from_gbp": 149
+    },
+    {
+      "name": "Onboarding & data migration package (one-off)",
+      "price_from_gbp": 499
+    },
+    {
+      "name": "Enterprise & dedicated support (POA)",
+      "price_from_gbp": null
+    }
+  ],
+  "system_prompt": "You are a friendly support assistant for a UK SaaS company. Duties: answer product and pricing FAQs, guide onboarding and integrations, explain the 14-day trial, capture name/email/company for trial signups, and offer human handoff for outages or billing disputes. Use British English and keep chat replies to 1-2 short sentences. If asked for non-product content (poems, jokes, homework, recipes): decline in one short sentence and redirect to what you can do — trial setup, pricing, or booking a demo.",
+  "voice": "sonia"
+}

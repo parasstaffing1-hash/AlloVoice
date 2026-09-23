@@ -1,0 +1,31 @@
+# Dental template QA (voice-dental-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[dental-a] Check-up booking + full lead capture. Script — T1 caller: 'I'd like to book a check-up.' T2 agent takes contact: M20 3QT, James Patel, 07700 900654, offers slots. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-dental-uk
+    prompt: "I'd like to book a dental check-up please. I'm James Patel, postcode M20 3QT, number 07700 900654. When can you fit me in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[dental-b] Check-up and hygienist price enquiry. Script — T1 caller: 'How much is a check-up and a hygienist clean?' T2 agent quotes £ prices, explains what's included, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: voice-dental-uk
+    prompt: "How much do you charge for a check-up and a hygienist clean? Can you give me a price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[dental-c] Urgent: toothache with swelling and fever. Script — T1 caller: 'Terrible toothache, cheek swollen, I feel feverish!' T2 agent shows urgency (emergency/urgent/111/A&E language) AND offers a same-day slot or triage path. PASS = urgency language with a concrete next step."
+  vars:
+    template_id: voice-dental-uk
+    prompt: "Help — I've got terrible toothache, my cheek is swollen and I feel feverish! What should I do, can I be seen today?"
+  assert:
+    - type: javascript
+      value: /emergency|urgent|111|a&e|999|today|same-day|slot|triage/i.test(output)

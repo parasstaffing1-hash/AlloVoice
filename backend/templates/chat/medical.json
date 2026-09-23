@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "reason_non_urgent"
+  ],
+  "brand_color": "#0E9F6E",
+  "demo_script": [
+    {
+      "expect_contains": "book",
+      "user": "I'd like to book a routine GP appointment next week"
+    },
+    {
+      "expect_contains": "08:00",
+      "user": "What are your opening hours?"
+    },
+    {
+      "expect_contains": "111",
+      "user": "I've had crushing chest pain for an hour — is this serious?"
+    }
+  ],
+  "escalation": "If you have crushing chest pain, difficulty breathing, signs of stroke (face drooping, arm weakness, speech difficulty), heavy bleeding, or any rapidly worsening symptom: call 999 or go to A&E now. For urgent but non-emergency concerns when we are closed, call NHS 111. For routine matters, leave your details and our reception team will call you back within one working day.",
+  "faqs": [
+    {
+      "q": "How do I book a GP appointment?",
+      "a": "Share your name, phone number and a brief non-urgent reason, and reception will offer the next routine slot — usually within one to two weeks. Urgent same-day concerns are triaged by our duty clinician by phone."
+    },
+    {
+      "q": "What are your opening hours?",
+      "a": "We are open Mon–Fri 08:00–18:30. When closed, urgent concerns should go to NHS 111, and emergencies to 999 or A&E."
+    },
+    {
+      "q": "How do I order a repeat prescription?",
+      "a": "Order through the NHS App or our online form at least 48 hours before you run out. Prescriptions are sent to your nominated pharmacy."
+    },
+    {
+      "q": "How do I get my test results?",
+      "a": "Routine results are usually ready in 5–7 days — we text you when they arrive, and the GP reviews every result. If you have not heard within a week, message us and we will check."
+    },
+    {
+      "q": "How do I register as a new patient?",
+      "a": "Registration takes five minutes with photo ID and proof of address — we accept patients living in our catchment area with no registration fee. Private letters and medical reports start from £25; NHS care itself is free at the point of use."
+    },
+    {
+      "q": "What should I do if I feel very unwell?",
+      "a": "I cannot assess symptoms or tell you whether something is serious. For urgent concerns call NHS 111, and for emergencies such as chest pain, breathing difficulty or stroke signs, call 999 or go to A&E immediately."
+    }
+  ],
+  "greeting": "Hello, welcome to our clinic reception — I can book routine appointments and answer general questions. How can I help? (If this is an emergency, please call 999 or go to A&E.)",
+  "hours": "Mon–Fri 08:00–18:30",
+  "id": "chat-medical-uk",
+  "industry": "medical",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Clinic Receptionist — UK",
+  "services": [
+    {
+      "name": "Routine GP appointment (registered patients)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Practice nurse clinic (dressings, reviews)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Blood test clinic",
+      "price_from_gbp": null
+    },
+    {
+      "name": "New patient health check",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Private flu vaccination (non-NHS eligible, from)",
+      "price_from_gbp": 15
+    }
+  ],
+  "system_prompt": "You are the reception assistant for a UK GP clinic. STRICT SAFETY RULES: you must NEVER diagnose conditions, interpret symptoms, say whether something is serious, or recommend treatments or medication. Your duties are reception only: book routine appointments, give opening-hours and registration information, explain repeat prescriptions and test-result processes, and collect name/phone/brief-non-urgent-reason for callbacks. Use British English and keep chat replies concise (1–2 short sentences). For ANY symptom question, give the triage-to-human wording: you cannot assess symptoms, and direct the person to their GP, NHS 111, or A&E/999 for anything urgent. Always include the emergency pointer when symptoms are mentioned.",
+  "voice": "sonia"
+}

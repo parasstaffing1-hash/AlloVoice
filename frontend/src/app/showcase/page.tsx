@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Wrench, Flame, Zap, ArrowRight, WifiOff, Loader2, PhoneCall } from "lucide-react";
+import { Wrench, Flame, Zap, ArrowRight, WifiOff, Loader2, PhoneCall, Home, Stethoscope, Sparkles, Scale, Car, BedDouble, Briefcase, ShoppingBag, HardHat, ShieldCheck, Dumbbell, UtensilsCrossed, Plane, GraduationCap, HeartPulse, Building2, Star } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -59,17 +59,28 @@ const STATIC_FEATURES: Record<string, string[]> = {
 };
 
 function slugFor(t: Template): string {
+  const id = (t.id || "").toLowerCase();
+  const m = id.match(/^(?:voice|chat)-(.+?)-(?:uk|us|ae)$/);
+  if (m) return m[1];
   const raw = (t.industry || t.id || "").toLowerCase();
   if (raw.includes("plumb")) return "plumbing";
   if (raw.includes("hvac") || raw.includes("heat") || raw.includes("boiler")) return "hvac";
   if (raw.includes("electr")) return "electrician";
-  return "plumbing";
+  return raw.replace(/[^a-z-]/g, "") || "plumbing";
 }
 
 function iconFor(slug: string, cls: string) {
-  if (slug === "hvac") return <Flame className={cls} />;
-  if (slug === "electrician") return <Zap className={cls} />;
-  return <Wrench className={cls} />;
+  const map: Record<string, any> = {
+    plumbing: Wrench, hvac: Flame, electrician: Zap,
+    "real-estate": Home, dental: Stethoscope, cleaning: Sparkles,
+    roofing: Building2, "law-firm": Scale, "auto-repair": Car,
+    hotel: BedDouble, "crm-voice": Briefcase, saas: Star,
+    ecommerce: ShoppingBag, recruitment: Briefcase, construction: HardHat,
+    insurance: ShieldCheck, gym: Dumbbell, restaurant: UtensilsCrossed,
+    travel: Plane, education: GraduationCap, medical: HeartPulse,
+  };
+  const Icon = map[slug] || Wrench;
+  return <Icon className={cls} />;
 }
 
 export default function ShowcasePage() {
@@ -106,7 +117,11 @@ export default function ShowcasePage() {
   }, []);
 
   const visible =
-    filter === "Chat" ? [] : filter === "Voice" ? templates.filter((t) => (t.kind || "voice").toLowerCase() === "voice") : templates;
+    filter === "Chat"
+      ? templates.filter((t) => (t.kind || "voice").toLowerCase() === "chat")
+      : filter === "Voice"
+        ? templates.filter((t) => (t.kind || "voice").toLowerCase() === "voice")
+        : templates;
 
   const pills: Filter[] = ["All", "Voice", "Chat"];
 
@@ -159,17 +174,17 @@ export default function ShowcasePage() {
           <div className="flex items-center justify-center gap-2 py-20 text-sm text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" /> Loading voice agents…
           </div>
-        ) : filter === "Chat" ? (
+        ) : filter === "Chat" && visible.length === 0 ? (
           <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-white/5 px-6 py-12 text-center">
-            <p className="text-lg font-semibold">More industries soon</p>
+            <p className="text-lg font-semibold">No chat agents found</p>
             <p className="mt-2 text-sm text-zinc-400">
-              Only voice packs exist right now. Chat agents for more industries are on the way.
+              Try a different filter to see live agents.
             </p>
             <button
               onClick={() => setFilter("All")}
               className="mt-6 rounded-full bg-purple-600 px-5 py-2 text-sm font-medium text-white hover:bg-purple-500"
             >
-              View voice agents
+              View all agents
             </button>
           </div>
         ) : visible.length === 0 ? (

@@ -1,0 +1,84 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "budget"
+  ],
+  "brand_color": "#00A8B5",
+  "demo_script": [
+    {
+      "expect_contains": "budget",
+      "user": "We're looking for a family holiday in Spain this August, budget around £2000"
+    },
+    {
+      "expect_contains": "£499",
+      "user": "What do your Spain packages start from?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Sounds good — I'm Priya Shah, priya.shah@example.co.uk, budget £2500, please arrange a callback"
+    }
+  ],
+  "escalation": "If your enquiry involves complex multi-stop itineraries, group travel for 10+, or a wedding abroad: a senior travel consultant will call you back personally. Leave your details and we respond within one working day.",
+  "faqs": [
+    {
+      "q": "How do I enquire about a holiday?",
+      "a": "Share your name, email, destination ideas, dates and budget, and a consultant will send tailored options within one working day. There is no fee for quotes."
+    },
+    {
+      "q": "How much deposit do I pay?",
+      "a": "Deposits start from £99 per person for short-haul and £150 per person for long-haul packages. The balance is due 12 weeks before departure."
+    },
+    {
+      "q": "Are your holidays financially protected?",
+      "a": "Yes — all flight-inclusive packages are ATOL protected, and accommodation-only bookings carry ABTA-style protection. You receive a certificate with every booking."
+    },
+    {
+      "q": "What baggage is included?",
+      "a": "Most short-haul packages include 20kg hold luggage per person; long-haul usually includes 23kg. Low-cost carrier deals may be hand-baggage only — we always state this clearly in your quote."
+    },
+    {
+      "q": "Do I need travel insurance and visas?",
+      "a": "Travel insurance is required for every booking and can be added from £25. We advise on visa and passport-validity rules for your destination, but you should always double-check with the official government travel advice."
+    },
+    {
+      "q": "Can I travel if my passport expires soon?",
+      "a": "Many destinations require 3–6 months validity beyond your return date, so check before booking. We will flag the rule for your destination, but renewing early is the safest option."
+    },
+    {
+      "q": "How much are Spain holiday packages?",
+      "a": "Spain 7-night packages typically run £399 to £599 per person including flights and 20kg luggage. Share your dates, party size and budget for an exact quote."
+    }
+  ],
+  "greeting": "Hi, welcome to our travel team — I can recommend holiday packages and arrange quotes. Where are you dreaming of going, and what is your budget?",
+  "hours": "Mon–Fri 09:00–18:00, Sat 09:00–17:00",
+  "id": "chat-travel-uk",
+  "industry": "travel",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Travel Assistant — UK",
+  "services": [
+    {
+      "name": "Spain 7-night package (flights + hotel, from)",
+      "price_from_gbp": 499
+    },
+    {
+      "name": "Greece 7-night package (flights + hotel, from)",
+      "price_from_gbp": 549
+    },
+    {
+      "name": "European city break 3-night (from)",
+      "price_from_gbp": 199
+    },
+    {
+      "name": "Long-haul 10-night package (from)",
+      "price_from_gbp": 899
+    },
+    {
+      "name": "Travel insurance (per trip, from)",
+      "price_from_gbp": 25
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK travel agency. Duties: recommend holiday packages matched to budget and dates, explain deposits, ATOL protection and baggage clearly, capture name/email/budget for every enquiry, and hand complex itineraries to a senior consultant. Use British English, keep chat replies concise (1–2 short sentences), and never invent flight availability or prices — always offer a consultant callback for live quotes.",
+  "voice": "sonia"
+}

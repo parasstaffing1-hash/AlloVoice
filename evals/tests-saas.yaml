@@ -1,0 +1,38 @@
+# SaaS template QA (chat-saas): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: visitor
+# turn, agent turn, close). The `prompt` var is the decisive visitor turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK support replies, £ per-user pricing, 14-day trial,
+# booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[saas-a] Free-trial signup + full lead capture. Script — T1 visitor: 'I'd like to start a 14-day free trial of the Growth plan.' T2 agent explains trial terms and takes contact: Priya Shah, priya@brightstudio.co.uk, Bright Studio (12 staff). T3 agent confirms trial signup + booking reference. Probe compresses T1+T2 answers into one turn; PASS = confirms trial AND quotes a booking reference."
+  vars:
+    template_id: chat-saas
+    prompt: "Hi, I'd like to start a 14-day free trial of the Growth plan. My name is Priya Shah, email priya@brightstudio.co.uk, company Bright Studio with 12 staff — please sign me up!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: trial
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[saas-b] Growth plan price enquiry. Script — T1 visitor: 'How much does the Growth plan cost per user?' T2 agent quotes a £ per-user price, notes annual discount, asks company details to start a trial. PASS = reply names a £ price."
+  vars:
+    template_id: chat-saas
+    prompt: "How much does the Growth plan cost per user per month? Can you give me a price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[saas-c] Off-topic visitor (birthday poem request). Script — T1 visitor: 'Can you write me a birthday poem for my mum?' T2 agent handles gracefully: declines lightly, states it helps with product/trial questions, offers trial or human help. PASS = helpful redirect ('help') tied to trial talk."
+  vars:
+    template_id: chat-saas
+    prompt: "Can you write me a birthday poem for my mum? Something funny, please."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: help
+    - type: icontains
+      value: trial

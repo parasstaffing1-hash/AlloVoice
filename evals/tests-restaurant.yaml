@@ -1,0 +1,34 @@
+# Restaurant template QA (chat-restaurant-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[restaurant-a] Table booking + full lead capture. Script — T1 caller: 'Table for 4 this Saturday evening.' T2 agent takes contact: Jess Carter, 07700 900789, party of 4, Saturday 19:30. T3 agent confirms table + booking reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-restaurant-uk
+    prompt: "Can I book a table for 4 this Saturday at 7:30pm? I'm Jess Carter, number 07700 900789."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[restaurant-b] Sunday roast price enquiry. Script — T1 caller: 'How much is the Sunday roast?' T2 agent quotes a £ price, mentions set lunch/alternatives, asks party size to book. PASS = reply names a £ price."
+  vars:
+    template_id: chat-restaurant-uk
+    prompt: "How much is your Sunday roast? What else is on the menu?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[restaurant-c] Severe allergy edge case. Script — T1 caller: 'My daughter has a severe nut allergy, is your menu safe?' T2 agent treats it seriously: mentions allergens, kitchen precautions, hands off to manager — never breezily guarantees safety. PASS = mentions allergen/allergy or manager/chef."
+  vars:
+    template_id: chat-restaurant-uk
+    prompt: "My daughter has a severe nut allergy — is your menu safe for her? Can you cater for us?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: allerg
+    - type: javascript
+      value: output.toLowerCase().includes('allerg') || output.toLowerCase().includes('manager') || output.toLowerCase().includes('chef') || output.toLowerCase().includes('kitchen')

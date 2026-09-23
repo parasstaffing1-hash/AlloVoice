@@ -1,0 +1,34 @@
+# Auto-repair template QA (voice-autorepair-us): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[autorepair-a] Repair booking + full lead capture. Script — T1 caller: 'My brakes are squealing, I need to book in.' T2 agent takes contact: ZIP 60614, Mike Torres, 312-555-0147, F-150 brake issue. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-autorepair-us
+    prompt: "My brakes are squealing and I need to book in. I'm Mike Torres, ZIP 60614, number 312-555-0147 — it's a Ford F-150. Can you schedule me?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[autorepair-b] Diagnostic fee price enquiry. Script — T1 caller: 'How much is a diagnostic check, my check engine light is on?' T2 agent quotes a $ price, says what is included, asks ZIP to book. PASS = reply names a $ price."
+  vars:
+    template_id: voice-autorepair-us
+    prompt: "My check engine light is on — how much is a diagnostic check? Can you give me a price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "$"
+
+- description: "[autorepair-c] Diagnostics and warranty question. Script — T1 caller: 'Do you do diagnostics, and is your work warrantied?' T2 agent confirms diagnostics, states the warranty terms, asks vehicle details. PASS = mentions diagnostics OR warranty."
+  vars:
+    template_id: voice-autorepair-us
+    prompt: "Do you do engine diagnostics, and is your repair work covered by a warranty?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: diagnostic
+    - type: icontains
+      value: warranty

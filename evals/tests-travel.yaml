@@ -1,0 +1,34 @@
+# Travel template QA (chat-travel-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[travel-a] Holiday enquiry + full lead capture. Script — T1 caller: 'Family holiday in Spain this August, budget around £2000.' T2 agent takes contact: Priya Shah, priya.shah@example.co.uk, budget £2500, recommends packages. T3 agent confirms callback + enquiry reference. Probe compresses T1+T2 answers into one turn; PASS = booking/enquiry language OR reference."
+  vars:
+    template_id: chat-travel-uk
+    prompt: "We're looking for a family holiday in Spain this August, budget around £2000. I'm Priya Shah, email priya.shah@example.co.uk — can someone send me options?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('quote') || output.toLowerCase().includes('callback') || output.toLowerCase().includes('call back')
+
+- description: "[travel-b] Package price enquiry. Script — T1 caller: 'What do Spain packages start from?' T2 agent quotes a £ price, mentions what's included, asks budget to tailor quote. PASS = reply names a £ price."
+  vars:
+    template_id: chat-travel-uk
+    prompt: "What do your 7-night Spain packages start from? What's included?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[travel-c] Passport-validity edge case. Script — T1 caller: 'My passport expires two months after we return, can I still travel?' T2 agent flags 3–6 month validity rules, advises checking official guidance/renewing early, never guarantees boarding. PASS = mentions passport or validity."
+  vars:
+    template_id: chat-travel-uk
+    prompt: "My passport expires two months after we get back — can I still travel to Spain on it?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: passport
+    - type: javascript
+      value: output.toLowerCase().includes('passport') || output.toLowerCase().includes('validity') || output.toLowerCase().includes('renew')

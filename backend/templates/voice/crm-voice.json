@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "company",
+    "request"
+  ],
+  "brand_color": "#6D28D9",
+  "demo_script": [
+    {
+      "expect_contains": "invoice",
+      "user": "What can you actually do for me?"
+    },
+    {
+      "expect_contains": "included",
+      "user": "How much does it cost to create an invoice by voice?"
+    },
+    {
+      "expect_contains": "schedul",
+      "user": "Please schedule a follow-up for Mrs Patel's boiler service, I'm Dave from Apex Plumbing, number 07700 900654"
+    }
+  ],
+  "escalation": "If a customer record cannot be found, a payment is disputed, or the caller makes a complaint: flag the request for the office manager and promise a human callback the same working day. Never invent customer details, balances or appointment times — say what you will check and confirm.",
+  "faqs": [
+    {
+      "q": "What can the CRM voice assistant do?",
+      "a": "It can create invoices and payment requests, update customer records, schedule follow-up visits, and read back tomorrow's jobs. Every action is confirmed back to you with a job reference."
+    },
+    {
+      "q": "How do I create an invoice by voice?",
+      "a": "Just say the customer name, the work done and the amount — for example 'Invoice Mrs Patel £180 for a boiler service'. The invoice is created instantly and included in your plan at £0."
+    },
+    {
+      "q": "Can it update a customer record?",
+      "a": "Yes — dictate the customer name plus the new phone number, address or notes and the record is updated on the spot. Changes are read back for confirmation and included at £0."
+    },
+    {
+      "q": "Can it schedule a follow-up visit?",
+      "a": "Yes — give the customer name, the job and your preferred day, and the follow-up is booked with a job reference. The customer receives a text confirmation automatically."
+    },
+    {
+      "q": "Can it tell me tomorrow's jobs?",
+      "a": "Yes — ask 'What are tomorrow's jobs?' and it reads back each visit in time order with customer names and addresses. It is the fastest way to brief the team each morning."
+    },
+    {
+      "q": "How much do these features cost?",
+      "a": "All voice features — invoices, record updates, follow-ups and job read-backs — are included in your plan at £0. There are no per-call or per-invoice charges."
+    }
+  ],
+  "greeting": "Hello, this is your CRM voice assistant — I can raise invoices, update customer records, book follow-ups and read back tomorrow's jobs. What shall we do first?",
+  "hours": "Mon–Fri 08:00–18:00 voice support, plus 24/7 for urgent jobs",
+  "id": "voice-crm-uk",
+  "industry": "crm",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "CRM Voice Assistant — UK",
+  "services": [
+    {
+      "name": "Create invoice / payment request (included)",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Update customer record (included)",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Schedule follow-up visit (included)",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Tomorrow's jobs read-back (included)",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Register new customer (included)",
+      "price_from_gbp": 0
+    }
+  ],
+  "system_prompt": "You are the CRM voice assistant for UK trades firms (plumbers, electricians, builders). Duties: create invoices and payment requests, update customer records, schedule follow-up visits, and read back tomorrow's jobs in time order. Always repeat details back for confirmation and confirm every action with a job reference like BK-XXXXXX. All features are included platform features at £0 — say so when asked about cost. Use British English, keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

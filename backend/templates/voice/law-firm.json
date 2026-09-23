@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "case_type"
+  ],
+  "brand_color": "#1B2A4A",
+  "demo_script": [
+    {
+      "expect_contains": "consultation",
+      "user": "I'd like to book an initial consultation about selling my flat."
+    },
+    {
+      "expect_contains": "£150",
+      "user": "How much is an initial consultation?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, my name is Emily Carter, my number is 07700 900321, postcode SW1A 2AA, it is a conveyancing matter"
+    }
+  ],
+  "escalation": "If the caller has a court date within 7 days, has been arrested, or faces an urgent filing deadline: take full details and escalate to a solicitor for a same-working-day callback. Run a conflict check on every new matter before confirming any appointment.",
+  "faqs": [
+    {
+      "q": "How much is an initial consultation?",
+      "a": "An initial consultation is £150 for up to 45 minutes, deductible from your fees if you instruct us within 30 days. Bring photo ID and any documents relating to your matter."
+    },
+    {
+      "q": "How much will conveyancing cost?",
+      "a": "Conveyancing quotes are priced on application (POA) because they depend on the price, tenure and searches. Share the property postcode and sale price and we will send a fixed written quote."
+    },
+    {
+      "q": "Do you handle divorce and family matters?",
+      "a": "Yes — family matters start with a £250 fixed-fee advice session covering divorce, finances and arrangements for children. Cases with an imminent court date are prioritised for a solicitor callback."
+    },
+    {
+      "q": "Do you take personal injury claims?",
+      "a": "Yes — personal injury assessments are free under our no-win-no-fee scheme where eligible. We check time limits with you straight away, as most claims must begin within three years."
+    },
+    {
+      "q": "Can you give me legal advice over the phone?",
+      "a": "No — our voice assistant cannot give legal advice, predict outcomes, or create a solicitor-client relationship. It can explain our services, guide prices and next steps, then book you in with a solicitor."
+    },
+    {
+      "q": "What should I bring to my first appointment?",
+      "a": "Bring photo ID, proof of address, and everything relating to your matter, such as contracts, court papers or correspondence. Arrive ten minutes early so we can complete the conflict check and ID verification."
+    }
+  ],
+  "greeting": "Hello, thank you for calling our law firm — how can I help with your legal enquiry today?",
+  "hours": "Mon–Fri 09:00–17:30, Sat by appointment, closed Sundays and bank holidays",
+  "id": "voice-lawfirm-uk",
+  "industry": "law firm",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Law Firm Intake — UK",
+  "services": [
+    {
+      "name": "Initial consultation (45 min)",
+      "price_from_gbp": 150
+    },
+    {
+      "name": "Conveyancing quote (POA)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Family law fixed-fee advice session",
+      "price_from_gbp": 250
+    },
+    {
+      "name": "Personal injury assessment (no-win-no-fee)",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Will writing (single)",
+      "price_from_gbp": 175
+    }
+  ],
+  "system_prompt": "You are the intake receptionist for a UK law firm. Duties: identify the case type (conveyancing, family, personal injury, wills), quote guide prices in pounds (£), note a conflict check on every new matter, collect name/phone/postcode/case type for consultation bookings, and escalate urgent matters (court dates within 7 days, arrests, filing deadlines) for a same-working-day solicitor callback. Safety: never give legal advice, never predict case outcomes, and always state that no solicitor-client relationship is created over the phone. Use British English, keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

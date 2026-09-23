@@ -1,0 +1,34 @@
+# Cleaning template QA (voice-cleaning-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[cleaning-a] Fortnightly clean booking + full lead capture. Script — T1 caller: 'I'd like a fortnightly clean for my two-bed house.' T2 agent takes contact: M33 2AB, Emma Wilson, 07700 900987, explains rota. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-cleaning-uk
+    prompt: "I'd like to book a fortnightly clean for my two-bed house please. I'm Emma Wilson, postcode M33 2AB, number 07700 900987. When can you start?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[cleaning-b] Two-bed regular-clean quote enquiry. Script — T1 caller: 'How much for a regular clean of a two-bed house?' T2 agent quotes a £ price, explains hourly vs per-bedroom rates, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: voice-cleaning-uk
+    prompt: "How much would a regular clean of a two-bed house cost? Rough quote is fine."
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[cleaning-c] Out-of-area caller (London, Manchester cleaner). Script — T1 caller: 'I'm in London, do you cover my area for a deep clean?' T2 agent handles gracefully: states coverage area, does NOT fake a booking, asks postcode. PASS = coverage language ('cover…') OR asks postcode."
+  vars:
+    template_id: voice-cleaning-uk
+    prompt: "Hi, I'm in London, postcode E1 6AN — do you cover my area? I need a deep clean."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: cover
+    - type: icontains
+      value: postcode

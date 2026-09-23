@@ -1,0 +1,38 @@
+# Ecommerce template QA (chat-ecommerce): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: shopper
+# turn, agent turn, close). The `prompt` var is the decisive shopper turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK retail replies, £ delivery pricing, 30-day returns,
+# booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[ecommerce-a] Order-tracking help + full lead capture. Script — T1 shopper: 'Where is my order ORD-78412, it hasn't arrived?' T2 agent looks it up and takes contact: Tom Baker, tom.baker@example.co.uk, order ORD-78412. T3 agent confirms lookup + booking reference. Probe compresses T1+T2 answers into one turn; PASS = talks about the order AND quotes a booking reference."
+  vars:
+    template_id: chat-ecommerce
+    prompt: "Hi, can you check my order ORD-78412? It hasn't arrived yet. My name is Tom Baker, email tom.baker@example.co.uk, order number ORD-78412 — please help!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: order
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[ecommerce-b] Delivery price enquiry. Script — T1 shopper: 'How much is standard delivery, and is it free over a certain amount?' T2 agent quotes £ delivery prices and the £50 free threshold, asks order details if needed. PASS = reply names a £ price."
+  vars:
+    template_id: chat-ecommerce
+    prompt: "How much is standard delivery, and is it free over a certain amount? Can you give me a price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[ecommerce-c] Off-topic shopper (car servicing request). Script — T1 shopper: 'Can you service my car engine this week?' T2 agent handles gracefully: declines lightly, states it helps with orders/returns, asks for order number. PASS = helpful redirect ('help') tied to returns talk."
+  vars:
+    template_id: chat-ecommerce
+    prompt: "Quick one — can you service my car engine this week? It's making a funny noise."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: help
+    - type: icontains
+      value: return

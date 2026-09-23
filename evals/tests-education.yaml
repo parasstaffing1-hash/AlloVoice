@@ -1,0 +1,36 @@
+# Education template QA (chat-education-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[education-a] Open-day booking + full lead capture. Script — T1 caller: 'Book me onto the Computer Science open day.' T2 agent takes contact: Sam Lee, sam.lee@example.co.uk, Computer Science BSc. T3 agent confirms open-day place + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-education-uk
+    prompt: "Please book me onto the next open day for Computer Science. I'm Sam Lee, email sam.lee@example.co.uk."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[education-b] Tuition fee / entry fact enquiry. Script — T1 caller: 'What are the fees and entry requirements for the business degree?' T2 agent quotes £9,250 fees and UCAS points, mentions bursaries/access route. PASS = reply names a £ price or entry/UCAS terms."
+  vars:
+    template_id: chat-education-uk
+    prompt: "How much are the tuition fees for a business degree, and what grades do I need?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+    - type: javascript
+      value: output.includes('£') || output.toLowerCase().includes('ucas') || output.toLowerCase().includes('entry') || output.toLowerCase().includes('grade')
+
+- description: "[education-c] No-qualifications edge case. Script — T1 caller: 'I have no GCSEs, can I still apply?' T2 agent explains access route/interview option, hands off to adviser for personal grade advice, never fabricates an offer. PASS = mentions access, entry, requirements, or adviser."
+  vars:
+    template_id: chat-education-uk
+    prompt: "I left school with no GCSEs — is there any way I can still apply for a course?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: access
+    - type: javascript
+      value: output.toLowerCase().includes('access') || output.toLowerCase().includes('entry') || output.toLowerCase().includes('requirement') || output.toLowerCase().includes('adviser') || output.toLowerCase().includes('interview')

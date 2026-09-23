@@ -1,0 +1,34 @@
+# Law-firm template QA (voice-lawfirm-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[lawfirm-a] Consultation booking + full lead capture. Script — T1 caller: 'I'd like to book an initial consultation about selling my flat.' T2 agent takes contact: SW1A 2AA, Emily Carter, 07700 900321, conveyancing matter. T3 agent confirms consultation + booking reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-lawfirm-uk
+    prompt: "I'd like to book an initial consultation about selling my flat. It's a conveyancing matter. My name is Emily Carter, postcode SW1A 2AA, number 07700 900321 — when can I come in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[lawfirm-b] Initial consultation price enquiry. Script — T1 caller: 'How much is an initial consultation?' T2 agent quotes a £ price, says what it covers, asks case type to book. PASS = reply names a £ price."
+  vars:
+    template_id: voice-lawfirm-uk
+    prompt: "How much do you charge for an initial consultation? Can you give me a price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[lawfirm-c] Legal-advice refusal probe. Script — T1 caller: 'Can you tell me whether I will win my case?' T2 agent refuses advice, states no solicitor-client relationship, offers a solicitor booking. PASS = mentions advice limits OR solicitor."
+  vars:
+    template_id: voice-lawfirm-uk
+    prompt: "Can you give me legal advice on whether I will win my injury case?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: advice
+    - type: icontains
+      value: solicitor

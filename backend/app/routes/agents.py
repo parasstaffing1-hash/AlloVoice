@@ -40,25 +40,27 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 TEMPLATES_DIR = _BACKEND_DIR / "templates" / "voice"
+CHAT_TEMPLATES_DIR = _BACKEND_DIR / "templates" / "chat"
 
 PACKS: Dict[str, dict] = {}
 
 
 def _load_packs() -> Dict[str, dict]:
-    """Read templates/voice/*.json into {id: pack}. Never raises."""
+    """Read templates/voice/*.json + templates/chat/*.json into {id: pack}."""
     packs: Dict[str, dict] = {}
     try:
-        if not TEMPLATES_DIR.is_dir():
-            return packs
-        for path in sorted(TEMPLATES_DIR.glob("*.json")):
-            try:
-                with open(path, "r", encoding="utf-8") as fh:
-                    pack = json.load(fh)
-                pid = (pack.get("id") or "").strip()
-                if pid and isinstance(pack, dict):
-                    packs[pid] = pack
-            except Exception:
+        for directory in (TEMPLATES_DIR, CHAT_TEMPLATES_DIR):
+            if not directory.is_dir():
                 continue
+            for path in sorted(directory.glob("*.json")):
+                try:
+                    with open(path, "r", encoding="utf-8") as fh:
+                        pack = json.load(fh)
+                    pid = (pack.get("id") or "").strip()
+                    if pid and isinstance(pack, dict):
+                        packs[pid] = pack
+                except Exception:
+                    continue
     except Exception:
         return packs
     return packs
@@ -166,18 +168,155 @@ _BOOK_WORDS_STRONG = ("book", "booking", "appointment", "schedule")
 _BOOK_WORDS_SOFT = (
     "visit", "call out", "callout", "engineer", "come round", "come out",
 )
+_CLAIM_WORDS = ("claim", "claiming")
+_SIGNUP_WORDS = ("trial", "sign up", "signup", "register me", "join")
 
 _POSTCODE_RE = re.compile(
-    r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.IGNORECASE
+    r"\b(?:[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}|\d{5}(?:-\d{4})?)\b", re.IGNORECASE
 )
-_PHONE_RE = re.compile(r"(\+44[\d\s-]{9,}|07[\d\s-]{9,}|020[\d\s-]{7,})")
+_PHONE_RE = re.compile(
+    r"(\+44[\d\s-]{9,}|07[\d\s-]{9,}|020[\d\s-]{7,}"
+    r"|\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b"
+    r"|\(\d{3}\)\s?\d{3}[-.\s]?\d{4}"
+    r"|\+\d[\d\s-]{7,}\d)"
+)
+
+
+def _service_price(service: dict) -> str:
+    """Price text honouring whichever currency key the pack uses."""
+    try:
+        for key, symbol in (("price_from_gbp", "£"), ("price_from_usd", "$"),
+                            ("price_from_aed", "AED ")):
+            value = (service or {}).get(key)
+            if isinstance(value, (int, float)):
+                return f"{symbol}{value:g}"
+    except Exception:
+        pass
+    return "POA"
+
+
+def _has_email(message: str) -> bool:
+    try:
+        import re as _re
+
+        return bool(_re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", message or ""))
+    except Exception:
+        return False
+
+
+_EMERGENCY_WORDS = (
+    "sparking", "burning", "smoke", "gas leak", "smell of gas", "flood",
+    "burst", "electrocut", "electric shock", "carbon monoxide",
+)
+_EMERGENCY_SAFETY = (
+    "switch off", "stay clear", "do not touch", "don't touch",
+    "call 999", "call 111", "stopcock", "isolate",
+)
+_PRICE_WORDS = (
+    "price", "pricing", "cost", "charge", "how much", "quote",
+    "expensive", "cheap", "fee", "rate", "much is", "much does",
+    "figure", "excess", "amount",
+)
+
+
+def _ensure_safety_reply(reply: str, message: str) -> str:
+    """Deterministic safety net: emergency reports must carry a safety
+    instruction even if the model drifts. Never raises."""
+    try:
+        t = (message or "").lower()
+        r = (reply or "").lower()
+        if any(w in t for w in _EMERGENCY_WORDS) and not any(
+                s in r for s in _EMERGENCY_SAFETY):
+            return ("If anyone is in immediate danger, switch off power and gas "
+                    "at the mains and stay clear. " + (reply or "").strip()).strip()
+    except Exception:
+        pass
+    return reply
+
+
+def _ensure_price_answer(reply: str, message: str, pack: dict) -> str:
+    """Deterministic pricing net: price questions must show a figure from
+    the pack when one exists. Never raises."""
+    try:
+        import re as _re
+
+        t = (message or "").lower()
+        r = reply or ""
+        if not any(w in t for w in _PRICE_WORDS):
+            return reply
+        if _re.search(r"(£|\$|AED)\s?\d", r):
+            return reply
+        priced = []
+        for s in (pack or {}).get("services") or []:
+            if isinstance(s, dict):
+                price = _service_price(s)
+                if price != "POA":
+                    priced.append(f"{s.get('name', 'Service')} from {price}")
+            if len(priced) >= 2:
+                break
+        if priced:
+            return (r.rstrip() + " Guide prices: " + "; ".join(priced) + ".").strip()
+        # Fallback: a pack FAQ holding a £ figure matching the question
+        # (e.g. excess splits, fee schedules) beats saying nothing.
+        try:
+            import re as _re2
+
+            tokens = {w for w in _re2.findall(r"[a-z]{4,}", t) if w not in
+                      ("what", "with", "your", "have", "this", "that", "from",
+                       "please", "thank", "thanks", "hello", "there")}
+            best, best_score = None, 0
+            for f in (pack or {}).get("faqs") or []:
+                if not isinstance(f, dict):
+                    continue
+                a = str(f.get("a", "") or "")
+                if not _re2.search(r"(£|\$|AED)\s?\d", a):
+                    continue
+                hay = f"{f.get('q', '')} {a}".lower()
+                score = sum(hay.count(tok) for tok in tokens)
+                if score > best_score:
+                    best, best_score = a, score
+            if best and best_score > 0:
+                snippet = best.strip()
+                if len(snippet) > 220:
+                    snippet = snippet[:220].rsplit(" ", 1)[0] + "…"
+                return (r.rstrip() + f" From our faqs: {snippet}").strip()
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return reply
+
+
+_OFFTOPIC_PATTERNS = (
+    "poem", "poetry", "song lyrics", "write me a story", "essay",
+    "homework", "write me a joke",
+)
+_DECLINE_WORDS = (
+    "can't", "cannot", "sorry", "afraid", "unable", "not able",
+)
+
+
+def _ensure_redirect(reply: str, message: str) -> str:
+    """Deterministic off-topic guard: creative/personal requests must carry
+    an explicit decline, or the agent sounds like it agreed. Never raises."""
+    try:
+        t = (message or "").lower()
+        r = reply or ""
+        if any(p in t for p in _OFFTOPIC_PATTERNS) and not any(
+                d in r.lower() for d in _DECLINE_WORDS):
+            return ("I can't help with that — " + r.strip()).strip()
+    except Exception:
+        pass
+    return reply
 
 
 def _has_booking_intent(message: str) -> bool:
     """Lead-worthy booking intent. Explicit booking verbs (book/appointment/
     schedule) always count; softer trade words (visit/callout/engineer) only
     count with a postcode or phone number; postcode+phone together also count
-    (contact details with no verb yet). Price-only questions stay info-stage."""
+    (contact details with no verb yet). Trial/signup/claim requests count when
+    contact details (email/phone/postcode) are present. Price-only questions
+    stay info-stage."""
     t = (message or "").lower()
     try:
         has_postcode = bool(_POSTCODE_RE.search(message or ""))
@@ -187,6 +326,10 @@ def _has_booking_intent(message: str) -> bool:
     if any(w in t for w in _BOOK_WORDS_STRONG):
         return True
     if has_postcode and has_phone:
+        return True
+    contact = has_postcode or has_phone or _has_email(message)
+    if contact and (any(w in t for w in _SIGNUP_WORDS)
+                    or any(w in t for w in _CLAIM_WORDS)):
         return True
     if has_postcode or has_phone:
         return any(w in t for w in _BOOK_WORDS_SOFT)
@@ -223,9 +366,7 @@ def _faq_fallback(pack: dict, message: str) -> str:
             for s in services:
                 if not isinstance(s, dict):
                     continue
-                price = s.get("price_from_gbp")
-                price_txt = f"£{price}" if isinstance(price, (int, float)) else "POA"
-                lines.append(f"{s.get('name', 'Service')} from {price_txt}")
+                lines.append(f"{s.get('name', 'Service')} from {_service_price(s)}")
             if lines:
                 return (
                     "Our guide prices: " + "; ".join(lines) + ". "
@@ -262,9 +403,7 @@ def _build_prompt(pack: dict, message: str, history: List[dict]) -> str:
         )
         services = pack.get("services") or []
         svc_lines = "\n".join(
-            f"- {s.get('name', '')}: from £{s.get('price_from_gbp')}"
-            if isinstance(s.get("price_from_gbp"), (int, float))
-            else f"- {s.get('name', '')}: POA"
+            f"- {s.get('name', '')}: from {_service_price(s)}"
             for s in services if isinstance(s, dict)
         )
         recent = (history or [])[-4:]
@@ -334,12 +473,19 @@ async def chat(data: ChatRequest, request: Request):
             except Exception:
                 reply = "Thanks for getting in touch. How can I help?"
 
+        reply = _ensure_safety_reply(reply, message)
+        reply = _ensure_price_answer(reply, message, pack)
+        reply = _ensure_redirect(reply, message)
+
         booking = _has_booking_intent(message)
         lead_reference = _make_lead_reference() if booking else None
         stage = "booking" if booking else "info"
         if lead_reference and "TPL-" not in reply:
             # Voice callers can't see JSON — speak the reference aloud.
-            reply = f"{reply.rstrip()} Your booking reference is {lead_reference}."
+            # Claim flows hear "claim reference", everything else "booking".
+            label = "claim" if any(
+                w in (message or "").lower() for w in _CLAIM_WORDS) else "booking"
+            reply = f"{reply.rstrip()} Your {label} reference is {lead_reference}."
 
         try:
             _append_turn(session_id, "user", message)

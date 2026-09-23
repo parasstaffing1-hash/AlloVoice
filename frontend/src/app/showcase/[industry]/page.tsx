@@ -23,13 +23,29 @@ const SLUG_TO_ID: Record<string, string> = {
   plumbing: "voice-plumbing-uk",
   hvac: "voice-hvac-uk",
   electrician: "voice-electrician-uk",
+  "real-estate": "voice-real-estate-uk",
+  dental: "voice-dental-uk",
+  cleaning: "voice-cleaning-uk",
+  roofing: "voice-roofing-us",
+  "law-firm": "voice-lawfirm-uk",
+  "auto-repair": "voice-autorepair-us",
+  hotel: "voice-hotel-ae",
+  "crm-voice": "voice-crm-uk",
+  saas: "chat-saas",
+  ecommerce: "chat-ecommerce",
+  recruitment: "chat-recruitment-uk",
+  construction: "chat-construction-uk",
+  insurance: "chat-insurance-uk",
+  gym: "chat-gym-uk",
+  restaurant: "chat-restaurant-uk",
+  travel: "chat-travel-uk",
+  education: "chat-education-uk",
+  medical: "chat-medical-uk",
 };
 
-const ID_TO_SLUG: Record<string, string> = {
-  "voice-plumbing-uk": "plumbing",
-  "voice-hvac-uk": "hvac",
-  "voice-electrician-uk": "electrician",
-};
+const ID_TO_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(SLUG_TO_ID).map(([slug, id]) => [id, slug])
+);
 
 type Pack = {
   id: string;

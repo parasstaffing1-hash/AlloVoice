@@ -1,0 +1,34 @@
+# Gym template QA (chat-gym-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[gym-a] Free-trial booking + full lead capture. Script — T1 caller: 'I'd like a free trial session.' T2 agent takes contact: Alex Morgan, 07700 900456, goal weight loss. T3 agent confirms trial booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-gym-uk
+    prompt: "I'd like to book a free trial session please. I'm Alex Morgan, number 07700 900456, and my goal is weight loss. When can I come in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('trial')
+
+- description: "[gym-b] Membership price enquiry. Script — T1 caller: 'How much is monthly membership?' T2 agent quotes a £ price, mentions off-peak/annual options, asks goal to book trial. PASS = reply names a £ price."
+  vars:
+    template_id: chat-gym-uk
+    prompt: "How much does monthly membership cost? Is there a joining fee?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[gym-c] Junior membership edge case. Script — T1 caller: 'Can my 14-year-old son join the gym?' T2 agent explains junior-hours supervision rule, does NOT promise full adult access, offers induction booking. PASS = mentions junior, age, or supervised hours."
+  vars:
+    template_id: chat-gym-uk
+    prompt: "Can my 14-year-old son join the gym and use it on his own?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: junior
+    - type: javascript
+      value: output.toLowerCase().includes('14') || output.toLowerCase().includes('16') || output.toLowerCase().includes('supervis') || output.toLowerCase().includes('age')

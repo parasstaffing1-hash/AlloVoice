@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "course"
+  ],
+  "brand_color": "#6C3FB5",
+  "demo_script": [
+    {
+      "expect_contains": "open day",
+      "user": "When is your next open day for computer science?"
+    },
+    {
+      "expect_contains": "entry",
+      "user": "What are the entry requirements for the business degree?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me onto the open day, I'm Sam Lee, sam.lee@example.co.uk, interested in Computer Science BSc"
+    }
+  ],
+  "escalation": "If your question involves visas, disability support, or individual advice on grades and clearing: our admissions advisers will contact you personally. Leave your details and we reply within two working days.",
+  "faqs": [
+    {
+      "q": "How do I apply?",
+      "a": "Undergraduate applications go through UCAS (deadline late January); postgraduate and short courses apply directly on our website. Our advisers check every application and reply within two working days."
+    },
+    {
+      "q": "What are the entry requirements?",
+      "a": "Most degrees ask for 112–128 UCAS points (BBC–ABB) or equivalent, plus GCSE English and maths at grade 4. Mature students without formal qualifications can apply via our access route with an interview."
+    },
+    {
+      "q": "How much are tuition fees and is funding available?",
+      "a": "Full-time UK undergraduate fees are £9,250 a year, covered by student loans for eligible students. Bursaries of £500–£2,000 are available for lower-income households — ask us for the eligibility checker."
+    },
+    {
+      "q": "When are the open days?",
+      "a": "Open days run each October, January and June with campus tours, taster lectures and accommodation viewings. Book with your name, email and course of interest and we will send your personalised itinerary."
+    },
+    {
+      "q": "When do terms start?",
+      "a": "Autumn term starts late September, spring term mid-January, and summer term late April. Enrolment week for new starters is the week before autumn term."
+    },
+    {
+      "q": "Do you accept international students?",
+      "a": "Yes — we welcome students from over 60 countries and sponsor Student visas. International fees start from £14,500 a year, and our team guides you through visas, English requirements and accommodation."
+    }
+  ],
+  "greeting": "Hello, welcome to our admissions team — I can help you find a course, check entry requirements and book open days. Which subject interests you?",
+  "hours": "Mon–Fri 09:00–17:00",
+  "id": "chat-education-uk",
+  "industry": "education",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Admissions Assistant — UK",
+  "services": [
+    {
+      "name": "Undergraduate degree (fees vary, UK)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Postgraduate degree (fees vary)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Short evening course, 8 weeks (from)",
+      "price_from_gbp": 250
+    },
+    {
+      "name": "English language course, per term (from)",
+      "price_from_gbp": 1200
+    },
+    {
+      "name": "Open day visit",
+      "price_from_gbp": 0
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK college admissions team. Duties: answer admissions, course, fee and open-day questions, help enquirers shortlist courses, book open-day visits, and collect name/email/course-of-interest for every lead. Use British English, keep chat replies concise (1–2 short sentences), and hand visa, disability-support or individual grade-advice cases to a human adviser rather than guessing.",
+  "voice": "sonia"
+}

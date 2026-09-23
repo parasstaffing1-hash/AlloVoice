@@ -1,0 +1,38 @@
+# Construction template QA (chat-construction-uk): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: homeowner
+# turn, agent turn, close). The `prompt` var is the decisive homeowner turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK builder replies, £ ballpark ranges, free site survey,
+# booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[construction-a] Extension quote request + full lead capture. Script — T1 homeowner: 'I need a quote for a single-storey extension in Leeds.' T2 agent explains free survey and takes contact: Sarah Jones, 07890 111222, LS6 2AB, extension. T3 agent confirms survey booking + booking reference. Probe compresses T1+T2 answers into one turn; PASS = talks about the survey AND quotes a booking reference."
+  vars:
+    template_id: chat-construction-uk
+    prompt: "Hi, I need a quote for a single-storey extension in Leeds, postcode LS6 2AB. My name is Sarah Jones, phone 07890 111222 — please arrange a site survey!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: survey
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[construction-b] Extension ballpark price enquiry. Script — T1 homeowner: 'Roughly how much does a single-storey extension cost?' T2 agent quotes a £ from-price, notes survey gives a fixed quote, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: chat-construction-uk
+    prompt: "Roughly how much does a single-storey extension cost? Can you give me a ballpark price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[construction-c] Out-of-area homeowner (Glasgow, Leeds builder). Script — T1 homeowner: 'I'm in Glasgow, can you help with an extension?' T2 agent handles gracefully: states coverage area, does NOT fake a booking, asks postcode. PASS = coverage language ('cover…') OR asks postcode."
+  vars:
+    template_id: chat-construction-uk
+    prompt: "Hi, I'm in Glasgow, postcode G1 2AB — do you cover my area? I need a single-storey extension."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: cover
+    - type: icontains
+      value: postcode

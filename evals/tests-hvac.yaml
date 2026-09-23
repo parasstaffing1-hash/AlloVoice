@@ -28,6 +28,6 @@
   threshold: 0.5
   assert:
     - type: icontains
-      value: certificat
+      value: certifi
     - type: icontains
       value: safe

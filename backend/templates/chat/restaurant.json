@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "party_size",
+    "date"
+  ],
+  "brand_color": "#B5651D",
+  "demo_script": [
+    {
+      "expect_contains": "book",
+      "user": "Can I book a table for 4 this Saturday evening?"
+    },
+    {
+      "expect_contains": "£22",
+      "user": "How much is the Sunday roast?"
+    },
+    {
+      "expect_contains": "allergen",
+      "user": "My daughter has a severe nut allergy — is your menu safe for her?"
+    }
+  ],
+  "escalation": "For parties of 9 or more, private hire, or any severe allergy: we will have our manager call you back to confirm arrangements personally. Leave your details and we confirm every booking by text within one working hour.",
+  "faqs": [
+    {
+      "q": "How do I book a table?",
+      "a": "Tell us your name, phone number, party size and preferred date and time, and we will confirm by text. Tables are held for 15 minutes past the booking time."
+    },
+    {
+      "q": "What is on the menu and how much does it cost?",
+      "a": "Our à la carte mains run £14–£28, the two-course set lunch is £19.95, and the Sunday roast is £22. The full menu with today's specials is on our website."
+    },
+    {
+      "q": "Can you cater for dietary requirements?",
+      "a": "Yes — we always have vegetarian, vegan and gluten-free options, and our allergen folder lists all 14 major allergens per dish. Tell us about any allergy when booking so the kitchen can prepare safely."
+    },
+    {
+      "q": "Do you take large groups or private parties?",
+      "a": "We take parties up to 12 online; for 9 or more we ask for a £10 per head deposit. Our private dining room seats 20 — message us and the manager will arrange it."
+    },
+    {
+      "q": "Do I need to pay a deposit?",
+      "a": "No deposit for tables under 9. Parties of 9+ pay £10 per head, refundable up to 48 hours before. No-shows without notice are charged the deposit."
+    },
+    {
+      "q": "Is there parking nearby?",
+      "a": "Yes — free parking in the side car park after 18:00, plus a public car park two minutes walk away. Blue-badge bays are right outside the front door."
+    }
+  ],
+  "greeting": "Hello, welcome to our restaurant — I can book your table, share the menu and help with dietary needs. How many guests are dining?",
+  "hours": "Mon–Sat 12:00–22:00, Sun 12:00–20:00",
+  "id": "chat-restaurant-uk",
+  "industry": "restaurant",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Restaurant Assistant — UK",
+  "services": [
+    {
+      "name": "Two-course set lunch",
+      "price_from_gbp": 19
+    },
+    {
+      "name": "Sunday roast",
+      "price_from_gbp": 22
+    },
+    {
+      "name": "À la carte dinner (mains from)",
+      "price_from_gbp": 14
+    },
+    {
+      "name": "Afternoon tea",
+      "price_from_gbp": 29
+    },
+    {
+      "name": "Private dining room hire (POA)",
+      "price_from_gbp": null
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK restaurant. Duties: take table bookings (name/phone/party-size/date-time), answer menu, price and dietary questions accurately, flag all 14 major allergens carefully, and upsell set menus and events. Use British English, keep chat replies concise (1–2 short sentences), and always confirm booking details back before closing. For severe allergies or parties of 9+, hand off to the manager rather than guessing.",
+  "voice": "sonia"
+}

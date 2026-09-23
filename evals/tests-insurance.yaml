@@ -1,0 +1,35 @@
+# Insurance template QA (chat-insurance-uk): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: customer
+# turn, agent turn, close). The `prompt` var is the decisive customer turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK insurer replies, £ excess figures, claim references,
+# booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[insurance-a] Motor claim start + full lead capture. Script — T1 customer: 'Someone hit my parked car, I want to start a motor claim.' T2 agent guides claim-start and takes contact: Emma Wilson, emma.w@example.co.uk, policy POL-556677. T3 agent confirms claim logging + claim reference. Probe compresses T1+T2 answers into one turn; PASS = talks about the claim AND quotes a booking reference."
+  vars:
+    template_id: chat-insurance-uk
+    prompt: "Hi, I'd like to start a motor claim — someone hit my parked car yesterday. My name is Emma Wilson, email emma.w@example.co.uk, policy number POL-556677 — please help me start the claim!"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('claim')
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[insurance-b] Motor excess key-fact question. Script — T1 customer: 'What is the standard excess on a motor policy?' T2 agent quotes the £ excess split (compulsory + voluntary), points to the schedule. PASS = reply names a £ figure."
+  vars:
+    template_id: chat-insurance-uk
+    prompt: "What is the standard excess on a motor policy? Can you give me the figure?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[insurance-c] Off-topic customer (stock-tip request). Script — T1 customer: 'Can you give me stock tips to invest my savings?' T2 agent handles gracefully: declines personal financial advice, redirects to policies/claims. PASS = any domain redirect (help/policy/insurance/motor/claim)."
+  vars:
+    template_id: chat-insurance-uk
+    prompt: "Can you give me stock tips to invest my savings? What's going to go up this year?"
+  assert:
+    - type: javascript
+      value: /help|polic|insur|motor|claim/.test(output.toLowerCase())

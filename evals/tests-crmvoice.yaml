@@ -1,0 +1,36 @@
+# CRM-voice template QA (voice-crm-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[crmvoice-a] Follow-up scheduling + full lead capture. Script — T1 caller (trades firm): 'Schedule a follow-up for Mrs Patel's boiler service.' T2 agent takes contact: Dave, Apex Plumbing, 07700 900654, confirms customer and day. T3 agent confirms scheduling + job reference. Probe compresses T1+T2 answers into one turn; PASS = scheduling language OR job reference."
+  vars:
+    template_id: voice-crm-uk
+    prompt: "Please schedule a follow-up visit for Mrs Patel's boiler service next Tuesday morning. I'm Dave from Apex Plumbing, number 07700 900654 — can you book it in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: schedul
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[crmvoice-b] Feature cost enquiry. Script — T1 caller: 'How much does it cost to create an invoice by voice?' T2 agent states the £0 included-platform price, lists what is included. PASS = reply names a £ price OR says included."
+  vars:
+    template_id: voice-crm-uk
+    prompt: "How much does it cost to create an invoice using the voice assistant? Is there a charge per invoice?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+    - type: icontains
+      value: includ
+
+- description: "[crmvoice-c] Capability question. Script — T1 caller: 'What can you actually do for me?' T2 agent lists capabilities: invoices, record updates, follow-ups, job read-backs. PASS = mentions invoices OR follow-ups."
+  vars:
+    template_id: voice-crm-uk
+    prompt: "What can you actually do for me? Give me a rundown of your features."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: invoice
+    - type: icontains
+      value: follow

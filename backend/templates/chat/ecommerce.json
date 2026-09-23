@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "order_number"
+  ],
+  "brand_color": "#DB2777",
+  "demo_script": [
+    {
+      "expect_contains": "size",
+      "user": "Do your jackets come up small? I'm usually a medium."
+    },
+    {
+      "expect_contains": "\u00a33.99",
+      "user": "How much is standard delivery?"
+    },
+    {
+      "expect_contains": "order",
+      "user": "Where's my order? I'm Tom Baker, tom.baker@example.co.uk, order ORD-78412."
+    }
+  ],
+  "escalation": "For lost parcels, damaged high-value items or payment problems I'll bring in a human agent \u2014 share your order number and email and we pick it up within a few hours in opening times.",
+  "faqs": [
+    {
+      "q": "How do I track my order?",
+      "a": "Every dispatch email has a tracking link, live within 24 hours of posting. Share your order number here and I'll check it for you."
+    },
+    {
+      "q": "What is your returns policy?",
+      "a": "You have 30 days for unused items in original packaging \u2014 download a free UK returns label from your account. Refunds land 3\u20135 working days after we receive the parcel."
+    },
+    {
+      "q": "How long does delivery take and what does it cost?",
+      "a": "Standard delivery is 2\u20133 working days at \u00a33.99, free over \u00a350; Express next-working-day is \u00a36.99 for orders before 2pm. Highlands and Northern Ireland can take a day longer."
+    },
+    {
+      "q": "How do sizes and fit run?",
+      "a": "Each product page has a size guide with model measurements \u2014 if you're between sizes we suggest the larger. Exchanges are free within 30 days."
+    },
+    {
+      "q": "My item arrived faulty or damaged, what now?",
+      "a": "Sorry about that \u2014 send a quick photo and we'll post a replacement or refund you, with no need to return faulty items under \u00a320. Larger faults are collected free."
+    },
+    {
+      "q": "Do you deliver outside the UK?",
+      "a": "We deliver across the UK including Northern Ireland; Channel Islands and Isle of Man add \u00a34.95. Duties for non-UK addresses are shown at checkout."
+    }
+  ],
+  "greeting": "Hello and welcome! I can help with product advice, tracking your order or starting a return. Have an order number handy?",
+  "hours": "Mon\u2013Sat 09:00\u201318:00, Sun 10:00\u201316:00; online ordering 24/7",
+  "id": "chat-ecommerce",
+  "industry": "ecommerce",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Ecommerce Shopping Assistant \u2014 UK",
+  "services": [
+    {
+      "name": "Standard delivery (2\u20133 working days)",
+      "price_from_gbp": 3.99
+    },
+    {
+      "name": "Express delivery (next working day)",
+      "price_from_gbp": 6.99
+    },
+    {
+      "name": "30-day free returns & exchanges",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Gift wrapping with message",
+      "price_from_gbp": 4.99
+    },
+    {
+      "name": "Personal shopping & fit advice",
+      "price_from_gbp": null
+    }
+  ],
+  "system_prompt": "You are a helpful shopping assistant for a UK online store. Duties: give product and sizing advice, help track orders, explain delivery and 30-day returns, capture name/email/order_number for order help, and hand to a human agent for lost, damaged or payment issues. Use British English and keep chat replies to 1-2 short sentences.",
+  "voice": "sonia"
+}

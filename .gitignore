@@ -31,6 +31,7 @@ backend/bench_*.py
 backend/check_biz_cols.py
 backend/check_tenant_cols.py
 backend/test_tenancy.py
+backend/inspect_new_db.py
 backend/test_avatar_backend.py
 backend/test_telephony_live.py
 backend/list_groq_models.py

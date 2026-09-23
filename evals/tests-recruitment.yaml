@@ -1,0 +1,38 @@
+# Recruitment template QA (chat-recruitment-uk): 3 scripted conversations.
+# Each `description` holds the full 2-3 turn script (demo_script style: candidate
+# turn, agent turn, close). The `prompt` var is the decisive candidate turn —
+# contact details are compressed into a single message because the eval hits a
+# stateless HTTP endpoint (no session chaining); see README "Multi-turn".
+# Style grounding: short UK agency replies, right-to-work checks, CV drop-off,
+# booking references like BK-XXXXXX (cf. backend/app/routes/chatbot.py).
+
+- description: "[recruitment-a] CV drop-off + full lead capture. Script — T1 candidate: 'I'm looking for warehouse work near Birmingham, here's my CV.' T2 agent matches roles and takes contact: Alex Nowak, alex.nowak@example.co.uk, warehouse operative. T3 agent confirms application + booking reference. Probe compresses T1+T2 answers into one turn; PASS = talks about the CV AND quotes a booking reference."
+  vars:
+    template_id: chat-recruitment-uk
+    prompt: "Hi, I'm looking for warehouse work near Birmingham. My name is Alex Nowak, email alex.nowak@example.co.uk, role warehouse operative — here's my CV, please put me forward!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: cv
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('confirm')
+
+- description: "[recruitment-b] Right-to-work key-fact question. Script — T1 candidate: 'Do I need the right to work in the UK to apply?' T2 agent states the right-to-work rule, mentions visas/eligibility, asks role and area to match jobs. PASS = reply names the right-to-work rule or visas."
+  vars:
+    template_id: chat-recruitment-uk
+    prompt: "Do I need the right to work in the UK to apply for your roles? I'm on a visa and want to check."
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('right to work') || output.toLowerCase().includes('visa')
+
+- description: "[recruitment-c] Off-topic candidate (maths homework). Script — T1 candidate: 'Can you help with my maths homework?' T2 agent handles gracefully: declines lightly, states it helps with roles/CV matching, asks what work they want. PASS = helpful redirect ('help') tied to CV talk."
+  vars:
+    template_id: chat-recruitment-uk
+    prompt: "Can you help me with my maths homework? I've got algebra due tomorrow."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: help
+    - type: icontains
+      value: cv

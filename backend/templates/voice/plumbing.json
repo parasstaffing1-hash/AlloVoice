@@ -49,6 +49,10 @@
     {
       "q": "How much is an annual boiler service?",
       "a": "Our annual boiler service is £90 including a full safety check and service record. Book in with your postcode and we'll confirm a slot."
+    },
+    {
+      "q": "Do you cover my area?",
+      "a": "We're based in Greater Manchester covering around 20 miles. Share your postcode and we'll confirm straight away — outside areas considered case-by-case with a travel fee."
     }
   ],
   "greeting": "Hello, thanks for calling our plumbing team â€” 24/7 help for leaks, blockages and boiler trouble. How can I help?",

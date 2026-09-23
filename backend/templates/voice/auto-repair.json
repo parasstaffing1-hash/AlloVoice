@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "zip",
+    "vehicle_issue"
+  ],
+  "brand_color": "#C2410C",
+  "demo_script": [
+    {
+      "expect_contains": "diagnostic",
+      "user": "My check engine light just came on, do you do diagnostics?"
+    },
+    {
+      "expect_contains": "$95",
+      "user": "How much is a diagnostic check?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, I'm Mike Torres, number 312-555-0147, ZIP 60614, brakes squealing on my F-150"
+    }
+  ],
+  "escalation": "If the caller reports smoke or burning smells, brake failure, steering loss, overheating in the red, or a fuel leak: tell them to pull over safely, shut the engine off, and stay clear of the vehicle. Arrange a tow and an urgent same-day slot — do not advise them to keep driving.",
+  "faqs": [
+    {
+      "q": "How much is a diagnostic check?",
+      "a": "A full diagnostic inspection is $95, covering a scan, road test and written findings. The fee is waived if you approve the repair with us the same visit."
+    },
+    {
+      "q": "Can I get an estimate before any work starts?",
+      "a": "Yes — written estimates are always free and itemized for parts and labor. We never start work without your approval of the estimate."
+    },
+    {
+      "q": "Is your work warrantied?",
+      "a": "Yes — every repair is covered by our 24-month, 24,000-mile warranty on parts and labor. Bring the vehicle back if anything we fixed is not right and we make it right."
+    },
+    {
+      "q": "How long does a brake job take?",
+      "a": "Brake pads on one axle take about 90 minutes, starting at $199 including parts and labor. Rotors, if needed, are measured and quoted before we proceed."
+    },
+    {
+      "q": "Do you service my make and model?",
+      "a": "We service all domestic makes plus Toyota, Honda, Nissan and Hyundai, including trucks and SUVs. For European models, call ahead so we can confirm parts availability."
+    },
+    {
+      "q": "Do you offer a shuttle or loaner car?",
+      "a": "Yes — a free local shuttle runs weekdays, and loaner cars are available for jobs over four hours when booked ahead. Ask when you schedule and we will reserve one."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our auto repair shop — estimates, diagnostics and repairs, all warrantied. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–14:00, closed Sundays",
+  "id": "voice-autorepair-us",
+  "industry": "auto repair",
+  "kind": "voice",
+  "locale": "en-US",
+  "name": "Auto Repair Shop — US",
+  "services": [
+    {
+      "name": "Diagnostic inspection (scan + road test)",
+      "price_from_usd": 95
+    },
+    {
+      "name": "Full synthetic oil change",
+      "price_from_usd": 79
+    },
+    {
+      "name": "Brake pads replacement (per axle)",
+      "price_from_usd": 199
+    },
+    {
+      "name": "Battery test and replacement",
+      "price_from_usd": 149
+    },
+    {
+      "name": "Written estimate (free)",
+      "price_from_usd": 0
+    }
+  ],
+  "system_prompt": "You are the service advisor for a US auto repair shop. Duties: take repair bookings, give free written estimate requests, quote the $95 diagnostic fee, explain the 24-month/24,000-mile warranty on all work, collect name/phone/ZIP/vehicle issue for bookings, and escalate unsafe symptoms (smoke, brake failure, overheating, fuel leaks) to an urgent same-day tow-in slot. Safety: never tell a caller with brake, steering, smoke or fuel problems to keep driving — tell them to pull over safely and shut off the engine. Use American English, quote prices in dollars ($), keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

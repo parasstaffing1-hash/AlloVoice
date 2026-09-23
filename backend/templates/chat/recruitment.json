@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "role"
+  ],
+  "brand_color": "#059669",
+  "demo_script": [
+    {
+      "expect_contains": "warehouse",
+      "user": "What warehouse roles do you have near Birmingham?"
+    },
+    {
+      "expect_contains": "right to work",
+      "user": "Do I need the right to work in the UK?"
+    },
+    {
+      "expect_contains": "cv",
+      "user": "Please put me forward \u2014 I'm Alex Nowak, alex.nowak@example.co.uk, warehouse operative, CV attached."
+    }
+  ],
+  "escalation": "For job offers, rejections feedback or anything sensitive I'll bring in a human consultant \u2014 leave your name, email and the role you want and we reply within one working day.",
+  "faqs": [
+    {
+      "q": "How do I apply or drop off my CV?",
+      "a": "Share your name, email and the role you want right here, plus a link to your CV \u2014 a consultant replies within one working day. No cover letter needed."
+    },
+    {
+      "q": "Do I need the right to work in the UK?",
+      "a": "Yes, you need the right to work in the UK \u2014 tell us your visa or settlement status and we'll confirm eligibility before putting you forward. We verify documents at registration."
+    },
+    {
+      "q": "Which roles and sectors do you recruit for?",
+      "a": "We recruit warehouse operatives, drivers, care assistants, hospitality and admin staff across the Midlands and North. New roles land daily \u2014 tell me your area and I'll match you."
+    },
+    {
+      "q": "How does temp vs permanent pay work?",
+      "a": "Temp roles pay weekly with holiday accrual; permanent salaries are benchmarked to market \u2014 typically drivers \u00a313\u2013\u00a316 per hour, warehouse \u00a312\u2013\u00a314 and care \u00a312.50\u2013\u00a315 around Birmingham."
+    },
+    {
+      "q": "What is the interview process?",
+      "a": "A short phone screen, then a client interview \u2014 usually within a week. Care and driving roles need a DBS or licence check, which we arrange for you."
+    },
+    {
+      "q": "Do candidates pay any fees?",
+      "a": "Finding work through us is free for candidates \u2014 employers pay our fees, and CV reviews plus interview prep are free too. Optional CV writing support is \u00a349 one-off."
+    }
+  ],
+  "greeting": "Hi! I can match you to live roles, answer hiring questions and take your CV. What kind of work are you looking for?",
+  "hours": "Mon\u2013Fri 08:30\u201317:30; consultants reply within one working day",
+  "id": "chat-recruitment-uk",
+  "industry": "recruitment",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Recruitment Assistant \u2014 UK",
+  "services": [
+    {
+      "name": "Permanent placements",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Temporary & shift staffing",
+      "price_from_gbp": null
+    },
+    {
+      "name": "CV review & interview preparation",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Salary benchmarking for employers",
+      "price_from_gbp": null
+    },
+    {
+      "name": "CV writing support (one-off)",
+      "price_from_gbp": 49
+    }
+  ],
+  "system_prompt": "You are a friendly recruitment assistant for a UK agency. Duties: match candidates to warehouse, driving, care, hospitality and admin roles, explain right-to-work checks and the hiring process, capture name/email/role plus CV for applications, and hand to a human consultant for offers or complaints. Use British English and keep chat replies to 1-2 short sentences.",
+  "voice": "sonia"
+}
