@@ -1,4 +1,4 @@
-# Allo — AI-powered field service management (UK)
+# AlloVoice — AI voice agents + field service management
 
 Quotes from voice, 24/7 AI voice agent, dispatch, certificates (Gas Safety CP12, F-Gas, EICR),
 invoicing with Stripe + GoCardless, Xero/QuickBooks sync, and full UK compliance (GDPR, CIS).
@@ -7,7 +7,7 @@ invoicing with Stripe + GoCardless, Xero/QuickBooks sync, and full UK compliance
 
 | Layer | Tech |
 |-------|------|
-| Frontend | Next.js 15 (App Router) + Tailwind + shadcn-style UI, deployed on **Cloudflare Workers** via OpenNext |
+| Frontend | Next.js 15 (App Router) + Tailwind + shadcn-style UI |
 | Backend | FastAPI + SQLAlchemy (async) + PostgreSQL (Aiven) |
 | Storage | Cloudflare R2 (photos, signatures, certificates) |
 | Voice | faster-whisper (local STT) + edge-tts UK voices · Sarvam optional |
