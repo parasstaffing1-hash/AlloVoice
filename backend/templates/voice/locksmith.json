@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#92400E",
+  "demo_script": [
+    {
+      "expect_contains": "safe",
+      "user": "I'm locked out of my flat, it's late and I'm on my own — what should I do?"
+    },
+    {
+      "expect_contains": "£85",
+      "user": "How much is an emergency lockout callout?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, my postcode is SW1A 1AA and my number is 07700 900123, I'm locked out of my flat"
+    }
+  ],
+  "escalation": "If you have been burgled or the door or frame is smashed: stay safe, do not touch anything, call the police on 999 in an emergency or 101 otherwise, then call our 24/7 line for emergency boarding and lock replacement. Vulnerable callers locked out late at night jump the queue for the on-call locksmith.",
+  "faqs": [
+    {
+      "q": "I'm locked out — what should I do?",
+      "a": "Stay calm and stay somewhere safe and well lit — never try to force the door, as that causes damage and can invalidate your insurance. Our locksmith opens most standard doors without damage from £85; please have photo ID and proof of address ready for our arrival."
+    },
+    {
+      "q": "How much is an emergency lockout callout?",
+      "a": "Our emergency lockout callout is £85 including the first 30 minutes of labour during the day, £110 after 10 PM. Any new lock or parts are always quoted before we fit them."
+    },
+    {
+      "q": "How much is a lock change?",
+      "a": "A like-for-like lock change is from £120, including an anti-snap cylinder and two keys. Upgrading to a British Standard 3-star cylinder costs a little more and we will quote upfront."
+    },
+    {
+      "q": "We've been burgled — can you repair the door?",
+      "a": "Yes — burglary repairs are treated as urgent: we board up and replace locks on the same visit wherever possible. Because damage varies so much, pricing is on application after inspection; if the police gave you a crime reference number, please have it ready."
+    },
+    {
+      "q": "Can you repair a uPVC door that won't lock?",
+      "a": "Yes — most uPVC problems are a failed multipoint mechanism or misaligned keeps, repaired from £140 including adjustment. Share your postcode and we will confirm a slot."
+    },
+    {
+      "q": "Can you cut spare keys?",
+      "a": "Yes — we cut spare keys on site from £15 per key when we attend, or in the shop during opening hours. High-security keys that need a code card take a little longer, so mention the brand when you book."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our locksmith team — 24/7 help for lockouts, lock changes and burglary repairs. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–13:00, plus 24/7 emergency lockout line",
+  "id": "voice-locksmith-uk",
+  "industry": "locksmith",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Emergency Locksmith — UK",
+  "services": [
+    {
+      "name": "Emergency lockout opening (incl. first 30 min)",
+      "price_from_gbp": 85
+    },
+    {
+      "name": "Like-for-like lock change (anti-snap, 2 keys)",
+      "price_from_gbp": 120
+    },
+    {
+      "name": "Burglary damage repair & boarding (POA after inspection)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "uPVC door mechanism repair",
+      "price_from_gbp": 140
+    },
+    {
+      "name": "Spare key cut on site (per key)",
+      "price_from_gbp": 15
+    }
+  ],
+  "system_prompt": "You are the 24/7 receptionist for a UK locksmith firm. Duties: calm stressed locked-out callers with instruction-first guidance (stay somewhere safe, do not force the door, have ID and proof of address ready), treat burglary repairs as urgent with stay-safe and call-the-police guidance, quote guide prices, collect name/phone/postcode/problem for bookings, confirm every booking using booking language with a booking reference, and escalate break-ins and vulnerable callers locked out at night to the on-call locksmith. Use British English, quote prices in pounds (£), keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

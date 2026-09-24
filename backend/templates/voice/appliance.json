@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "zip",
+    "appliance_issue"
+  ],
+  "brand_color": "#334155",
+  "demo_script": [
+    {
+      "expect_contains": "brand",
+      "user": "My washer won't drain, it's a Samsung, about three years old — can you help?"
+    },
+    {
+      "expect_contains": "$89",
+      "user": "How much is a service call?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, I'm Mike Torres, ZIP 60614, number 312-555-0147, LG fridge not cooling, model LFXS26973S"
+    }
+  ],
+  "escalation": "If you smell gas, see sparking or smoke, or water is leaking near outlets: switch the appliance off, turn off the breaker if it is safe to reach, ventilate the area, and call our urgent line for a same-day emergency slot. For warranty claims we log the brand, model and serial and arrange a manufacturer-authorized visit.",
+  "faqs": [
+    {
+      "q": "How much is a service call?",
+      "a": "Our diagnostic service call is $89, covering the visit, full inspection and a written quote. The $89 is waived entirely if you approve the repair on the same visit."
+    },
+    {
+      "q": "My fridge is not cooling — what happens next?",
+      "a": "We start with the brand, model and age, plus symptoms like frost buildup or strange noises, then book a visit — fridge repairs start at $149 labor plus parts. Keep the doors closed and move perishables to a cooler until we arrive."
+    },
+    {
+      "q": "My washer won't drain or spin?",
+      "a": "Share the brand and model plus the error code if one shows — most drain faults are a clogged pump filter or lid switch, repaired from $129 labor. Turn the machine off and shut the water valves until your slot."
+    },
+    {
+      "q": "My dryer runs but has no heat?",
+      "a": "That is usually a failed heating element, thermal fuse or vent blockage — dryer repairs start at $119 labor plus parts. Stop using the dryer and do not run it unattended until we check the vent."
+    },
+    {
+      "q": "Do you service my brand? What about warranty?",
+      "a": "We service all major brands including Whirlpool, GE, Samsung, LG and Maytag — just share the brand and model when you book. For units under manufacturer warranty we log the serial and arrange a warranty-authorized visit."
+    },
+    {
+      "q": "How long does a repair take, and is it guaranteed?",
+      "a": "Most repairs are completed in one visit of 60–90 minutes from stocked parts. Every repair carries a 90-day labor warranty plus the manufacturer's parts warranty."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our appliance repair team — fridge, washer and dryer diagnosis and repair. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–14:00, closed Sundays",
+  "id": "voice-appliance-us",
+  "industry": "appliance repair",
+  "kind": "voice",
+  "locale": "en-US",
+  "name": "Appliance Repair — US",
+  "services": [
+    {
+      "name": "Service-call diagnostic ($89, waived if repaired)",
+      "price_from_usd": 89
+    },
+    {
+      "name": "Refrigerator repair (labor, from)",
+      "price_from_usd": 149
+    },
+    {
+      "name": "Washer repair (labor, from)",
+      "price_from_usd": 129
+    },
+    {
+      "name": "Dryer repair (labor, from)",
+      "price_from_usd": 119
+    },
+    {
+      "name": "Parts & warranty jobs (quoted upfront, POA)",
+      "price_from_usd": null
+    }
+  ],
+  "system_prompt": "You are the service advisor for a US appliance repair company. Duties: triage fridge, washer and dryer problems by symptom, capture the appliance brand and model (plus serial and age when available), quote the $89 service-call diagnostic fee and explain it is waived if you approve the repair on the same visit, collect name/phone/ZIP/appliance issue for bookings, and confirm every booking using booking language with a booking reference. Safety: for gas smells, sparking, smoke, or water near outlets, give shutoff guidance and escalate to an urgent same-day slot. Use American English, quote prices in dollars ($), keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

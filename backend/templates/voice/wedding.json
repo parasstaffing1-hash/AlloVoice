@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "event_date",
+    "guests"
+  ],
+  "brand_color": "#C2185B",
+  "demo_script": [
+    {
+      "expect_contains": "available",
+      "user": "We're hoping for next June, do you have Saturdays free?"
+    },
+    {
+      "expect_contains": "£",
+      "user": "What do your wedding packages cost?"
+    },
+    {
+      "expect_contains": "tour",
+      "user": "We'd love a tour — I'm Emily, 07700 900321, looking at 12 June next year for about 80 guests"
+    }
+  ],
+  "escalation": "Date holds are free for 7 days once you have toured — tell us your preferred date and party size and we pencil it in writing the same day. For short-notice dates (under 3 months), large parties over 150, or bespoke supplier requests, we bring in our wedding coordinator who confirms within one working day.",
+  "faqs": [
+    {
+      "q": "How do I check if my date is available?",
+      "a": "Just tell us your preferred date and a backup — Saturdays from May to September book 12–18 months out. We confirm availability live on the call and can hold your date free for 7 days after a tour."
+    },
+    {
+      "q": "Can we book a show-round tour?",
+      "a": "Of course — tours are complimentary and last about an hour with fizz, including the ceremony barn, gardens and bridal suite. Share your name, number, preferred day and party size and we will book you in."
+    },
+    {
+      "q": "How many guests can you host?",
+      "a": "Our ceremony barn seats 120 and the marquee extends evening receptions to 180. Intimate midweek weddings from 30 guests are very welcome off-peak."
+    },
+    {
+      "q": "What do your packages cost?",
+      "a": "Venue hire is from £2,500 off-peak and from £4,500 for peak Saturdays, with wedding breakfast menus from £65 per guest. Evening reception add-ons with DJ and late bar are from £950 — every quote is itemised in writing."
+    },
+    {
+      "q": "Do you require a deposit?",
+      "a": "A £500 deposit secures your date with the balance in two stages, the final payment due 6 weeks before. Everything is covered by our written terms and wedding insurance guidance."
+    },
+    {
+      "q": "Can we bring our own suppliers and decorations?",
+      "a": "Yes — bring your own florist, photographer and styling, or choose from our recommended list. Candles and confetti rules are organised with your coordinator at the planning meeting."
+    }
+  ],
+  "greeting": "Hello, and congratulations — thank you for calling our wedding venue team! We'd love to help you check dates, book a show-round, and plan your perfect day. What date are you dreaming of?",
+  "hours": "Mon–Sun 09:00–19:00, show-rounds daily by appointment",
+  "id": "voice-wedding-uk",
+  "industry": "wedding",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Wedding Venue Enquiries — UK",
+  "services": [
+    {
+      "name": "Complimentary show-round tour with fizz",
+      "price_from_gbp": 0
+    },
+    {
+      "name": "Venue hire, off-peak (Sun–Fri, Oct–Mar)",
+      "price_from_gbp": 2500
+    },
+    {
+      "name": "Venue hire, peak Saturday (May–Sep)",
+      "price_from_gbp": 4500
+    },
+    {
+      "name": "Wedding breakfast package (per guest)",
+      "price_from_gbp": 65
+    },
+    {
+      "name": "Evening reception add-on with DJ and late bar",
+      "price_from_gbp": 950
+    }
+  ],
+  "system_prompt": "You are the warm, celebratory receptionist for a UK wedding venue handling high-value enquiries with care. Duties: check date availability live, book complimentary show-round tours, answer package/capacity/deposit questions with £ guide prices, capture name/phone/event date/guest count for every enquiry, and offer a free 7-day date hold after tours. Use British English and £ pricing, keep replies to 2 short sentences for voice, be joyful and unhurried, and escalate short-notice dates, parties over 150, or bespoke requests to the wedding coordinator.",
+  "voice": "sonia"
+}

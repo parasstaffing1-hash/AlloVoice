@@ -341,24 +341,33 @@ def _make_lead_reference() -> str:
     return f"TPL-{rand6}"
 
 
+def _faq_scores(pack: dict, message: str) -> list:
+    """Token-overlap relevance per FAQ. Question-text matches weigh 3x —
+    answer bodies share vocabulary (e.g. 'lessons') and would otherwise win."""
+    t = (message or "").lower().strip()
+    try:
+        tokens = re.findall(r"[a-z]{3,}", t)
+        scored = []
+        for faq in pack.get("faqs") or []:
+            if not isinstance(faq, dict):
+                continue
+            q = (faq.get("q") or "").lower()
+            a = (faq.get("a") or "").lower()
+            score = sum(q.count(tok) for tok in tokens) * 3 + sum(a.count(tok) for tok in tokens)
+            scored.append((score, faq))
+        scored.sort(key=lambda s: s[0], reverse=True)
+        return scored
+    except Exception:
+        return [(0, f) for f in (pack.get("faqs") or []) if isinstance(f, dict)]
+
+
 def _faq_fallback(pack: dict, message: str) -> str:
     """Keyword fallback: best FAQ answer, else services/prices, else greeting."""
     t = (message or "").lower().strip()
     try:
-        faqs = pack.get("faqs") or []
-        tokens = re.findall(r"[a-z]{3,}", t)
-        best = None
-        best_score = 0
-        for faq in faqs:
-            if not isinstance(faq, dict):
-                continue
-            hay = f"{faq.get('q', '')} {faq.get('a', '')}".lower()
-            score = sum(hay.count(tok) for tok in tokens)
-            if score > best_score:
-                best_score = score
-                best = faq
-        if best is not None and best_score > 0:
-            return (best.get("a") or "").strip()
+        scored = _faq_scores(pack, message)
+        if scored and scored[0][0] > 0:
+            return (scored[0][1].get("a") or "").strip()
 
         services = pack.get("services") or []
         if any(w in t for w in ("price", "pricing", "cost", "charge", "quote", "how much")):
@@ -396,10 +405,11 @@ def _faq_fallback(pack: dict, message: str) -> str:
 
 def _build_prompt(pack: dict, message: str, history: List[dict]) -> str:
     try:
-        faqs = pack.get("faqs") or []
+        scored = _faq_scores(pack, message)
+        ordered = [f for _, f in scored] or [f for f in (pack.get("faqs") or []) if isinstance(f, dict)]
         faq_lines = "\n".join(
             f"- Q: {f.get('q', '')}\n  A: {f.get('a', '')}"
-            for f in faqs if isinstance(f, dict)
+            for f in ordered
         )
         services = pack.get("services") or []
         svc_lines = "\n".join(

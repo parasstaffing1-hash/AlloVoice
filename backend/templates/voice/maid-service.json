@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "area",
+    "visit_type"
+  ],
+  "brand_color": "#0D9488",
+  "demo_script": [
+    {
+      "expect_contains": "AED",
+      "user": "How much is deep cleaning for a two-bedroom apartment?"
+    },
+    {
+      "expect_contains": "140",
+      "user": "How much is a regular maid visit?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a weekly visit, I'm Sara Ahmed, area Dubai Marina, number +971-50-123-4567"
+    }
+  ],
+  "escalation": "Same-day urgent requests, villas over five bedrooms, and move-in or move-out cleans go straight to our scheduling supervisor for team allocation. If anything about a visit disappoints you, we re-clean free of charge within 24 hours — just share your booking reference.",
+  "faqs": [
+    {
+      "q": "How much is a regular maid visit?",
+      "a": "A regular 3-hour home visit starts at AED 140, including all cleaning materials and equipment. Weekly and twice-weekly plans bring the per-visit rate down — share your area and we will quote."
+    },
+    {
+      "q": "How much is deep cleaning?",
+      "a": "Deep cleaning starts at AED 349 for a one-bedroom apartment and AED 599 for a villa, depending on size and condition. Move-in and move-out cleans start at AED 449 and include inside cupboards, windows and balconies."
+    },
+    {
+      "q": "What is included in a recurring visit?",
+      "a": "Every visit covers dusting, vacuuming, mopping, bathrooms, kitchen surfaces and bed-making, finished with a supervisor checklist. Extras like laundry, ironing and balcony cleaning can be added per hour."
+    },
+    {
+      "q": "Do I need to provide cleaning products?",
+      "a": "No — our team brings professional-grade materials and equipment to every visit, all included in the price. If you prefer specific products for allergies or sensitivities, just leave them out and we will happily use them."
+    },
+    {
+      "q": "Can I book for today?",
+      "a": "Same-day visits are often available when you call before 2 PM, subject to team availability in your area. Share your area and preferred time and we will confirm the earliest slot."
+    },
+    {
+      "q": "How do I reschedule or cancel?",
+      "a": "Rescheduling or cancellation is free until 6 PM the day before your visit. Later changes carry a one-hour service fee, so please message or call us in good time."
+    }
+  ],
+  "greeting": "Welcome, and thank you for calling our maid service — it is our pleasure to keep your home spotless. How may I assist you today?",
+  "hours": "Daily 08:00–20:00 Gulf Standard Time",
+  "id": "voice-maid-ae",
+  "industry": "maid service",
+  "kind": "voice",
+  "locale": "en-AE",
+  "name": "Maid Service — UAE",
+  "services": [
+    {
+      "name": "Regular home visit (3 hours, materials included)",
+      "price_from_aed": 140
+    },
+    {
+      "name": "Deep cleaning — apartment (from)",
+      "price_from_aed": 349
+    },
+    {
+      "name": "Deep cleaning — villa (from)",
+      "price_from_aed": 599
+    },
+    {
+      "name": "Move-in/move-out cleaning (from)",
+      "price_from_aed": 449
+    },
+    {
+      "name": "Laundry & ironing add-on (per hour)",
+      "price_from_aed": 60
+    }
+  ],
+  "system_prompt": "You are the reservations assistant for a maid service in the UAE. Duties: book recurring maid visits and deep cleaning, explain what each visit includes and same-day availability, quote all prices in UAE dirhams (AED), collect name/phone/area/visit type for bookings, and confirm every booking using booking language with a booking reference. Use a warm Gulf hospitality tone in English and keep replies to 2 short sentences for voice. Stay visa-status-neutral: never ask about domestic-worker visas, sponsorship, or live-in arrangements.",
+  "voice": "sonia"
+}

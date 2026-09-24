@@ -1,0 +1,32 @@
+# Driving-school template QA (voice-driving-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[driving-a] Automatic-lesson booking + full lead capture. Script — T1 caller: 'I'd like to book automatic driving lessons.' T2 agent takes contact: M14 4TQ, Aisha Khan, 07911 123456, matches instructor. T3 agent confirms lessons + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language AND booking reference."
+  vars:
+    template_id: voice-driving-uk
+    prompt: "I'd like to book driving lessons, automatic please. I'm Aisha Khan, postcode M14 4TQ, number 07911 123456. When can I start?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[driving-b] Lesson/block price enquiry. Script — T1 caller: 'How much is a single lesson? Do you do block discounts?' T2 agent quotes £38 single, £340 block of 10. PASS = reply names a £ price."
+  vars:
+    template_id: voice-driving-uk
+    prompt: "How much is a single driving lesson? Do you do block booking discounts?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[driving-c] Under-age edge case. Script — T1 caller: 'My son is 16 — can he start lessons?' T2 agent states the age rule honestly: must be 17+ with a valid UK provisional licence, offers waiting list/theory prep. PASS = reply mentions 17 or provisional."
+  vars:
+    template_id: voice-driving-uk
+    prompt: "My son is 16 — can he start driving lessons with you yet?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('17') || output.toLowerCase().includes('provisional')

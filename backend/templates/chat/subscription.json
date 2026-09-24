@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "account"
+  ],
+  "brand_color": "#C2410C",
+  "demo_script": [
+    {
+      "expect_contains": "pause",
+      "user": "Can I pause my subscription over summer?"
+    },
+    {
+      "expect_contains": "£12",
+      "user": "How much is the Standard plan?"
+    },
+    {
+      "expect_contains": "cancel",
+      "user": "I'd like to cancel please, I'm Tom Reid, tom.reid@example.co.uk, account AC-44210"
+    }
+  ],
+  "escalation": "If a payment has failed, you see an unexpected charge, or you want to make a formal complaint: share your name, email and account number and we will connect you to our billing team, who respond within one working day.",
+  "faqs": [
+    {
+      "q": "How do I pause my subscription?",
+      "a": "You can pause for 1–3 months from your account page, and billing restarts automatically when the pause ends. Pausing keeps your playlists, history and billing date exactly as they are."
+    },
+    {
+      "q": "Can I skip a month or change my billing date?",
+      "a": "Yes — skip any month up to 48 hours before your billing date, and move your billing date once per cycle free of charge. Both options are under Billing settings, or share your details and we will do it for you."
+    },
+    {
+      "q": "How do I cancel my subscription?",
+      "a": "You can cancel any time in two clicks under Account settings — no calls, no retention maze, and your plan stays active until the end of the paid period. Share your name, email and account number and we will process it for you and confirm by email."
+    },
+    {
+      "q": "How much is the Standard plan?",
+      "a": "Standard is £12 a month or £120 a year (two months free). Basic is £8 a month, Premium is £16 a month, and Family covers 5 profiles for £18 a month."
+    },
+    {
+      "q": "How do I change plans?",
+      "a": "Upgrades apply instantly with a pro-rata charge; downgrades take effect from your next billing date. Annual plans can switch to monthly at renewal with no fee."
+    },
+    {
+      "q": "What happens if my payment fails?",
+      "a": "We retry your payment after 3 and 7 days, and your plan stays active during that grace period. Update your card in Billing settings to avoid interruption — we never charge retry fees."
+    }
+  ],
+  "greeting": "Hi, thanks for being with us — I can help with pausing, plan changes, billing and cancellations. How can I help today?",
+  "hours": "Mon–Fri 08:00–20:00, Sat–Sun 09:00–17:00 GMT",
+  "id": "chat-subscription",
+  "industry": "subscription",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Subscription Support Assistant",
+  "services": [
+    {
+      "name": "Basic plan (monthly)",
+      "price_from_gbp": 8
+    },
+    {
+      "name": "Standard plan (monthly)",
+      "price_from_gbp": 12
+    },
+    {
+      "name": "Premium plan (monthly)",
+      "price_from_gbp": 16
+    },
+    {
+      "name": "Family plan (monthly, 5 profiles)",
+      "price_from_gbp": 18
+    },
+    {
+      "name": "Standard plan (annual, two months free)",
+      "price_from_gbp": 120
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK subscription service. Duties: help with pause, skip, plan changes, billing dates and cancellations, and collect name/email/account-number for every account action. Use British English, keep chat replies concise (1–2 short sentences), and always confirm the next step. Churn-defense tone: warmly offer pauses, skips or cheaper plans first, but be fully honest about cancellation — it must always be easy, immediate on request, with no dark patterns, guilt-tripping or hidden steps.",
+  "voice": "sonia"
+}

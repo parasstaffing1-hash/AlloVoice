@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Wrench, Flame, Zap, ArrowRight, WifiOff, Loader2, PhoneCall, Home, Stethoscope, Sparkles, Scale, Car, BedDouble, Briefcase, ShoppingBag, HardHat, ShieldCheck, Dumbbell, UtensilsCrossed, Plane, GraduationCap, HeartPulse, Building2, Star } from "lucide-react";
+import { Wrench, Flame, Zap, ArrowRight, WifiOff, Loader2, PhoneCall, Home, Stethoscope, Sparkles, Scale, Car, BedDouble, Briefcase, ShoppingBag, HardHat, ShieldCheck, Dumbbell, UtensilsCrossed, Plane, GraduationCap, HeartPulse, Building2, Star, KeyRound, CarFront, SprayCan, Pill, Refrigerator, Building, BrickWall, Heart, Siren, Waves, School, PlaneTakeoff, Repeat, Sofa, Laptop } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -78,6 +78,11 @@ function iconFor(slug: string, cls: string) {
     ecommerce: ShoppingBag, recruitment: Briefcase, construction: HardHat,
     insurance: ShieldCheck, gym: Dumbbell, restaurant: UtensilsCrossed,
     travel: Plane, education: GraduationCap, medical: HeartPulse,
+    locksmith: KeyRound, driving: CarFront, maid: SprayCan,
+    pharmacy: Pill, appliance: Refrigerator, "property-mgmt": Building,
+    chimney: BrickWall, wedding: Heart, security: Siren,
+    pool: Waves, "student-housing": School, airline: PlaneTakeoff,
+    subscription: Repeat, furniture: Sofa, coworking: Laptop,
   };
   const Icon = map[slug] || Wrench;
   return <Icon className={cls} />;

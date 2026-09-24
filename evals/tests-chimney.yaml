@@ -1,0 +1,34 @@
+# Chimney template QA (voice-chimney-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[chimney-a] Sweep booking + full lead capture. Script — T1 caller: 'We need our chimney swept before winter.' T2 agent takes contact: SK8 6QA, Tom Baker, 07700 900789, open fire not swept in two years. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-chimney-uk
+    prompt: "Hi, we'd like to book a chimney sweep before winter — open fire not swept in two years. I'm Tom Baker, postcode SK8 6QA, number 07700 900789. When can you come?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[chimney-b] Standard sweep price enquiry. Script — T1 caller: 'How much is a standard chimney sweep?' T2 agent quotes a £ price, says certificate included, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: voice-chimney-uk
+    prompt: "How much do you charge for a standard chimney sweep? Does it include a certificate?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[chimney-c] Bird nest + CO alarm safety angle. Script — T1 caller: 'Something is nesting up there and the CO alarm went off — can I still light it?' T2 agent warns NOT to light, gives CO safety advice (ventilate, alarm, inspection, bird-guard). PASS = alarm/CO language AND sweep/nest safety language."
+  vars:
+    template_id: voice-chimney-uk
+    prompt: "There seems to be a bird nest in our chimney and our carbon monoxide alarm beeped last night — is it safe to light the fire this weekend?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: alarm
+    - type: javascript
+      value: output.toLowerCase().includes('carbon') || output.toLowerCase().includes('nest') || output.toLowerCase().includes('sweep') || output.toLowerCase().includes('ventilate') || output.toLowerCase().includes('certificate')

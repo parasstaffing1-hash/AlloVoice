@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "company"
+  ],
+  "brand_color": "#BE185D",
+  "demo_script": [
+    {
+      "expect_contains": "tour",
+      "user": "Can I book a tour of the space this week?"
+    },
+    {
+      "expect_contains": "£35",
+      "user": "How much is a day pass?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book my tour, I'm James Okafor, james@example.co.uk, from Northloop Ltd"
+    }
+  ],
+  "escalation": "If you have an access problem out of hours, a billing dispute, or need a custom office quote: leave your name, email and company and our community manager will get back to you within one working day — or call reception in hours for anything urgent.",
+  "faqs": [
+    {
+      "q": "Can I book a tour of the space?",
+      "a": "Of course — tours run Monday to Friday at 10:00, 12:30 and 16:00 and take about 30 minutes. Share your name, email and company and we will confirm your slot straight away."
+    },
+    {
+      "q": "How much is a day pass?",
+      "a": "Day passes are £35 including superfast Wi-Fi, bottomless coffee and access to all breakout areas from 08:00 to 18:00. A bundle of 5 day passes is £140, valid for 3 months."
+    },
+    {
+      "q": "How do meeting rooms work?",
+      "a": "Meeting rooms seat 4–12 people and cost £25 an hour, including screen, video conferencing and whiteboard. Members get 2 hours free each month; book up to 30 days ahead."
+    },
+    {
+      "q": "What membership plans do you offer?",
+      "a": "Hot-desking is £199 a month, a dedicated desk with locker is £349 a month, and private offices start from £600 a month. All plans include 24/7 access, mail handling and the members' events programme."
+    },
+    {
+      "q": "Can I access the space at weekends?",
+      "a": "Members on monthly plans get 24/7 fob access including weekends and bank holidays. Day-pass guests have access Monday to Friday 08:00–18:00 only, with staffed reception support."
+    },
+    {
+      "q": "Is there a minimum commitment?",
+      "a": "Day passes and meeting rooms are pay-as-you-go with no commitment. Monthly plans run rolling with 30 days notice, and private offices start on a 3-month minimum term."
+    }
+  ],
+  "greeting": "Hi, welcome to our coworking space — I can help with tours, day passes, meeting rooms and memberships. Are you looking for yourself or a team?",
+  "hours": "Staffed Mon–Fri 08:00–18:00; members get 24/7 fob access",
+  "id": "chat-coworking-uk",
+  "industry": "coworking",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Coworking Assistant — UK",
+  "services": [
+    {
+      "name": "Day pass (08:00–18:00, coffee included)",
+      "price_from_gbp": 35
+    },
+    {
+      "name": "Meeting room hire (per hour, up to 12 people)",
+      "price_from_gbp": 25
+    },
+    {
+      "name": "Hot-desk membership (monthly, 24/7 access)",
+      "price_from_gbp": 199
+    },
+    {
+      "name": "Dedicated desk with locker (monthly, 24/7 access)",
+      "price_from_gbp": 349
+    },
+    {
+      "name": "Private office (monthly, from)",
+      "price_from_gbp": 600
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK coworking space. Duties: arrange tours, explain day passes, meeting rooms and membership plans with £ prices, and collect name/email/company for every tour or booking lead. Use British English, keep chat replies concise (1–2 short sentences), and always confirm the next step. Promote the community feel — events, networking and flexible terms — without overselling.",
+  "voice": "sonia"
+}

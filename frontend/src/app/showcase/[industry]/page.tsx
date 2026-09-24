@@ -41,6 +41,21 @@ const SLUG_TO_ID: Record<string, string> = {
   travel: "chat-travel-uk",
   education: "chat-education-uk",
   medical: "chat-medical-uk",
+  locksmith: "voice-locksmith-uk",
+  driving: "voice-driving-uk",
+  maid: "voice-maid-ae",
+  pharmacy: "voice-pharmacy-uk",
+  appliance: "voice-appliance-us",
+  "property-mgmt": "voice-property-mgmt-uk",
+  chimney: "voice-chimney-uk",
+  wedding: "voice-wedding-uk",
+  security: "voice-security-uk",
+  pool: "voice-pool-us",
+  "student-housing": "chat-student-housing-uk",
+  airline: "chat-airline",
+  subscription: "chat-subscription",
+  furniture: "chat-furniture-uk",
+  coworking: "chat-coworking-uk",
 };
 
 const ID_TO_SLUG: Record<string, string> = Object.fromEntries(

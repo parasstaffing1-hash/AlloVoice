@@ -1,0 +1,34 @@
+# Security template QA (voice-security-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[security-a] Patrol booking + full lead capture. Script — T1 caller: 'We need night patrols for our warehouse.' T2 agent takes contact: DE1 2AB, David Clark, 07700 900654. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-security-uk
+    prompt: "Hi, please arrange nightly mobile patrols for our warehouse on DE1 2AB. I'm David Clark, number 07700 900654. Can you book that in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[security-b] Alarm response price enquiry. Script — T1 caller: 'How much is an alarm response callout?' T2 agent quotes a £ price, explains attendance plus report, asks postcode to arrange cover. PASS = reply names a £ price."
+  vars:
+    template_id: voice-security-uk
+    prompt: "How much do you charge for an alarm response callout? Just a guide price please."
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[security-c] Alarm sounding NOW — stay-safe + control-room escalation. Script — T1 caller: 'Our shop alarm is going off right now!' T2 agent gives stay-safe advice (stay away, do not enter/confront) AND escalates (dispatch officer, police control room). PASS = control-room/police language AND stay-safe language."
+  vars:
+    template_id: voice-security-uk
+    prompt: "Our shop alarm is sounding right now and the shutters look forced! What should we do? We're outside the shop!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: control
+    - type: javascript
+      value: output.toLowerCase().includes('police') || output.toLowerCase().includes('stay') || output.toLowerCase().includes('safe') || output.toLowerCase().includes('dispatch') || output.toLowerCase().includes('officer')

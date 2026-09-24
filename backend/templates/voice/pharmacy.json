@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "prescription_ref",
+    "request_type"
+  ],
+  "brand_color": "#15803D",
+  "demo_script": [
+    {
+      "expect_contains": "ready",
+      "user": "Is my prescription ready? My name is Tom Reed and my reference is RX-44821"
+    },
+    {
+      "expect_contains": "09:00",
+      "user": "What are your opening hours?"
+    },
+    {
+      "expect_contains": "111",
+      "user": "I have a sore throat and a temperature — what medicine should I take?"
+    }
+  ],
+  "escalation": "If you mention chest pain, breathing difficulty, stroke signs, a severe allergic reaction, or a child with a high fever: call 999 or go to A&E now. For urgent medicine queries when we are closed, call NHS 111. Routine prescription queries are answered within one working day.",
+  "faqs": [
+    {
+      "q": "Is my prescription ready?",
+      "a": "Share your name and prescription reference and we will check straight away — most prescriptions are ready within 24 hours of the GP sending them. We text you the moment your medicines are bagged and ready to collect."
+    },
+    {
+      "q": "What are your opening hours?",
+      "a": "We are open Monday to Friday 09:00–19:00 and Saturday 09:00–17:00, closed on Sundays. When we are closed, urgent medicine queries should go to NHS 111."
+    },
+    {
+      "q": "How do I order a repeat prescription?",
+      "a": "Order through the NHS App or with us at least 48 hours before you run out, and we will have it ready with a text reminder. Tell us your nominated pharmacy once and all future repeats come to us automatically."
+    },
+    {
+      "q": "Do you deliver prescriptions?",
+      "a": "Yes — free local delivery runs every weekday afternoon for housebound patients and anyone within three miles. Share your address and prescription reference and we will confirm today's delivery slot."
+    },
+    {
+      "q": "Do you offer flu vaccinations?",
+      "a": "Yes — private flu vaccinations are from £18 with no appointment needed during opening hours. NHS flu jabs are free for eligible groups including over-65s and carers."
+    },
+    {
+      "q": "I have a rash and a fever — what should I take?",
+      "a": "I cannot advise on symptoms or recommend any medicine. Please speak to the pharmacist in store, your GP, or NHS 111 — and call 999 or go to A&E if anything feels urgent or is getting worse quickly."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our pharmacy — prescriptions, opening hours and refill reminders. How can I help? (For anything urgent, please call NHS 111 or 999.)",
+  "hours": "Mon–Fri 09:00–19:00, Sat 09:00–17:00, closed Sundays; NHS 111 when closed",
+  "id": "voice-pharmacy-uk",
+  "industry": "pharmacy",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Community Pharmacy — UK",
+  "services": [
+    {
+      "name": "NHS prescription collection",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Repeat prescription ordering (48-hour)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Prescription delivery (local)",
+      "price_from_gbp": null
+    },
+    {
+      "name": "Private flu vaccination (from)",
+      "price_from_gbp": 18
+    },
+    {
+      "name": "Private health check — blood pressure (from)",
+      "price_from_gbp": 10
+    }
+  ],
+  "system_prompt": "You are the reception assistant for a UK community pharmacy. STRICT SAFETY RULES: you must NEVER diagnose conditions, interpret symptoms, say whether something is serious, or recommend medicines, treatments or dosages. Your duties are reception only: give prescription-ready notices, opening hours and refill reminders, explain repeat ordering and local delivery, collect name/phone/prescription reference/request type, and confirm every request using booking language with a booking reference. Use British English and keep replies to 2 short sentences for voice. For ANY symptom or medicine question, give triage-to-human wording: speak to the pharmacist in store, your GP, or NHS 111 — and call 999 or go to A&E for anything urgent.",
+  "voice": "sonia"
+}

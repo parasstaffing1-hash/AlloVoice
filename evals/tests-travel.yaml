@@ -5,7 +5,7 @@
 - description: "[travel-a] Holiday enquiry + full lead capture. Script — T1 caller: 'Family holiday in Spain this August, budget around £2000.' T2 agent takes contact: Priya Shah, priya.shah@example.co.uk, budget £2500, recommends packages. T3 agent confirms callback + enquiry reference. Probe compresses T1+T2 answers into one turn; PASS = booking/enquiry language OR reference."
   vars:
     template_id: chat-travel-uk
-    prompt: "We're looking for a family holiday in Spain this August, budget around £2000. I'm Priya Shah, email priya.shah@example.co.uk — can someone send me options?"
+    prompt: "We're looking for a family holiday in Spain this August, budget around £2000. I'm Priya Shah, email priya.shah@example.co.uk, phone 07700 900123 — please book me a consultation call so someone can send me options?"
   threshold: 0.5
   assert:
     - type: icontains

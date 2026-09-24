@@ -1,0 +1,34 @@
+# Airline template QA (chat-airline): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[airline-a] Rebooking help + full lead capture. Script — T1 caller: 'I need to rebook my flight.' T2 agent takes contact: Amelia Hart, booking ref SKY7X2. T3 agent confirms rebooking help + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-airline
+    prompt: "I need help rebooking my flight please. I'm Amelia Hart and my booking reference is SKY7X2 — what are my options?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('rebook')
+
+- description: "[airline-b] Extra-bag price enquiry. Script — T1 caller: 'How much is an extra checked bag?' T2 agent quotes a £ price, states weight limit, asks booking reference to add the bag. PASS = reply names a £ price."
+  vars:
+    template_id: chat-airline
+    prompt: "How much does an extra checked bag cost on a long-haul flight?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[airline-c] Live-delay edge case (must NOT invent status). Script — T1 caller: 'My flight BA123 to New York is delayed — what's happening?' T2 agent must NOT invent times/gates/status; directs to booking-reference lookup + airline app. PASS = asks booking reference OR points to the app."
+  vars:
+    template_id: chat-airline
+    prompt: "My flight BA123 to New York today is showing as delayed — what's happening with it and when will it depart?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: booking
+    - type: javascript
+      value: output.toLowerCase().includes('booking') || output.toLowerCase().includes('reference') || output.toLowerCase().includes('app') || output.toLowerCase().includes('manage')

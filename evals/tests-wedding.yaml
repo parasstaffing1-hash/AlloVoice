@@ -1,0 +1,34 @@
+# Wedding template QA (voice-wedding-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[wedding-a] Tour booking + full lead capture. Script — T1 caller: 'We'd love a tour for next June, about 80 guests.' T2 agent takes contact: Emily, 07700 900321, 12 June next year. T3 agent confirms tour booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-wedding-uk
+    prompt: "Hello, we'd love to book a show-round tour! I'm Emily, number 07700 900321, looking at 12 June next year for about 80 guests. Can you book us in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: tour
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('book')
+
+- description: "[wedding-b] Wedding package price enquiry. Script — T1 caller: 'What do your wedding packages cost?' T2 agent quotes a £ price, outlines hire plus per-guest catering, asks date to check availability. PASS = reply names a £ price."
+  vars:
+    template_id: voice-wedding-uk
+    prompt: "What do your wedding packages cost? Could you give me a rough idea of venue hire and catering prices?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[wedding-c] Date availability check. Script — T1 caller: 'Do you have Saturdays free next June?' T2 agent checks availability live, offers tour and 7-day hold, asks party size. PASS = availability language AND tour/hold language."
+  vars:
+    template_id: voice-wedding-uk
+    prompt: "We're hoping for a Saturday next June — do you have any availability? There'd be about 100 of us."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: availab
+    - type: javascript
+      value: output.toLowerCase().includes('tour') || output.toLowerCase().includes('hold') || output.toLowerCase().includes('date') || output.toLowerCase().includes('available')

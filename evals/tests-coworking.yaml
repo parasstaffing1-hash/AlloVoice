@@ -1,0 +1,34 @@
+# Coworking template QA (chat-coworking-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[coworking-a] Tour booking + full lead capture. Script — T1 caller: 'Can I book a tour this week?' T2 agent takes contact: James Okafor, james@example.co.uk, Northloop Ltd. T3 agent confirms tour slot + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-coworking-uk
+    prompt: "Can I book a tour of the space this week please? I'm James Okafor, james@example.co.uk, from Northloop Ltd."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('tour')
+
+- description: "[coworking-b] Day-pass price enquiry. Script — T1 caller: 'How much is a day pass?' T2 agent quotes the £35 price, says what's included, offers tour booking. PASS = reply names a £ price."
+  vars:
+    template_id: chat-coworking-uk
+    prompt: "How much does a day pass cost, and what's included?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[coworking-c] Weekend-access edge case. Script — T1 caller: 'Can I work from the space on Saturdays?' T2 agent explains member 24/7 fob vs day-pass weekday limits, offers membership. PASS = mentions weekend access rules."
+  vars:
+    template_id: chat-coworking-uk
+    prompt: "Can I use the space on weekends? I mostly need to work on Saturdays."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: weekend
+    - type: javascript
+      value: output.toLowerCase().includes('weekend') || output.toLowerCase().includes('saturday') || output.toLowerCase().includes('24/7') || output.toLowerCase().includes('member')

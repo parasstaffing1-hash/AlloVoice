@@ -1,0 +1,79 @@
+{
+  "booking_fields": [
+    "name",
+    "booking_ref"
+  ],
+  "brand_color": "#0B4F8A",
+  "demo_script": [
+    {
+      "expect_contains": "booking reference",
+      "user": "Is my flight on time today?"
+    },
+    {
+      "expect_contains": "£65",
+      "user": "How much is an extra checked bag?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "I need help rebooking, I'm Amelia Hart and my booking reference is SKY7X2"
+    }
+  ],
+  "escalation": "If your flight is cancelled, you are stranded abroad, or you need special assistance: share your name and booking reference and we will connect you to our 24/7 support team straight away. For urgent airport issues, please also speak to our ground staff at the departure desk.",
+  "faqs": [
+    {
+      "q": "Is my flight on time?",
+      "a": "I can't see live flight data here, so please check your flight status in our app or on the website using your 6-character booking reference. Share your name and booking reference and I can point you to the right lookup for your flight."
+    },
+    {
+      "q": "My flight was cancelled — how do I rebook?",
+      "a": "You're entitled to a free rebooking or a full refund when we cancel. Share your name and booking reference and we will arrange the next available flight, or you can rebook instantly in the app under Manage My Booking."
+    },
+    {
+      "q": "What is my checked baggage allowance?",
+      "a": "Economy includes one 23kg checked bag on most long-haul fares; short-haul saver fares are cabin-bag only. Extra checked bags start from £65 each way when added online at least 24 hours before departure."
+    },
+    {
+      "q": "What hand luggage can I bring?",
+      "a": "Everyone can bring one cabin bag up to 56 x 45 x 25cm plus a small personal item. The combined weight limit is 10kg, and bags that don't fit the sizer at the gate go in the hold from £50."
+    },
+    {
+      "q": "When does check-in open and close?",
+      "a": "Online check-in opens 24 hours before departure and closes 60 minutes before. Bag drop closes 45 minutes before short-haul and 60 minutes before long-haul flights, so arrive at least 2 hours ahead."
+    },
+    {
+      "q": "How do I request special assistance?",
+      "a": "Wheelchair, medical and unaccompanied-minor assistance (from £50 each way) must be booked at least 48 hours before departure. Share your name and booking reference and we will add the request and confirm it back to you."
+    }
+  ],
+  "greeting": "Hello, and thanks for flying with us — I can help with flight status, rebooking and baggage. Please share your booking reference to get started.",
+  "hours": "24/7 chat support; phone lines Mon–Sun 06:00–23:00 GMT",
+  "id": "chat-airline",
+  "industry": "airline",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Airline Support Assistant",
+  "services": [
+    {
+      "name": "Extra checked bag (23kg, added online)",
+      "price_from_gbp": 65
+    },
+    {
+      "name": "Standard seat selection (short-haul)",
+      "price_from_gbp": 12
+    },
+    {
+      "name": "Same-day flight change fee",
+      "price_from_gbp": 75
+    },
+    {
+      "name": "Lounge day pass",
+      "price_from_gbp": 35
+    },
+    {
+      "name": "Unaccompanied minor service (each way)",
+      "price_from_gbp": 50
+    }
+  ],
+  "system_prompt": "You are the helpful online assistant for a global airline. Duties: help with flight-status queries, rebooking guidance and baggage rules, and collect name/booking-reference for every assistance lead. Use clear international English, keep chat replies concise (1–2 short sentences). STRICT: never invent or guess live flight data (times, delays, gates, aircraft). For any status question, direct the customer to look up their flight in the airline app or website using their booking reference, and offer to help once they share it.",
+  "voice": "sonia"
+}

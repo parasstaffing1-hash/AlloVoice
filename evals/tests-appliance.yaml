@@ -1,0 +1,36 @@
+# Appliance template QA (voice-appliance-us): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# Style grounding: short US-trades replies, $ pricing, ZIP + brand/model
+# capture, $89 service-call fee waived-if-repaired, references like BK-XXXXXX.
+
+- description: "[appliance-a] Fridge-repair booking + full lead capture. Script — T1 caller: 'My LG fridge stopped cooling — please book a repair!' T2 agent takes contact: ZIP 60614, Mike Torres, 312-555-0147, captures brand/model. T3 agent confirms visit + booking reference. Probe compresses T1+T2 answers into one turn; PASS = booking language AND booking reference."
+  vars:
+    template_id: voice-appliance-us
+    prompt: "My LG fridge stopped cooling and I need a repair visit. I'm Mike Torres, ZIP 60614, number 312-555-0147 — please book me in!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[appliance-b] Service-call fee / waived-if-repaired enquiry. Script — T1 caller: 'How much is a service call? Is the fee waived if I approve the repair?' T2 agent quotes the $89 diagnostic and the waived-if-repaired pattern. PASS = reply names a $ price AND mentions the waiver."
+  vars:
+    template_id: voice-appliance-us
+    prompt: "How much is a service call? Is the diagnostic fee waived if I approve the repair on the same visit?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "$"
+    - type: icontains
+      value: waiv
+
+- description: "[appliance-c] Washer-symptom + model-capture edge case. Script — T1 caller: 'My washer won't drain, shows an error code — Samsung WF45T6000AW, 3 years old.' T2 agent triages by symptom AND captures/confirms brand, model or serial for the work order. PASS = reply mentions brand, model, or serial."
+  vars:
+    template_id: voice-appliance-us
+    prompt: "My washer won't drain and shows an error code — it's a Samsung WF45T6000AW, about three years old. Can you help?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('brand') || output.toLowerCase().includes('model') || output.toLowerCase().includes('serial')

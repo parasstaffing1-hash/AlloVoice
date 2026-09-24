@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "lesson_type"
+  ],
+  "brand_color": "#2563EB",
+  "demo_script": [
+    {
+      "expect_contains": "17",
+      "user": "My daughter is 16 — can she start lessons yet?"
+    },
+    {
+      "expect_contains": "£38",
+      "user": "How much is a single driving lesson?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book me in, I'm Aisha Khan, postcode M14 4TQ, number 07911 123456, automatic lessons"
+    }
+  ],
+  "escalation": "Under-17s without a provisional licence, very nervous pupils, and anyone wanting an intensive course or test-day car hire are routed to our bookings adviser for instructor matching and a free 10-minute consultation. Complaints about a lesson go to the school manager with your booking reference.",
+  "faqs": [
+    {
+      "q": "How much are driving lessons?",
+      "a": "A single 60-minute lesson is £38, and a block of 10 is £340 — a saving of £40. Blocks never expire and can be split between practical lessons and theory preparation."
+    },
+    {
+      "q": "How old do I need to be, and what licence do I need?",
+      "a": "You must be 17 or over and hold a valid UK provisional driving licence before your first lesson — we check it on arrival. Under-17s can join our waiting list and start theory preparation."
+    },
+    {
+      "q": "Should I learn manual or automatic?",
+      "a": "Manual gives you a full licence covering both gearbox types, while automatic suits nervous pupils and anyone who will only ever drive an automatic. Tell us your preference and postcode and we will match you to the right instructor."
+    },
+    {
+      "q": "Do you help with the theory test?",
+      "a": "Yes — one-to-one theory preparation is £25 per session, covering hazard perception and the question bank. Most pupils pass theory within two to four sessions alongside practical lessons."
+    },
+    {
+      "q": "How many lessons will I need?",
+      "a": "The DVSA average is around 45 hours of professional lessons plus 20 hours of private practice, but it varies widely. We start with an assessment lesson and give you an honest plan, including a £45 mock test when you are nearly ready."
+    },
+    {
+      "q": "Do you offer intensive courses or test-day car hire?",
+      "a": "Yes — intensive courses run over one to four weeks and are priced on application after an assessment lesson. Test-day car hire with your instructor, including a warm-up hour, starts from £90."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our driving school — lessons for teens and adults, manual and automatic. How can I help?",
+  "hours": "Mon–Sat 08:00–20:00, Sun 09:00–17:00",
+  "id": "voice-driving-uk",
+  "industry": "driving school",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Driving School — UK",
+  "services": [
+    {
+      "name": "Single 60-minute lesson",
+      "price_from_gbp": 38
+    },
+    {
+      "name": "Block of 10 lessons (save £40)",
+      "price_from_gbp": 340
+    },
+    {
+      "name": "Theory test preparation session",
+      "price_from_gbp": 25
+    },
+    {
+      "name": "Mock driving test (60 minutes)",
+      "price_from_gbp": 45
+    },
+    {
+      "name": "Intensive course (POA after assessment)",
+      "price_from_gbp": null
+    }
+  ],
+  "system_prompt": "You are the friendly receptionist for a UK driving school. Duties: book lessons for teens and adults, match pupils to manual or automatic instructors, explain theory test help and block-booking discounts, state the age and provisional-licence requirements honestly, collect name/phone/postcode/lesson type for bookings, confirm every booking using booking language with a booking reference, and If asked about 16-year-olds or under-17s, always state pupils must be 17+ with a provisional licence and offer the waiting list; escalate intensive courses and nervous first-time pupils to our bookings adviser. Use British English, quote prices in pounds (£), keep replies to 2 short sentences for voice.",
+  "voice": "sonia"
+}

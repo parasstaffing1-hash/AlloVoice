@@ -1,0 +1,34 @@
+# Student-housing template QA (chat-student-housing-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[studenthousing-a] Viewing booking + full lead capture. Script — T1 caller: 'I need a room for September at the University of Manchester.' T2 agent takes contact: Priya Shah, priya.shah@example.co.uk, University of Manchester. T3 agent confirms viewing booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-student-housing-uk
+    prompt: "I need a room for September please. I'm Priya Shah, email priya.shah@example.co.uk, studying at the University of Manchester — can you book me a viewing?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('viewing')
+
+- description: "[studenthousing-b] En-suite price enquiry. Script — T1 caller: 'How much is an en-suite per week?' T2 agent quotes a £ price, says bills are included, asks university to check availability. PASS = reply names a £ price."
+  vars:
+    template_id: chat-student-housing-uk
+    prompt: "How much does an en-suite room cost per week? Are bills included?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[studenthousing-c] Guarantor edge case (international student). Script — T1 caller: 'I'm an international student with no UK guarantor — can I still book?' T2 agent explains guarantor-service or deposit alternative, does NOT refuse outright, asks for details. PASS = mentions guarantor."
+  vars:
+    template_id: chat-student-housing-uk
+    prompt: "I'm an international student and I don't have a UK guarantor — can I still book a room? What are my options?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: guarantor
+    - type: javascript
+      value: output.toLowerCase().includes('guarantor') || output.toLowerCase().includes('deposit') || output.toLowerCase().includes('international')

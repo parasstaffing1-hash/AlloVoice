@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "delivery_postcode"
+  ],
+  "brand_color": "#0F766E",
+  "demo_script": [
+    {
+      "expect_contains": "delivery",
+      "user": "What delivery slots do you offer to Leeds?"
+    },
+    {
+      "expect_contains": "£60",
+      "user": "How much is the assembly service?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book delivery, I'm Sophie Lane on 07700 900789, postcode LS1 4DY"
+    }
+  ],
+  "escalation": "If your delivery arrives damaged, something is missing, or assembly can't be completed: send photos of the issue plus your name, phone and delivery postcode and our customer care team will arrange a repair, replacement or refund within two working days.",
+  "faqs": [
+    {
+      "q": "What delivery slots do you offer?",
+      "a": "We deliver Tuesday to Saturday in 4-hour slots (08:00–12:00 or 12:00–16:00). Standard doorstep delivery is £29, and room-of-choice delivery with packaging removal is £49."
+    },
+    {
+      "q": "Do you offer assembly?",
+      "a": "Yes — our two-person assembly service is £60 per room (up to 3 items) and includes packaging removal. Wardrobes, beds and dining sets are usually assembled within 45 minutes."
+    },
+    {
+      "q": "What is your returns policy?",
+      "a": "You have 30 days to return unused items in original packaging for a full refund — collections cost £35. Made-to-order sofas and mattresses with broken hygiene seals are excluded unless faulty."
+    },
+    {
+      "q": "What if my furniture arrives damaged?",
+      "a": "Tell us within 48 hours with photos and keep the packaging. We will offer a free repair, replacement, or full refund including delivery charges — whichever you prefer — confirmed within two working days."
+    },
+    {
+      "q": "Do you take away old furniture?",
+      "a": "Yes — old sofa or mattress removal is £40 per item when collected with your new delivery. Items must be empty, disconnected and ready at the door."
+    },
+    {
+      "q": "How long will my order take?",
+      "a": "In-stock items arrive within 5–7 working days; made-to-order sofas take 6–8 weeks. Share your delivery postcode and we will give you the earliest available slot."
+    }
+  ],
+  "greeting": "Hello, welcome to our furniture store — I can help with delivery slots, assembly and returns. What are you looking for today?",
+  "hours": "Mon–Sat 09:00–18:00, Sun 10:00–16:00",
+  "id": "chat-furniture-uk",
+  "industry": "furniture",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Furniture Store Assistant — UK",
+  "services": [
+    {
+      "name": "Standard doorstep delivery",
+      "price_from_gbp": 29
+    },
+    {
+      "name": "Room-of-choice delivery with packaging removal",
+      "price_from_gbp": 49
+    },
+    {
+      "name": "Assembly service (per room, up to 3 items)",
+      "price_from_gbp": 60
+    },
+    {
+      "name": "Old sofa or mattress removal (per item)",
+      "price_from_gbp": 40
+    },
+    {
+      "name": "Furniture return collection",
+      "price_from_gbp": 35
+    }
+  ],
+  "system_prompt": "You are the helpful online assistant for a UK furniture retailer. Duties: explain delivery slots and charges, assembly and removal services, and the 30-day returns policy with £ figures, and collect name/phone/delivery-postcode for every delivery or service booking. Use British English, keep chat replies concise (1–2 short sentences), and always confirm the next step. For damaged or faulty items, be reassuring and clearly offer repair, replacement or refund.",
+  "voice": "sonia"
+}

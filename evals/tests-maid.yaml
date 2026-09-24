@@ -1,0 +1,36 @@
+# Maid-service template QA (voice-maid-ae): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# Style grounding: warm Gulf hospitality tone in English, AED pricing, Dubai
+# area + +971 contact details, booking references like BK-XXXXXX.
+
+- description: "[maid-a] Weekly-visit booking + full lead capture. Script — T1 caller: 'I'd like to book a weekly maid visit on Saturdays.' T2 agent takes contact: Dubai Marina, Sara Ahmed, +971-50-123-4567. T3 agent confirms visit + booking reference. Probe compresses T1+T2 answers into one turn; PASS = booking language AND booking reference."
+  vars:
+    template_id: voice-maid-ae
+    prompt: "I'd like to book a weekly maid visit on Saturdays please. I'm Sara Ahmed, I live in Dubai Marina, number +971-50-123-4567. Can you book me in?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[maid-b] Regular-visit price enquiry. Script — T1 caller: 'How much is a regular maid visit?' T2 agent quotes an AED price and what's included. PASS = reply names an AED price."
+  vars:
+    template_id: voice-maid-ae
+    prompt: "How much is a regular maid visit? What is included in the price?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "AED"
+
+- description: "[maid-c] Deep-clean price edge case. Script — T1 caller: 'How much is deep cleaning for a two-bedroom apartment?' T2 agent quotes the AED deep-clean rate and offers to book. PASS = reply names an AED price AND mentions cleaning."
+  vars:
+    template_id: voice-maid-ae
+    prompt: "How much is deep cleaning for a two-bedroom apartment?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "AED"
+    - type: icontains
+      value: clean

@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#2E7D32",
+  "demo_script": [
+    {
+      "expect_contains": "emergency",
+      "user": "Water is coming through my flat ceiling, is that an emergency?"
+    },
+    {
+      "expect_contains": "£120",
+      "user": "How much is an emergency maintenance callout?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please log it, I'm Sarah Jones, 07700 900456, flat 4, M15 6QT, leak from upstairs bathroom"
+    }
+  ],
+  "escalation": "Emergencies — active flood, gas smell, no heating in winter, insecure doors/windows after a break-in, or sparking electrics: isolate water/gas/electrics if safe, then call our 24/7 emergency line immediately and we dispatch within hours. Routine issues (dripping taps, cosmetic damage, appliance niggles) are logged with full details and confirmed within one working day, with updates shared with your landlord.",
+  "faqs": [
+    {
+      "q": "What counts as a maintenance emergency?",
+      "a": "Active floods, gas smells, total loss of heating or hot water in winter, insecure doors or windows, and sparking electrics. Report these on our 24/7 line straight away — emergency callouts are from £120."
+    },
+    {
+      "q": "How do I report a routine repair?",
+      "a": "Call us with your name, property address and postcode, and a short description plus photos if you can. We log it, grade it routine or urgent, and confirm a visit slot within one working day."
+    },
+    {
+      "q": "How fast will someone come out?",
+      "a": "Emergencies are attended the same day, usually within hours. Routine jobs are scheduled within 3–5 working days, and we text you the morning of the visit with an arrival window."
+    },
+    {
+      "q": "Will my landlord be kept updated?",
+      "a": "Yes — every report, visit and invoice is shared with your landlord or letting agent the same day. For emergencies we notify them immediately and follow up with photos and the engineer's notes."
+    },
+    {
+      "q": "Who pays for the repair?",
+      "a": "Landlord obligations (structure, heating, plumbing, electrics) are billed to the landlord. Tenant-caused damage or lost keys may be recharged — we always explain who pays before work starts."
+    },
+    {
+      "q": "What should I do if water is flooding in?",
+      "a": "Turn off the stopcock (usually under the kitchen sink), switch off electrics to affected rooms, move valuables upstairs, and call our 24/7 line. Do not touch switches or sockets that are wet."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our property management team — reporting maintenance for tenants and landlords, from emergency leaks to routine repairs. How can I help?",
+  "hours": "Mon–Fri 09:00–18:00, Sat 09:00–13:00, plus 24/7 emergency line",
+  "id": "voice-property-mgmt-uk",
+  "industry": "property-mgmt",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Property Management Receptionist — UK",
+  "services": [
+    {
+      "name": "Routine maintenance visit",
+      "price_from_gbp": 75
+    },
+    {
+      "name": "Emergency callout (incl. first hour)",
+      "price_from_gbp": 120
+    },
+    {
+      "name": "Annual safety and compliance inspection",
+      "price_from_gbp": 95
+    },
+    {
+      "name": "Check-in / check-out inspection with report",
+      "price_from_gbp": 85
+    },
+    {
+      "name": "Landlord compliance and certification pack",
+      "price_from_gbp": 150
+    }
+  ],
+  "system_prompt": "You are the friendly receptionist for a UK property management firm handling tenant maintenance requests and landlord updates. Duties: triage every report as emergency (flood, gas smell, no heating/hot water in winter, insecure property, sparking electrics) versus routine, give immediate safety advice (stopcock off, electrics off near water, ventilate for gas and call the gas emergency line), quote £ guide prices, capture name/phone/postcode/full problem for every booking, and confirm landlord updates will follow. Use British English and £ pricing, keep replies to 2 short sentences for voice, and escalate emergencies to the on-call manager at once.",
+  "voice": "sonia"
+}

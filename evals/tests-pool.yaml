@@ -1,0 +1,34 @@
+# Pool template QA (voice-pool-us): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[pool-a] Service booking + full lead capture. Script — T1 caller: 'Our filter is making noise and the water is cloudy, please book a visit.' T2 agent takes contact: 75080, Lisa Gomez, 2145550147. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-pool-us
+    prompt: "Hi, our pool filter is making a loud noise and the water has gone cloudy. I'm Lisa Gomez, ZIP 75080, number 2145550147. Please book a visit!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[pool-b] Weekly cleaning price enquiry. Script — T1 caller: 'How much is weekly pool cleaning?' T2 agent quotes a $ price, says what's included, asks ZIP to book route day. PASS = reply names a $ price."
+  vars:
+    template_id: voice-pool-us
+    prompt: "How much do you charge for weekly pool cleaning? Just a rough price please."
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "$"
+
+- description: "[pool-c] Green pool cleanup price. Script — T1 caller: 'Our pool turned green over vacation, how much to fix it?' T2 agent quotes a $ cleanup price, explains shock/algae process, warns no swimming until tested. PASS = $ price AND green/cleanup language."
+  vars:
+    template_id: voice-pool-us
+    prompt: "Our pool turned completely green while we were on vacation — how much does a green pool cleanup cost and how fast can you fix it?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "$"
+    - type: javascript
+      value: output.toLowerCase().includes('green') || output.toLowerCase().includes('algae') || output.toLowerCase().includes('shock') || output.toLowerCase().includes('clean')

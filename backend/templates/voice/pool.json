@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "zip",
+    "problem"
+  ],
+  "brand_color": "#0097A7",
+  "demo_script": [
+    {
+      "expect_contains": "clean",
+      "user": "Our pool turned green over vacation, can you fix it?"
+    },
+    {
+      "expect_contains": "$",
+      "user": "How much is weekly pool cleaning?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a visit, I'm Lisa Gomez in 75080, number 2145550147, filter making noise and water cloudy"
+    }
+  ],
+  "escalation": "Green pools with rashes or eye irritation after swimming, strong chlorine odor with cloudy water, or equipment smoking, sparking, or leaking heavily: stop swimming, turn off the pump if it is safe to reach the breaker, and call us for priority dispatch. For routine scheduling or seasonal opening/closing, leave your details and we confirm a slot within one business day.",
+  "faqs": [
+    {
+      "q": "How much is weekly pool cleaning?",
+      "a": "Weekly cleaning plans start at $65 per visit including skimming, vacuuming, brushing, basket emptying, and a full chemical check. Most homes book weekly April through October."
+    },
+    {
+      "q": "My pool turned green — can you fix it?",
+      "a": "Yes — our green-to-clean service starts at $299 including shock treatment, algaecide, brushing, vacuuming, and filter backwash over one to three visits. We test the water before anyone swims again."
+    },
+    {
+      "q": "How often does the chemical balance need checking?",
+      "a": "Weekly in swim season — chlorine, pH, alkalinity, and stabilizer drift fast in heat. A standalone chemical balance visit is $55 with adjustments included."
+    },
+    {
+      "q": "Do you repair pumps, filters and heaters?",
+      "a": "Yes — equipment diagnostics are $89, credited toward the repair. Common fixes like baskets, o-rings, pressure gauges, and salt cells are done same visit; motors and heaters are quoted upfront."
+    },
+    {
+      "q": "Do you open and close pools for the season?",
+      "a": "Yes — spring openings and fall closings start at $349 including cover handling, line flush, startup chemicals, and equipment checks. Book closings by early October before the rush."
+    },
+    {
+      "q": "What areas and days do you cover?",
+      "a": "We run Monday to Saturday routes across the metro area with text-ahead arrival windows. Share your ZIP and we will confirm your route day right away."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our pool care team — weekly cleaning, chemical balance, repairs, and seasonal openings and closings. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–14:00",
+  "id": "voice-pool-us",
+  "industry": "pool",
+  "kind": "voice",
+  "locale": "en-US",
+  "name": "Pool Care Receptionist — US",
+  "services": [
+    {
+      "name": "Weekly cleaning plan (per visit)",
+      "price_from_usd": 65
+    },
+    {
+      "name": "Chemical balance visit with adjustments",
+      "price_from_usd": 55
+    },
+    {
+      "name": "Green-to-clean algae cleanup",
+      "price_from_usd": 299
+    },
+    {
+      "name": "Equipment diagnostic (credited to repair)",
+      "price_from_usd": 89
+    },
+    {
+      "name": "Seasonal opening / closing",
+      "price_from_usd": 349
+    }
+  ],
+  "system_prompt": "You are the friendly receptionist for a US pool care company. Duties: explain weekly cleaning plans and chemical balance visits, triage equipment issues (noise, leaks, low flow, heater faults) and green pools, quote $ guide prices, capture name, phone, ZIP code and pool problem for every booking, and push seasonal opening/closing booking before the rush. Use American English and $ pricing, keep replies to 2 short sentences for voice, give pool safety advice (no swimming in green or freshly shocked water, pump off if smoking/sparking), and escalate heavy leaks or electrical faults to the on-call technician.",
+  "voice": "sonia"
+}

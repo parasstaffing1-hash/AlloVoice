@@ -1,0 +1,34 @@
+# Subscription template QA (chat-subscription): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[subscription-a] Plan-change request + full lead capture. Script — T1 caller: 'I want to change my plan.' T2 agent takes contact: Tom Reid, tom.reid@example.co.uk, account AC-44210. T3 agent confirms plan change + reference. Probe compresses T1+T2 answers into one turn; PASS = booking/action language OR reference."
+  vars:
+    template_id: chat-subscription
+    prompt: "I'd like to change my plan please. I'm Tom Reid, email tom.reid@example.co.uk, account AC-44210 — can you sort that for me?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: plan
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('confirm') || output.toLowerCase().includes('plan')
+
+- description: "[subscription-b] Standard-plan price enquiry. Script — T1 caller: 'How much is the Standard plan?' T2 agent quotes a £ price, mentions annual option, offers pause/alternatives. PASS = reply names a £ price."
+  vars:
+    template_id: chat-subscription
+    prompt: "How much does the Standard plan cost per month? Is there an annual option?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[subscription-c] Cancellation edge case (no dark patterns). Script — T1 caller: 'I want to cancel my subscription now.' T2 agent allows cancellation honestly, confirms without retention maze or guilt-tripping, asks account details to process. PASS = honours cancel language."
+  vars:
+    template_id: chat-subscription
+    prompt: "I want to cancel my subscription right now please. I'm Tom Reid, tom.reid@example.co.uk, account AC-44210."
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: cancel
+    - type: javascript
+      value: output.toLowerCase().includes('cancel') || output.toLowerCase().includes('confirm') || output.toLowerCase().includes('sorry to see')

@@ -1,0 +1,81 @@
+{
+  "booking_fields": [
+    "name",
+    "phone",
+    "postcode",
+    "problem"
+  ],
+  "brand_color": "#B5451B",
+  "demo_script": [
+    {
+      "expect_contains": "sweep",
+      "user": "We need our chimney swept before winter, when can you come?"
+    },
+    {
+      "expect_contains": "£65",
+      "user": "How much is a standard chimney sweep?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a sweep, I'm Tom Baker, 07700 900789, postcode SK8 6QA, open fire not swept in two years"
+    }
+  ],
+  "escalation": "If your carbon monoxide alarm is sounding, there is smoke blowing back into the room, or birds are trapped and distressed: ventilate the room, do not light the fire, and call us immediately — for suspected CO (headaches, nausea, alarm sounding) leave the property and call the gas emergency line. Otherwise share your details and we confirm an autumn sweep slot, usually within a week at peak season.",
+  "faqs": [
+    {
+      "q": "How much is a chimney sweep?",
+      "a": "A standard open-fire sweep is from £65 and a wood-burner or stove sweep from £75, including a smoke-draw test and safety certificate. A sweep with CCTV inspection is from £90."
+    },
+    {
+      "q": "How often should I have my chimney swept?",
+      "a": "At least once a year before heating season, and twice a year for heavy wood-burner use or coal. Insurers and stove warranties usually require an annual certificate."
+    },
+    {
+      "q": "How far ahead should I book for autumn?",
+      "a": "September to November is our rush — book 2–3 weeks ahead to get your preferred day. We hold evening and Saturday slots through the autumn rush."
+    },
+    {
+      "q": "Do I get a certificate after the sweep?",
+      "a": "Yes — every sweep includes a smoke-draw test and an industry safety certificate for your insurer or stove warranty. Replacement certificates are £25."
+    },
+    {
+      "q": "There is a bird nest in my chimney, can you remove it?",
+      "a": "Do not light the fire — nesting birds are protected in breeding season. We inspect with CCTV from £90, remove accessible nests where lawful, and recommend a bird-guard from £85 to stop it happening again."
+    },
+    {
+      "q": "Should I get a bird-guard or cowl?",
+      "a": "Yes if you have had nests, downdraught or rain ingress — supply and fit from £85 in about 30 minutes during your sweep visit. It keeps birds and rain out while letting smoke draw properly."
+    }
+  ],
+  "greeting": "Hello, thanks for calling our chimney sweep team — autumn bookings now open, sweeps from £65 with safety certificate included. How can I help?",
+  "hours": "Mon–Fri 08:00–18:00, Sat 09:00–14:00, extended hours in the autumn rush",
+  "id": "voice-chimney-uk",
+  "industry": "chimney",
+  "kind": "voice",
+  "locale": "en-GB",
+  "name": "Chimney Sweep Receptionist — UK",
+  "services": [
+    {
+      "name": "Standard open-fire sweep with certificate",
+      "price_from_gbp": 65
+    },
+    {
+      "name": "Wood-burner / stove sweep with certificate",
+      "price_from_gbp": 75
+    },
+    {
+      "name": "Sweep with CCTV inspection",
+      "price_from_gbp": 90
+    },
+    {
+      "name": "Bird-guard supply and fit",
+      "price_from_gbp": 85
+    },
+    {
+      "name": "Smoke-draw test and replacement certificate",
+      "price_from_gbp": 25
+    }
+  ],
+  "system_prompt": "You are the warm, efficient receptionist for a UK chimney sweep firm in the autumn rush. Duties: push prompt pre-winter booking with urgency (slots fill 2–3 weeks out), quote £ guide prices from £65, explain certificates and the bird-guard upsell, capture name/phone/postcode/fire type for every booking, and give CO safety advice (working alarm, ventilation, never light a blocked or nested flue). Use British English and £ pricing, keep replies to 2 short sentences for voice, and escalate sounding CO alarms, smoke blow-back, or trapped birds to the senior sweep at once.",
+  "voice": "sonia"
+}

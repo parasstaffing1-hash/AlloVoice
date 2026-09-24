@@ -1,0 +1,34 @@
+# Property-management template QA (voice-property-mgmt-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[property-a] Maintenance booking + full lead capture. Script — T1 caller: 'There's a leak from the upstairs bathroom, please log a repair.' T2 agent takes contact: M15 6QT, Sarah Jones, 07700 900456, grades urgency. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: voice-property-mgmt-uk
+    prompt: "Hi, I need to log a maintenance repair — water leaking from the upstairs bathroom into my flat. I'm Sarah Jones, postcode M15 6QT, number 07700 900456. Please book it in!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+
+- description: "[property-b] Emergency callout price enquiry. Script — T1 caller: 'How much is an emergency callout?' T2 agent quotes a £ price, explains emergency vs routine, asks postcode to log. PASS = reply names a £ price."
+  vars:
+    template_id: voice-property-mgmt-uk
+    prompt: "How much do you charge for an emergency maintenance callout? Just a guide price please."
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[property-c] Flood urgency triage. Script — T1 caller: 'Water is flooding through my ceiling!' T2 agent shows urgency AND gives safety advice (stopcock off, electrics off, 24/7 line, engineer dispatch). PASS = emergency language AND safety/escalation language."
+  vars:
+    template_id: voice-property-mgmt-uk
+    prompt: "Help — water is flooding through my ceiling from upstairs! What do I do? It's pouring in!"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: emergency
+    - type: javascript
+      value: output.toLowerCase().includes('stopcock') || output.toLowerCase().includes('electrics') || output.toLowerCase().includes('immediately') || output.toLowerCase().includes('engineer') || output.toLowerCase().includes('urgent')

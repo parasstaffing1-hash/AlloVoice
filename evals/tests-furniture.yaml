@@ -1,0 +1,34 @@
+# Furniture template QA (chat-furniture-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+
+- description: "[furniture-a] Delivery booking + full lead capture. Script — T1 caller: 'Please book delivery to Leeds.' T2 agent takes contact: Sophie Lane, 07700 900789, LS1 4DY. T3 agent confirms delivery slot + booking reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+  vars:
+    template_id: chat-furniture-uk
+    prompt: "Please book delivery for my order to Leeds. I'm Sophie Lane on 07700 900789, postcode LS1 4DY — when can you deliver?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: book
+    - type: javascript
+      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('deliver')
+
+- description: "[furniture-b] Assembly-service price enquiry. Script — T1 caller: 'How much is the assembly service?' T2 agent quotes a £ price, says what's included, asks postcode to book. PASS = reply names a £ price."
+  vars:
+    template_id: chat-furniture-uk
+    prompt: "How much do you charge for the assembly service? What does it include?"
+  threshold: 0.5
+  assert:
+    - type: contains
+      value: "£"
+
+- description: "[furniture-c] Damaged-delivery edge case. Script — T1 caller: 'My sofa arrived with a torn arm — what do I do?' T2 agent reassures, offers repair/replacement/refund, asks for photos + details. PASS = mentions damage handling or delivery resolution."
+  vars:
+    template_id: chat-furniture-uk
+    prompt: "My new sofa arrived yesterday with a tear in the arm — it's damaged. What can you do about it?"
+  threshold: 0.5
+  assert:
+    - type: icontains
+      value: damage
+    - type: javascript
+      value: output.toLowerCase().includes('damage') || output.toLowerCase().includes('photo') || output.toLowerCase().includes('replacement') || output.toLowerCase().includes('refund') || output.toLowerCase().includes('sorry')

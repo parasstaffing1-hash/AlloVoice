@@ -1,0 +1,80 @@
+{
+  "booking_fields": [
+    "name",
+    "email",
+    "university"
+  ],
+  "brand_color": "#1B6B4A",
+  "demo_script": [
+    {
+      "expect_contains": "En-suite",
+      "user": "What room types do you have for next September?"
+    },
+    {
+      "expect_contains": "£149",
+      "user": "How much is an en-suite per week?"
+    },
+    {
+      "expect_contains": "book",
+      "user": "Please book a viewing, I'm Priya Shah, priya.shah@example.co.uk, studying at the University of Manchester"
+    }
+  ],
+  "escalation": "If you need contract advice, have a guarantor problem, or want to hold a specific room today: leave your name, email and university and our lettings team will call you back within one working day. For maintenance emergencies in halls, call the on-site team on the number in your welcome pack.",
+  "faqs": [
+    {
+      "q": "What room types do you offer?",
+      "a": "We offer shared twin rooms from £119 a week, en-suite rooms from £149 a week, and studios from £229 a week. All rooms come furnished with a study desk, ample storage and a comfy double bed."
+    },
+    {
+      "q": "Are bills included in the rent?",
+      "a": "Yes — gas, electricity, water, 100Mb Wi-Fi and contents insurance are all included in the weekly rent. There is fair-use capping on energy, but most students never hit it."
+    },
+    {
+      "q": "Do I need a guarantor?",
+      "a": "Yes — every tenancy needs a UK-based guarantor earning at least 36 times the monthly rent. International students without a UK guarantor can use our approved guarantor service from around £295 per tenancy, or pay a larger rent deposit instead."
+    },
+    {
+      "q": "When should I book, and is there availability?",
+      "a": "Rooms for September usually sell out by June, so booking before Easter gives you the best choice. Share your name, email and university and we will check live availability for your city and dates."
+    },
+    {
+      "q": "Can I book a viewing before I commit?",
+      "a": "Absolutely — we run in-person and video viewings Monday to Saturday. Send your name, email and university and we will confirm a viewing slot within one working day."
+    },
+    {
+      "q": "How long are contracts, and can I cancel?",
+      "a": "Standard contracts run 44 or 51 weeks to match the academic year. You can cancel within a 72-hour cooling-off period after signing; after that you may re-let your room to another student with our free re-let matching service."
+    }
+  ],
+  "greeting": "Hi, welcome to our student housing team — I can help with room types, availability, guarantors and viewings. Which university will you be studying at?",
+  "hours": "Mon–Fri 09:00–18:00, Sat 10:00–16:00, with extended hours in August and September",
+  "id": "chat-student-housing-uk",
+  "industry": "student-housing",
+  "kind": "chat",
+  "locale": "en-GB",
+  "name": "Student Housing Assistant — UK",
+  "services": [
+    {
+      "name": "Shared twin room (per week, bills included)",
+      "price_from_gbp": 119
+    },
+    {
+      "name": "En-suite room (per week, bills included)",
+      "price_from_gbp": 149
+    },
+    {
+      "name": "Studio flat (per week, bills included)",
+      "price_from_gbp": 229
+    },
+    {
+      "name": "Summer short-let (per week, bills included)",
+      "price_from_gbp": 99
+    },
+    {
+      "name": "Room holding deposit (one-off, deductible from rent)",
+      "price_from_gbp": 250
+    }
+  ],
+  "system_prompt": "You are the friendly online assistant for a UK student accommodation provider. Duties: explain room types and weekly prices, check availability interest, answer guarantor and bills questions, arrange viewings, always mention guarantor, deposit and international-student options by name when money or eligibility is asked about, and collect name/email/university for every booking or viewing lead. Use British English, keep chat replies concise (1–2 short sentences), and always confirm the next step. Never guarantee a specific room is available without checking — always offer to check live availability.",
+  "voice": "sonia"
+}
