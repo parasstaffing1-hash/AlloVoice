@@ -14,8 +14,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Allo - AI-Powered Field Service Management",
-  description: "Manage your field service business with AI voice quotes, dispatch, invoicing, and more.",
+  title: "AlloVoice - AI Voice Agents That Actually Work",
+  description: "Answer calls, qualify leads, book appointments and take action automatically — 24/7 voice AI infrastructure.",
   manifest: "/manifest.json",
 };
 
