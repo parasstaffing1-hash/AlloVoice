@@ -1,0 +1,60 @@
+# AlloVoice production stack for Oracle Always Free (ARM).
+# One file runs everything: Caddy (TLS) + backend API + frontend.
+# Usage: copy .env.prod.example -> .env.prod, fill it, then
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+services:
+  backend:
+    build: ../../backend
+    image: allovoice-backend:prod
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      # Small pool: Aiven free allows 20 connections total.
+      DB_POOL_SIZE: "3"
+      DB_MAX_OVERFLOW: "2"
+      VOICE_STT_PROVIDER: groq
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      --proxy-headers --forwarded-allow-ips "*"
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: ../deploy/oracle/frontend.Dockerfile
+    image: allovoice-frontend:prod
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:
