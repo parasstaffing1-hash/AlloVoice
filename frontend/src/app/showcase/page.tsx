@@ -60,8 +60,12 @@ const STATIC_FEATURES: Record<string, string[]> = {
 
 function slugFor(t: Template): string {
   const id = (t.id || "").toLowerCase();
-  const m = id.match(/^(?:voice|chat)-(.+?)-(?:uk|us|ae)$/);
-  if (m) return m[1];
+  const m = id.match(/^(?:voice|chat)-(.+?)-(uk|us|ae|in)$/);
+  if (m) {
+    // Disambiguate packs sharing a base across countries.
+    if (m[1] === "appliance" || m[1] === "restaurant") return `${m[1]}-${m[2]}`;
+    return m[1];
+  }
   const raw = (t.industry || t.id || "").toLowerCase();
   if (raw.includes("plumb")) return "plumbing";
   if (raw.includes("hvac") || raw.includes("heat") || raw.includes("boiler")) return "hvac";
@@ -83,6 +87,9 @@ function iconFor(slug: string, cls: string) {
     chimney: BrickWall, wedding: Heart, security: Siren,
     pool: Waves, "student-housing": School, airline: PlaneTakeoff,
     subscription: Repeat, furniture: Sofa, coworking: Laptop,
+    clinic: Stethoscope, property: Home, salon: Sparkles,
+    "restaurant-in": UtensilsCrossed, restaurant: UtensilsCrossed,
+    coaching: GraduationCap, "appliance-in": Refrigerator, appliance: Refrigerator,
   };
   const Icon = map[slug] || Wrench;
   return <Icon className={cls} />;

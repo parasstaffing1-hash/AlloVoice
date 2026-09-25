@@ -1,0 +1,36 @@
+# Coaching-HI template QA (voice-coaching-in): 3 scripted conversations.
+# Same harness notes as tests-pharmacy.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# Locale hi-IN: asserts use javascript output.includes on Hindi keywords +
+# TPL- booking-reference checks and plain-number fee checks.
+
+- description: "[coaching-hi-a] Demo-class booking with details. Script — T1 caller: 'UPSC फाउंडेशन के लिए फ्री डेमो क्लास बुक करनी है।' T2 agent takes contact: प्रिया वर्मा, 98765 43210, जयपुर, confirms demo booking with booking language and reference. Probe compresses T1+T2 answers into one turn; PASS = TPL- reference AND Hindi booking word."
+  vars:
+    template_id: voice-coaching-in
+    prompt: "नमस्ते, मुझे UPSC फाउंडेशन कोर्स के लिए फ्री डेमो क्लास बुक करनी है। मेरा नाम प्रिया वर्मा है, नंबर 98765 43210 है, मैं जयपुर से हूँ।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('TPL-')
+    - type: javascript
+      value: output.includes('बुक') || output.includes('कन्फर्म') || output.includes('डेमो')
+
+- description: "[coaching-hi-b] Fee-guide key-fact enquiry. Script — T1 caller: 'फाउंडेशन कोर्स और टेस्ट सीरीज़ की फीस कितनी है?' T2 agent states foundation from 45000 rupees, test series from 4999 rupees, demo free. PASS = reply names plain-number fee or Hindi fee keyword."
+  vars:
+    template_id: voice-coaching-in
+    prompt: "फाउंडेशन कोर्स और टेस्ट सीरीज़ की फीस कितनी है? क्या डेमो क्लास फ्री है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('45000') || output.includes('4999')
+    - type: javascript
+      value: output.includes('45000') || output.includes('4999') || output.includes('फीस') || output.includes('कीमत') || output.includes('रुपये')
+
+- description: "[coaching-hi-c] Fee-instalment / scholarship edge case. Script — T1 caller: 'क्या फीस किस्तों में दे सकते हैं? स्कॉलरशिप टेस्ट कब है?' T2 agent explains instalments, 10-50% scholarship discount and monthly test date. PASS = reply mentions scholarship/instalment/discount wording."
+  vars:
+    template_id: voice-coaching-in
+    prompt: "मेरी फीस एक साथ देना मुश्किल है — क्या किस्तों में दे सकते हैं? स्कॉलरशिप टेस्ट कब होता है और कितनी छूट मिलेगी?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('स्कॉलरशिप') || output.includes('किस्त') || output.includes('छूट') || output.includes('काउंसलर')

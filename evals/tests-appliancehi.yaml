@@ -1,0 +1,36 @@
+# Appliance-HI template QA (voice-appliance-in): 3 scripted conversations.
+# Same harness notes as tests-pharmacy.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# Locale hi-IN: asserts use javascript output.includes on Hindi keywords +
+# TPL- booking-reference checks and plain-number charge checks.
+
+- description: "[appliance-hi-a] Service-visit booking with symptom + brand. Script — T1 caller: 'मेरा फ्रिज ठंडा नहीं कर रहा, ब्रांड LG है, विज़िट बुक कर दीजिए।' T2 agent takes contact: अमित गुप्ता, 99880 11223, रोहिणी, confirms visit with booking language and reference. Probe compresses T1+T2 answers into one turn; PASS = TPL- reference AND Hindi booking word."
+  vars:
+    template_id: voice-appliance-in
+    prompt: "नमस्ते, मेरा डबल-डोर फ्रिज ठंडा नहीं कर रहा है, ब्रांड LG है। मेरा नाम अमित गुप्ता है, नंबर 99880 11223 है, इलाका रोहिणी है — विज़िट बुक कर दीजिए।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('TPL-')
+    - type: javascript
+      value: output.includes('बुक') || output.includes('कन्फर्म') || output.includes('विज़िट')
+
+- description: "[appliance-hi-b] Visit-charge / AC-service price enquiry. Script — T1 caller: 'विज़िट चार्ज और AC सर्विस की कीमत क्या है?' T2 agent states visit 299 rupees (adjusted in repair), AC service from 599 rupees. PASS = reply names plain-number charge or Hindi price keyword."
+  vars:
+    template_id: voice-appliance-in
+    prompt: "आपका विज़िट चार्ज कितना है? AC सर्विस और गैस रिफिल की कीमत क्या है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('299') || output.includes('599') || output.includes('1499')
+    - type: javascript
+      value: output.includes('299') || output.includes('599') || output.includes('चार्ज') || output.includes('कीमत') || output.includes('रुपये')
+
+- description: "[appliance-hi-c] AC cooling complaint in summer edge case. Script — T1 caller: 'गर्मी में AC ठंडी हवा नहीं दे रहा, क्या गैस भरनी पड़ेगी?' T2 agent triages filter/service vs gas, quotes service/gas prices and books technician visit. PASS = reply mentions service/gas/technician/visit wording."
+  vars:
+    template_id: voice-appliance-in
+    prompt: "बहुत गर्मी है और मेरा AC ठंडी हवा नहीं दे रहा है — क्या गैस भरनी पड़ेगी? जल्दी सर्विस चाहिए।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('गैस') || output.includes('सर्विस') || output.includes('टेक्नीशियन') || output.includes('विज़िट')

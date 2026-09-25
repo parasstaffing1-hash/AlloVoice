@@ -1,0 +1,36 @@
+# Restaurant-HI template QA (voice-restaurant-in): 3 scripted conversations.
+# Same harness notes as tests-pharmacy.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# Locale hi-IN: asserts use javascript output.includes on Hindi keywords +
+# TPL- booking-reference checks and plain-number price checks.
+
+- description: "[restaurant-hi-a] Table-booking with details. Script — T1 caller: 'शनिवार शाम सात बजे चार लोगों के लिए टेबल बुक करनी है।' T2 agent takes contact: राहुल शर्मा, 98110 12345, लक्ष्मी नगर, confirms table booking with booking language and reference. Probe compresses T1+T2 answers into one turn; PASS = TPL- reference AND Hindi booking word."
+  vars:
+    template_id: voice-restaurant-in
+    prompt: "नमस्ते, मुझे शनिवार शाम सात बजे चार लोगों के लिए टेबल बुक करनी है। मेरा नाम राहुल शर्मा है, नंबर 98110 12345 है, इलाका लक्ष्मी नगर है।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('TPL-')
+    - type: javascript
+      value: output.includes('बुक') || output.includes('कन्फर्म') || output.includes('रेफरेंस')
+
+- description: "[restaurant-hi-b] Menu price key-fact enquiry. Script — T1 caller: 'वेज थाली और चिकन बिरयानी की कीमत क्या है?' T2 agent states veg thali from 249 rupees, biryani from 299 rupees. PASS = reply names plain-number price or Hindi price keyword."
+  vars:
+    template_id: voice-restaurant-in
+    prompt: "आपके यहाँ वेज थाली और चिकन बिरयानी की कीमत क्या है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('249') || output.includes('299')
+    - type: javascript
+      value: output.includes('249') || output.includes('299') || output.includes('कीमत') || output.includes('रुपये') || output.includes('₹')
+
+- description: "[restaurant-hi-c] Large-party / bulk-order edge case. Script — T1 caller: 'हमें साठ लोगों के लिए पार्टी हॉल चाहिए और बल्क ऑर्डर भी होगा।' T2 agent quotes party hall from 15000 rupees, explains package/booking and escalates to manager. PASS = reply mentions hall/party/manager or hall price."
+  vars:
+    template_id: voice-restaurant-in
+    prompt: "हमें साठ लोगों के बर्थडे के लिए पार्टी हॉल चाहिए और सौ लोगों का बल्क ऑर्डर भी होगा — कीमत और बुकिंग कैसे होगी?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('15000') || output.includes('हॉल') || output.includes('पार्टी') || output.includes('मैनेजर')

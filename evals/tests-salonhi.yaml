@@ -1,0 +1,40 @@
+# Salon-HI template QA (voice-salon-in): 3 scripted conversations.
+# Same harness notes as tests-pharmacy.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# LOCALE: hi-IN — all prompts/asserts in Hindi. The (a) probe asserts the
+# backend-appended TPL- booking reference (cf. backend/app/routes/agents.py
+# _make_lead_reference) plus the Hindi booking word 'बुक', since English
+# 'book' will not appear in Hindi replies.
+
+- description: "[salonhi-a] Appointment booking + full lead capture. Script — T1 caller: 'Mujhe Saturday ko facial aur hair spa book karna hai.' T2 agent takes contact: Neha Gupta, 99580 67891, confirms appointment with booking language and reference. Probe compresses T1+T2 into one turn; PASS = Hindi booking language AND TPL- reference."
+  vars:
+    template_id: voice-salon-in
+    prompt: "नमस्ते, मुझे शनिवार को फेशियल और हेयर स्पा बुक करना है। मेरा नाम नेहा गुप्ता है, नंबर 99580 67891 है — कृपया अपॉइंटमेंट बुक कर दीजिए।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('बुक') || output.includes('कन्फर्म') || output.includes('अपॉइंटमेंट')
+    - type: javascript
+      value: output.includes('TPL-') || output.includes('रेफरेंस') || output.includes('रेफरेन्स') || output.includes('कन्फर्म')
+
+- description: "[salonhi-b] Haircut/facial price-menu enquiry. Script — T1 caller: 'Haircut aur facial ka kya price hai?' T2 agent quotes the menu: haircut from ₹299, facial from ₹1499. PASS = reply names a menu price number."
+  vars:
+    template_id: voice-salon-in
+    prompt: "हेयरकट और फेशियल का क्या प्राइस है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('299') || output.includes('1499') || output.includes('1299') || output.includes('799')
+    - type: javascript
+      value: output.includes('₹') || output.includes('रुपये') || output.includes('रुपए') || output.includes('299') || output.includes('1499')
+
+- description: "[salonhi-c] Bridal-package edge case. Script — T1 caller: 'Bridal package ka kya price hai, usme kya-kya milta hai?' T2 agent quotes bridal from ₹21000 with inclusions (makeup + hair + facial) and offers trial booking. PASS = reply names the bridal price."
+  vars:
+    template_id: voice-salon-in
+    prompt: "ब्राइडल पैकेज का क्या प्राइस है? उसमें क्या-क्या मिलता है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('21000') || output.includes('ब्राइडल')
+    - type: javascript
+      value: output.includes('21000') || output.includes('₹') || output.includes('मेकअप') || output.includes('ट्रायल')

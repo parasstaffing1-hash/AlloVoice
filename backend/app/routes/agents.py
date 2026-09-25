@@ -164,7 +164,7 @@ class SpeakRequest(BaseModel):
 # Helpers: booking intent, fallback, prompt building
 # ---------------------------------------------------------------------------
 
-_BOOK_WORDS_STRONG = ("book", "booking", "appointment", "schedule")
+_BOOK_WORDS_STRONG = ("book", "booking", "appointment", "schedule", "\u092c\u0941\u0915", "\u092c\u0941\u0915\u093f\u0902\u0917", "\u0905\u092a\u0949\u0907\u0902\u091f\u092e\u0947\u0902\u091f", "\u0935\u093f\u091c\u093f\u091f", "\u0935\u093f\u091c\u093c\u093f\u091f")
 _BOOK_WORDS_SOFT = (
     "visit", "call out", "callout", "engineer", "come round", "come out",
 )
@@ -178,7 +178,7 @@ _PHONE_RE = re.compile(
     r"(\+44[\d\s-]{9,}|07[\d\s-]{9,}|020[\d\s-]{7,}"
     r"|\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b"
     r"|\(\d{3}\)\s?\d{3}[-.\s]?\d{4}"
-    r"|\+\d[\d\s-]{7,}\d)"
+    r"|\+\d[\d\s-]{7,}\d|\b[6-9]\d{4}[-.\s]?\d{5}\b)"
 )
 
 
@@ -186,7 +186,7 @@ def _service_price(service: dict) -> str:
     """Price text honouring whichever currency key the pack uses."""
     try:
         for key, symbol in (("price_from_gbp", "£"), ("price_from_usd", "$"),
-                            ("price_from_aed", "AED ")):
+                            ("price_from_aed", "AED "), ("price_from_inr", "₹")):
             value = (service or {}).get(key)
             if isinstance(value, (int, float)):
                 return f"{symbol}{value:g}"
@@ -215,7 +215,7 @@ _EMERGENCY_SAFETY = (
 _PRICE_WORDS = (
     "price", "pricing", "cost", "charge", "how much", "quote",
     "expensive", "cheap", "fee", "rate", "much is", "much does",
-    "figure", "excess", "amount",
+    "figure", "excess", "amount", "\u0915\u0940\u092e\u0924", "\u0926\u093e\u092e", "\u092b\u0940\u0938", "\u0915\u093f\u0924\u0928\u093e", "\u0915\u093f\u0924\u0928\u0947", "\u0915\u093f\u0930\u093e\u092f\u093e", "\u0930\u0947\u091f", "\u091a\u093e\u0930\u094d\u091c",
 )
 
 
@@ -244,7 +244,7 @@ def _ensure_price_answer(reply: str, message: str, pack: dict) -> str:
         r = reply or ""
         if not any(w in t for w in _PRICE_WORDS):
             return reply
-        if _re.search(r"(£|\$|AED)\s?\d", r):
+        if _re.search(r"(£|\$|AED|\u20b9)\s?\d", r):
             return reply
         priced = []
         for s in (pack or {}).get("services") or []:
@@ -255,13 +255,15 @@ def _ensure_price_answer(reply: str, message: str, pack: dict) -> str:
             if len(priced) >= 2:
                 break
         if priced:
-            return (r.rstrip() + " Guide prices: " + "; ".join(priced) + ".").strip()
+            hi = str((pack or {}).get("locale", "")).startswith("hi")
+            label = " \u092e\u093e\u0930\u094d\u0917\u0926\u0930\u094d\u0936\u0928 \u092e\u0942\u0932\u094d\u092f: " if hi else " Guide prices: "
+            return (r.rstrip() + label + "; ".join(priced) + ".").strip()
         # Fallback: a pack FAQ holding a £ figure matching the question
         # (e.g. excess splits, fee schedules) beats saying nothing.
         try:
             import re as _re2
 
-            tokens = {w for w in _re2.findall(r"[a-z]{4,}", t) if w not in
+            tokens = {w for w in _re2.findall(r"[a-z]{4,}|[\u0900-\u097F]{2,}", t) if w not in
                       ("what", "with", "your", "have", "this", "that", "from",
                        "please", "thank", "thanks", "hello", "there")}
             best, best_score = None, 0
@@ -269,7 +271,7 @@ def _ensure_price_answer(reply: str, message: str, pack: dict) -> str:
                 if not isinstance(f, dict):
                     continue
                 a = str(f.get("a", "") or "")
-                if not _re2.search(r"(£|\$|AED)\s?\d", a):
+                if not _re2.search(r"(£|\$|AED|\u20b9)\s?\d", a):
                     continue
                 hay = f"{f.get('q', '')} {a}".lower()
                 score = sum(hay.count(tok) for tok in tokens)
@@ -352,7 +354,7 @@ def _faq_scores(pack: dict, message: str) -> list:
     answer bodies share vocabulary (e.g. 'lessons') and would otherwise win."""
     t = (message or "").lower().strip()
     try:
-        tokens = re.findall(r"[a-z]{3,}", t)
+        tokens = re.findall(r"[a-z]{3,}|[\u0900-\u097F]{2,}", t)
         scored = []
         for faq in pack.get("faqs") or []:
             if not isinstance(faq, dict):

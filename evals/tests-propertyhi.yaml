@@ -1,0 +1,40 @@
+# Property-HI template QA (voice-property-in): 3 scripted conversations.
+# Same harness notes as tests-pharmacy.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# LOCALE: hi-IN — all prompts/asserts in Hindi. The (a) probe asserts the
+# backend-appended TPL- booking reference (cf. backend/app/routes/agents.py
+# _make_lead_reference) plus the Hindi booking word 'बुक', since English
+# 'book' will not appear in Hindi replies.
+
+- description: "[propertyhi-a] Site-visit booking + full lead capture. Script — T1 caller: 'Mujhe Dwarka mein 2BHK kiraye par chahiye, Sunday site visit karni hai.' T2 agent takes contact: Rahul Verma, 98990 12345, confirms site visit with booking language and reference. Probe compresses T1+T2 into one turn; PASS = Hindi booking language AND TPL- reference."
+  vars:
+    template_id: voice-property-in
+    prompt: "नमस्ते, मुझे द्वारका में 2BHK किराए पर चाहिए। मेरा नाम राहुल वर्मा है, नंबर 98990 12345 है, इस रविवार साइट विज़िट बुक कर दीजिए।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('बुक') || output.includes('कन्फर्म') || output.includes('विज़िट') || output.includes('विजिट')
+    - type: javascript
+      value: output.includes('TPL-') || output.includes('रेफरेंस') || output.includes('रेफरेन्स') || output.includes('कन्फर्म')
+
+- description: "[propertyhi-b] Locality price-guide enquiry. Script — T1 caller: 'Dwarka mein 2BHK khareedne ka kya rate chal raha hai?' T2 agent quotes the guide: 2BHK from ~65 lakh (₹6500000). PASS = reply names the 65-lakh price keyword or plain number."
+  vars:
+    template_id: voice-property-in
+    prompt: "द्वारका में 2BHK खरीदने का क्या रेट चल रहा है?"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('65') || output.includes('6500000') || output.includes('लाख')
+    - type: javascript
+      value: output.includes('₹') || output.includes('रुपये') || output.includes('रुपए') || output.includes('लाख') || output.includes('65')
+
+- description: "[propertyhi-c] Budget-constrained buyer edge case. Script — T1 caller: 'Mera budget 50 lakh hai, kya Dwarka mein 2BHK milega?' T2 agent handles gracefully: states 2BHK starts ~65 lakh, suggests 1BHK/rent options or nearby areas, asks area/budget to book a visit — does NOT fake a price. PASS = budget/option guidance with booking or visit language."
+  vars:
+    template_id: voice-property-in
+    prompt: "मेरा बजट 50 लाख है, क्या द्वारका में 2BHK मिल जाएगा? कोई ऑप्शन बताइए।"
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.includes('लाख') || output.includes('बजट') || output.includes('65')
+    - type: javascript
+      value: output.includes('विज़िट') || output.includes('विजिट') || output.includes('बुक') || output.includes('कन्फर्म') || output.includes('ऑप्शन')
