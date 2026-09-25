@@ -53,6 +53,29 @@ _HISTORY_MAX_MSGS = 12
 # Per-connection emotion timelines: [{turn, state, confidence}], capped at 20.
 _EMOTIONS: dict[int, list] = {}
 _EMOTION_MAX_TURNS = 20
+# Global session cap: _HISTORIES/_EMOTIONS are per-conn capped, but the dicts
+# themselves were unbounded — a flood of half-open sockets could grow them
+# forever. Oldest entries beyond this are evicted on new connections.
+_MAX_SESSIONS = 500
+
+
+def _evict_sessions_if_needed(current_id: int) -> None:
+    """Drop oldest sessions beyond _MAX_SESSIONS. Never raises."""
+    try:
+        while len(_HISTORIES) > _MAX_SESSIONS:
+            oldest = next((k for k in _HISTORIES if k != current_id), None)
+            if oldest is None:
+                break
+            _HISTORIES.pop(oldest, None)
+            _EMOTIONS.pop(oldest, None)
+        while len(_EMOTIONS) > _MAX_SESSIONS:
+            oldest = next((k for k in _EMOTIONS if k != current_id), None)
+            if oldest is None:
+                break
+            _EMOTIONS.pop(oldest, None)
+            _HISTORIES.pop(oldest, None)
+    except Exception:
+        pass
 
 
 def _emotion_timeline(conn_id: int) -> list:
@@ -565,6 +588,7 @@ async def ws_talk(websocket: WebSocket):
     conn_id = id(websocket)
     _HISTORIES.pop(conn_id, None)
     _EMOTIONS.pop(conn_id, None)
+    _evict_sessions_if_needed(conn_id)
     detector = VadTurnDetector()  # lazy singleton model, per-conn iterator state
     utterance = bytearray()
     speaking = False
@@ -577,9 +601,17 @@ async def ws_talk(websocket: WebSocket):
 
     async def abort_speaking(reason: str = "interrupted") -> None:
         nonlocal speaking, current_task
-        if current_task is not None and not current_task.done():
-            current_task.cancel()
+        # Detach first, then await the cancelled task: this guarantees the
+        # old reply pipeline is fully dead before "interrupted" is sent, so
+        # a new utterance can't start a second overlapping TTS stream.
+        task = current_task
         current_task = None
+        if task is not None and not task.done():
+            task.cancel()
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
         if speaking:
             speaking = False
             try:
@@ -1083,8 +1115,16 @@ async def ws_talk(websocket: WebSocket):
             # Unknown text types are ignored (keep socket open).
     finally:
         try:
-            if current_task is not None and not current_task.done():
-                current_task.cancel()
+            # Cancel AND await: avoids "task destroyed but pending" warnings
+            # and unretrieved-exception noise on dropped calls.
+            task = current_task
+            current_task = None
+            if task is not None and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except (asyncio.CancelledError, Exception):
+                    pass
         except Exception:
             pass
         _HISTORIES.pop(conn_id, None)

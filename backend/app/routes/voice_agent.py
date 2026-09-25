@@ -100,7 +100,11 @@ def rule_based_reply(message: str) -> str:
         )
     if any(w in t for w in ["goodbye", "bye", "see you", "cheers"]):
         return "Goodbye, and thanks for using Allo! Get in touch any time you need help."
-    if any(w in t for w in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"]):
+    # Word-boundary match: plain `in` checks misfire on "hi" inside
+    # "which"/"this"/"high", shadowing the document/booking branches below.
+    if re.search(
+        r"\b(hello|hi|hey|good\s+morning|good\s+afternoon|good\s+evening)\b", t
+    ):
         return (
             "Hello! I'm the Allo support assistant. I can help with creating "
             "your account, documents you'll need, bookings and plans. "

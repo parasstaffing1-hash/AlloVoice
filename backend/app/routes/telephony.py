@@ -19,8 +19,9 @@ a public tunnel (ngrok/cloudflared) or a VPS with public HTTPS/WSS, then
 set TWILIO_MEDIA_WS_URL to the public *wss* base URL, e.g.
 TWILIO_MEDIA_WS_URL=wss://abc123.ngrok.io
 
-Raw REST + hand-built TwiML only — no twilio SDK. Only httpx + numpy
-(+ stdlib) are used here. Every audio helper is pure and never raises.
+Raw REST + hand-built TwiML only — no twilio SDK. Only httpx
+(+ stdlib) are used here, with an optional numpy fast path and a stdlib
+fallback per helper. Every audio helper is pure and never raises.
 Every WebSocket stage is try/except-guarded so one bad frame or failed
 STT/LLM/TTS call can never crash the socket.
 """
@@ -100,12 +101,119 @@ _HISTORY_MAX_MSGS = 12
 _EMOTION_MAX_TURNS = 20
 
 
-# ─── Audio glue (numpy only, pure functions, never raise) ────────────────────
+# ─── Audio glue (numpy fast path, stdlib fallback; never raise) ────────────────
+
+def _mulaw_to_pcm16_py(mulaw: bytes) -> bytes:
+    """Pure-stdlib G.711 mu-law -> Int16LE PCM. Empty bytes on bad input."""
+    try:
+        import struct
+
+        raw = bytes(mulaw or b"")
+        if not raw:
+            return b""
+        out = bytearray(2 * len(raw))
+        for i, b in enumerate(raw):
+            u = (~b) & 0xFF
+            sign = u & 0x80
+            exponent = (u >> 4) & 0x07
+            mantissa = u & 0x0F
+            magnitude = (((mantissa << 3) + _MULAW_BIAS) << exponent) - _MULAW_BIAS
+            s = -magnitude if sign else magnitude
+            if s < -32768:
+                s = -32768
+            elif s > 32767:
+                s = 32767
+            struct.pack_into("<h", out, i * 2, s)
+        return bytes(out)
+    except Exception:
+        return b""
+
+
+def _pcm16_to_mulaw_py(pcm: bytes) -> bytes:
+    """Pure-stdlib Int16LE PCM -> G.711 mu-law. Empty bytes on bad input."""
+    try:
+        import struct
+
+        raw = bytes(pcm or b"")
+        if len(raw) < 2:
+            return b""
+        if len(raw) % 2:
+            raw = raw[:-1]
+        if not raw:
+            return b""
+        n = len(raw) // 2
+        samples = struct.unpack("<" + "h" * n, raw)
+        out = bytearray(n)
+        for i, s in enumerate(samples):
+            neg = s < 0
+            mag = (-s if neg else s)
+            if mag > _MULAW_CLIP:
+                mag = _MULAW_CLIP
+            mag += _MULAW_BIAS
+            exp = mag.bit_length() - 8  # floor(log2(mag)) - 7
+            if exp < 0:
+                exp = 0
+            elif exp > 7:
+                exp = 7
+            mant = (mag >> (exp + 3)) & 0x0F
+            code = (0x80 if neg else 0) | (exp << 4) | mant
+            out[i] = (~code) & 0xFF
+        return bytes(out)
+    except Exception:
+        return b""
+
+
+def _resample_8k_to_16k_py(pcm: bytes) -> bytes:
+    """Pure-stdlib 8kHz -> 16kHz linear interp (midpoint inserts)."""
+    try:
+        import struct
+
+        raw = bytes(pcm or b"")
+        if len(raw) < 2:
+            return b""
+        if len(raw) % 2:
+            raw = raw[:-1]
+        n = len(raw) // 2
+        if n == 0:
+            return b""
+        x = struct.unpack("<" + "h" * n, raw)
+        out = bytearray(4 * n)
+        for i, s in enumerate(x):
+            nxt = x[i + 1] if i + 1 < n else s
+            mid = (s + nxt) // 2
+            struct.pack_into("<hh", out, i * 4, s, mid)
+        return bytes(out)
+    except Exception:
+        return b""
+
+
+def _resample_16k_to_8k_py(pcm: bytes) -> bytes:
+    """Pure-stdlib 16kHz -> 8kHz by taking even samples (matches np.interp)."""
+    try:
+        import struct
+
+        raw = bytes(pcm or b"")
+        if len(raw) < 2:
+            return b""
+        if len(raw) % 2:
+            raw = raw[:-1]
+        n = len(raw) // 2
+        if n == 0:
+            return b""
+        x = struct.unpack("<" + "h" * n, raw)
+        kept = x[::2]
+        return struct.pack("<" + "h" * len(kept), *kept) if kept else b""
+    except Exception:
+        return b""
+
 
 def mulaw_to_pcm16(mulaw: bytes) -> bytes:
     """G.711 mu-law bytes -> Int16LE PCM bytes. Empty bytes on bad input."""
     try:
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError:
+            return _mulaw_to_pcm16_py(mulaw if isinstance(mulaw, bytes) else b"")
 
         if not mulaw:
             return b""
@@ -124,7 +232,10 @@ def mulaw_to_pcm16(mulaw: bytes) -> bytes:
 def pcm16_to_mulaw(pcm: bytes) -> bytes:
     """Int16LE PCM bytes -> G.711 mu-law bytes. Empty bytes on bad input."""
     try:
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError:
+            return _pcm16_to_mulaw_py(pcm if isinstance(pcm, bytes) else b"")
 
         if not pcm or len(pcm) < 2:
             return b""
@@ -155,7 +266,10 @@ def pcm16_to_mulaw(pcm: bytes) -> bytes:
 def resample_8k_to_16k(pcm: bytes) -> bytes:
     """Int16LE mono 8kHz -> 16kHz via linear interp. Empty on bad input."""
     try:
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError:
+            return _resample_8k_to_16k_py(pcm if isinstance(pcm, bytes) else b"")
 
         if not pcm or len(pcm) < 2:
             return b""
@@ -176,7 +290,10 @@ def resample_8k_to_16k(pcm: bytes) -> bytes:
 def resample_16k_to_8k(pcm: bytes) -> bytes:
     """Int16LE mono 16kHz -> 8kHz via linear interp. Empty on bad input."""
     try:
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError:
+            return _resample_16k_to_8k_py(pcm if isinstance(pcm, bytes) else b"")
 
         if not pcm or len(pcm) < 2:
             return b""
@@ -359,7 +476,9 @@ async def outbound_twiml(message: str = "Hello from Allo."):
         text = "Hello from Allo."
     return _twiml(
         '<?xml version="1.0" encoding="UTF-8"?>'
-        "<Response><Say>" + _xml_attr(text)[:1600] + "</Say></Response>"
+        # Truncate BEFORE escaping: cutting an escaped entity (e.g. "&amp")
+        # mid-sequence would emit malformed XML that Twilio rejects.
+        "<Response><Say>" + _xml_attr(text[:1600]) + "</Say></Response>"
     )
 
 
@@ -416,6 +535,18 @@ async def _finalize_twilio_call(stream_key: str) -> None:
                 model = "llm"
         except Exception:
             pass
+        escalation: dict = {"escalated": False, "reason": None, "mood": None}
+        if _EMOTION_AVAILABLE:
+            try:
+                _adapted = adapt(list(emotions) if isinstance(emotions, list) else [])
+                if isinstance(_adapted, dict):
+                    escalation = {
+                        "escalated": bool(_adapted.get("escalate")),
+                        "reason": _adapted.get("reason"),
+                        "mood": _adapted.get("mood"),
+                    }
+            except Exception:
+                pass
         call_id = str(rec.get("call_id") or stream_key)
         TWILIO_CALL_RECORDS[call_id] = {
             "call_id": call_id,
@@ -427,6 +558,7 @@ async def _finalize_twilio_call(stream_key: str) -> None:
             "status": "ended",
             "turns": history,
             "emotions": emotions,
+            "escalation": escalation,
             "analysis": {"summary": summary, "model": model},
         }
     except Exception:
@@ -514,9 +646,26 @@ async def media_stream(websocket: WebSocket):
                     tts_pitch = str(_pol.get("tts_pitch") or "+0Hz")
                 except Exception:
                     empathy_addon = ""
+            handoff_addon = ""
+            if _EMOTION_AVAILABLE:
+                try:
+                    _adapted = adapt(list(emotions))
+                    if (isinstance(_adapted, dict)
+                            and _adapted.get("escalate")):
+                        # Suggest-only: the agent offers a human colleague,
+                        # it never transfers the call itself.
+                        handoff_addon = (
+                            "The caller has sounded frustrated or upset "
+                            "repeatedly. Briefly acknowledge this and offer "
+                            "to bring in a human colleague to help."
+                        )
+                except Exception:
+                    handoff_addon = ""
             messages = list(history)
             if empathy_addon:
                 messages.append({"role": "system", "content": empathy_addon})
+            if handoff_addon:
+                messages.append({"role": "system", "content": handoff_addon})
             messages.append({"role": "user", "content": text})
             reply = ""
             try:

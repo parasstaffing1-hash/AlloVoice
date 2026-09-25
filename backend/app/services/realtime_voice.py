@@ -186,7 +186,15 @@ class VadTurnDetector:
         return None
 
     def feed(self, pcm16_bytes: bytes, sample_rate: int = 16000) -> str | None:
-        """Feed arbitrary-size PCM16 chunk; return turn event or None."""
+        """Feed arbitrary-size PCM16 chunk; return turn event or None.
+
+        Contract: caller MUST supply 16kHz Int16LE mono (the talk-page
+        AudioWorklet resamples any native rate to 16k before sending).
+        `sample_rate` is accepted for forward-compat but intentionally
+        ignored: no resampling here (would need numpy/scipy — absent
+        per requirements.txt). Non-16k input only skews window timing
+        (~32ms windows stretch/shrink), never crashes.
+        """
         try:
             if not pcm16_bytes:
                 return None

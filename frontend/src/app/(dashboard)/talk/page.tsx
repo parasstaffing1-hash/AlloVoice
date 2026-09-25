@@ -126,6 +126,8 @@ export default function TalkPage() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const levelBarRef = useRef<HTMLDivElement | null>(null);
   const lastBargeRef = useRef(0);
+  const silentFramesRef = useRef(0);
+  const noSignalNotifiedRef = useRef(false);
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deltaActiveRef = useRef(false);
   const mountedRef = useRef(true);
@@ -352,6 +354,9 @@ export default function TalkPage() {
       teardownAudio();
       mp3ChunksRef.current = [];
       mp3BytesRef.current = 0;
+      deltaActiveRef.current = false;
+      silentFramesRef.current = 0;
+      noSignalNotifiedRef.current = false;
       if (clearTranscript && mountedRef.current) setMessages([]);
       setBothStatus("Idle");
     },
@@ -444,6 +449,13 @@ export default function TalkPage() {
     setError(null);
     setWsClosed(false);
     setConnecting(true);
+    // Fresh per-session streaming/audio state (stale deltas/buffers from a
+    // previous call would corrupt the new transcript/audio queue).
+    deltaActiveRef.current = false;
+    mp3ChunksRef.current = [];
+    mp3BytesRef.current = 0;
+    silentFramesRef.current = 0;
+    noSignalNotifiedRef.current = false;
 
     // 1) Mic first so permission errors surface before we dial the socket.
     let stream: MediaStream;
@@ -668,6 +680,17 @@ export default function TalkPage() {
             sendBargeIn();
             stopPlayback();
           }
+          // No-audio feedback: mic attached but (near-)silent for ~8s while
+          // the agent isn't playing usually means muted input / wrong device.
+          if (!speakingRef.current && rms < 0.004) {
+            silentFramesRef.current += 1;
+            if (silentFramesRef.current > 480 && !noSignalNotifiedRef.current) {
+              noSignalNotifiedRef.current = true;
+              showError("Mic sounds silent — check the input volume/mute switch, then talk. Dismiss anytime.");
+            }
+          } else if (!speakingRef.current) {
+            silentFramesRef.current = 0;
+          }
           lastUi = pct;
         }
       }
@@ -675,7 +698,7 @@ export default function TalkPage() {
     };
     levelRafRef.current = requestAnimationFrame(tick);
     void lastUi;
-  }, [sendBargeIn, stopLevelLoop, stopPlayback]);
+  }, [sendBargeIn, showError, stopLevelLoop, stopPlayback]);
 
   // ---- auto-scroll transcript ----
   useEffect(() => {

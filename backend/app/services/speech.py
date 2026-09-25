@@ -58,10 +58,17 @@ class FasterWhisperSTT(STTProvider):
             return ""
 
         def _run() -> str:
-            model = _get_model()
+            try:
+                model = _get_model()
+            except ImportError as e:
+                raise RuntimeError(
+                    "faster-whisper not installed (local STT unavailable)"
+                ) from e
+            except Exception as e:
+                raise RuntimeError(f"local STT model load failed: {e}") from e
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                f.write(wav_bytes)
                 path = f.name
+                f.write(wav_bytes)
             try:
                 segments, _info = model.transcribe(
                     path, language="en", beam_size=1, vad_filter=True
@@ -69,6 +76,8 @@ class FasterWhisperSTT(STTProvider):
                 return " ".join(
                     (s.text or "").strip() for s in segments if (s.text or "").strip()
                 ).strip()
+            except Exception as e:
+                raise RuntimeError(f"local STT transcription failed: {e}") from e
             finally:
                 try:
                     os.unlink(path)
@@ -81,6 +90,22 @@ class FasterWhisperSTT(STTProvider):
 # ---------------------------------------------------------------------------
 # Groq-hosted Whisper STT (fast alternative to local faster-whisper)
 # ---------------------------------------------------------------------------
+
+
+# Module-level shared client: reuse TCP/TLS connections across STT calls
+# instead of paying a fresh handshake per transcription. Process-lifetime;
+# httpx.AsyncClient is safe to share across awaits on one event loop.
+_GROQ_CLIENT = None
+
+
+def _get_groq_client():
+    """Lazy singleton httpx.AsyncClient for Groq STT. May raise ImportError."""
+    global _GROQ_CLIENT
+    if _GROQ_CLIENT is None:
+        import httpx
+
+        _GROQ_CLIENT = httpx.AsyncClient(timeout=60.0)
+    return _GROQ_CLIENT
 
 
 class GroqWhisperSTT(STTProvider):
@@ -111,18 +136,21 @@ class GroqWhisperSTT(STTProvider):
         api_key = self._api_key()
         if not api_key:
             raise RuntimeError("GROQ_API_KEY not configured")
-        import httpx
-
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(
-                    self._URL,
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    files={"file": ("audio.wav", wav_bytes, "audio/wav")},
-                    data={"model": self._MODEL, "language": "en"},
-                )
-                resp.raise_for_status()
-                data = resp.json()
+            client = _get_groq_client()
+        except ImportError as e:
+            raise RuntimeError(
+                "httpx not installed (required for Groq STT)"
+            ) from e
+        try:
+            resp = await client.post(
+                self._URL,
+                headers={"Authorization": f"Bearer {api_key}"},
+                files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+                data={"model": self._MODEL, "language": "en"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
         except Exception as e:
             raise RuntimeError(f"Groq STT failed: {e}") from e
         text = (data.get("text") or "").strip() if isinstance(data, dict) else ""
@@ -231,8 +259,22 @@ class EdgeTTSVoice(TTSProvider):
                 return data, self.primary
             raise RuntimeError("primary TTS returned empty audio")
         except Exception:
+            pass
+        # Fallback voice: consult its own cache slot first, then synthesize.
+        # Never raises — a total TTS outage degrades to b"" and callers
+        # translate that to HTTP 502 (same as before, minus the traceback).
+        try:
+            fb_key = self._cache_key(text, self.fallback, rate, pitch)
+            fb_hit = self._cache_get(fb_key)
+            if fb_hit:
+                return fb_hit, self.fallback
             data = await self._speak_with_voice(text, self.fallback, rate, pitch)
-            return data, self.fallback
+            if data:
+                self._cache_put(fb_key, data)
+                return data, self.fallback
+            return b"", self.fallback
+        except Exception:
+            return b"", self.fallback
 
 
 # ---------------------------------------------------------------------------
@@ -273,25 +315,46 @@ def webm_to_wav(webm_bytes: bytes) -> bytes:
     """
     if not webm_bytes:
         raise ValueError("empty audio input")
-    import imageio_ffmpeg
-
-    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as fin:
-        fin.write(webm_bytes)
-        in_path = fin.name
-    out_fd, out_path = tempfile.mkstemp(suffix=".wav")
-    os.close(out_fd)
     try:
-        subprocess.run(
-            [ffmpeg, "-y", "-i", in_path, "-ac", "1", "-ar", "16000", "-f", "wav", out_path],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
+        import imageio_ffmpeg
+    except ImportError as e:
+        raise RuntimeError(
+            "imageio-ffmpeg not installed (audio conversion unavailable)"
+        ) from e
+    try:
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception as e:
+        raise RuntimeError(f"ffmpeg binary unavailable: {e}") from e
+    in_path = ""
+    out_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as fin:
+            in_path = fin.name
+            fin.write(webm_bytes)
+        out_fd, out_path = tempfile.mkstemp(suffix=".wav")
+        os.close(out_fd)
+        try:
+            subprocess.run(
+                [ffmpeg, "-y", "-i", in_path, "-ac", "1", "-ar", "16000", "-f", "wav", out_path],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError("audio conversion timed out") from e
+        except subprocess.CalledProcessError as e:
+            tail = ((e.stderr or b"")[-500:]).decode("utf-8", "ignore").strip()
+            detail = f": {tail}" if tail else ""
+            raise RuntimeError(
+                f"audio conversion failed (invalid/corrupt audio){detail}"
+            ) from e
         with open(out_path, "rb") as fh:
             return fh.read()
     finally:
         for p in (in_path, out_path):
+            if not p:
+                continue
             try:
                 os.unlink(p)
             except OSError:
