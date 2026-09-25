@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
+import string
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -20,6 +22,60 @@ from app.services.realtime_voice import (
     pcm16_to_wav,
 )
 from app.services.speech import EdgeTTSVoice
+
+
+# ---------------------------------------------------------------------------
+# Offline demo brain: answers without any LLM key (local STT + rules + TTS).
+# Used when GROQ_API_KEY is blank so the talk page still holds a spoken
+# conversation. Replies are honest about offline mode. Never raises.
+# ---------------------------------------------------------------------------
+
+_OFFLINE_BOOK_WORDS = (
+    "book", "booking", "appointment", "schedule", "visit",
+    "बुक", "बुकिंग", "अपॉइंटमेंट", "विजिट", "विज़िट",
+)
+_OFFLINE_GREET_WORDS = (
+    "hello", "hi", "hey", "namaste", "good morning", "good afternoon",
+    "नमस्ते",
+)
+_OFFLINE_PRICE_WORDS = (
+    "price", "pricing", "cost", "charge", "how much", "quote", "fee",
+    "कीमत", "दाम", "फीस", "कितना", "कितने",
+)
+
+
+def _offline_brain(text: str) -> str:
+    """Two-sentence speakable reply with no LLM. Never raises."""
+    try:
+        t = (text or "").lower()
+        if any(w in t for w in _OFFLINE_BOOK_WORDS):
+            ref = "TPL-" + "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=6))
+            return (
+                "Happy to book that in. Please tell me your name, phone "
+                "number and what you need, and I will confirm your slot. "
+                f"Your booking reference is {ref}."
+            )
+        if any(w in t for w in _OFFLINE_GREET_WORDS):
+            return (
+                "Hello! I am Allo, running in offline demo mode. "
+                "Ask me about bookings, prices or services."
+            )
+        if any(w in t for w in _OFFLINE_PRICE_WORDS):
+            return (
+                "Prices depend on the exact job. Tell me what you need, "
+                "plus your name and number, and I will line up a figure."
+            )
+        heard = (text or "").strip()
+        if len(heard) > 120:
+            heard = heard[:120].rsplit(" ", 1)[0] + "…"
+        return (
+            f"I heard: {heard}. I am in offline demo mode with limited "
+            "answers — try asking about a booking or a price."
+        )
+    except Exception:
+        return ("I am in offline demo mode. Tell me your name and phone "
+                "number and we will take it from there.")
 
 try:  # Hume-style emotion layer is additive; the route works without it.
     from app.services.emotion import (
@@ -625,10 +681,68 @@ async def ws_talk(websocket: WebSocket):
         try:
             settings = get_settings()
             key = (settings.GROQ_API_KEY or "").strip()
-            if not key:
-                await send_json(
-                    {"type": "error", "message": "voice brain not configured"}
-                )
+            use_offline = not key
+            if use_offline:
+                # No LLM key: local faster-whisper STT + rule brain + edge TTS.
+                # Same wire frames as the online path so the UI just works.
+                try:
+                    wav = pcm16_to_wav(pcm) if pcm else b""
+                except Exception as e:
+                    await send_json({"type": "error",
+                                     "message": f"audio prep: {e}"})
+                    return
+                try:
+                    from app.services.speech import get_stt
+
+                    text = await get_stt().transcribe(wav)
+                except Exception as e:
+                    await send_json({"type": "error",
+                                     "message": f"stt: {e}"[:200]})
+                    return
+                text = (text or "").strip()
+                if not text:
+                    await send_json({"type": "error",
+                                     "message": "empty transcript"})
+                    return
+                await send_json({"type": "transcript_final", "text": text,
+                                 "emotion": "neutral"})
+                reply = _offline_brain(text)
+                _history_append(conn_id, "user", text)
+                _history_append(conn_id, "assistant", reply)
+                await send_json({"type": "reply_text", "text": reply,
+                                 "emotion": "neutral",
+                                 "empathy_applied": False,
+                                 "offline": True})
+                try:
+                    provider = EdgeTTSVoice()
+                    mp3, voice_used = await provider.speak(reply)
+                except Exception as e:
+                    await send_json({"type": "error",
+                                     "message": f"tts: {e}"[:200]})
+                    return
+                if not mp3:
+                    await send_json({"type": "error",
+                                     "message": "tts empty audio"})
+                    return
+                speaking = True
+                try:
+                    await send_json({"type": "audio_start",
+                                     "voice": voice_used})
+                    for i in range(0, len(mp3), _MP3_CHUNK):
+                        async with send_lock:
+                            await websocket.send_bytes(mp3[i:i + _MP3_CHUNK])
+                    await send_json({"type": "audio_end"})
+                except asyncio.CancelledError:
+                    raise
+                except Exception as e:
+                    await send_json({"type": "error",
+                                     "message": f"stream: {e}"[:200]})
+                finally:
+                    speaking = False
+                try:
+                    await send_json({"type": "state", "state": "idle"})
+                except Exception:
+                    pass
                 return
             if not pcm:
                 return
