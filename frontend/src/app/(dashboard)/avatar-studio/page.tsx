@@ -51,7 +51,9 @@ const EMOTION_HINT: Record<AvatarEmotion, string> = {
 
 export default function AvatarStudioPage() {
   const [draftUrl, setDraftUrl] = useState("");
-  const [vrmUrl, setVrmUrl] = useState("");
+  // Bundled default so the studio is never empty (RPM is unreachable
+  // in some regions — see RPM iframe below, kept as an optional extra).
+  const [vrmUrl, setVrmUrl] = useState("/avatars/default.glb");
   const [voice, setVoice] = useState("Sonia");
   const [emotion, setEmotion] = useState<AvatarEmotion>("neutral");
   const [testText, setTestText] = useState("Hi there! Thanks for visiting — how can I help today?");
@@ -281,7 +283,7 @@ export default function AvatarStudioPage() {
                   <Badge>Step 1</Badge>
                   <CardTitle className="text-base">Make your avatar</CardTitle>
                 </div>
-                <CardDescription>Build with Ready Player Me, or paste a .glb / .vrm URL.</CardDescription>
+                <CardDescription>Build with Ready Player Me below (may not load in all regions), or paste a .glb / .vrm URL — a default avatar is preloaded.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900">

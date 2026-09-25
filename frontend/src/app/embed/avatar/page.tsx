@@ -241,7 +241,7 @@ function EmbedAvatarInner() {
       {/* Avatar or voice-only fallback */}
       <div className="relative min-h-0 flex-1">
         {vrm ? (
-          <AvatarViewer vrmUrl={vrm} audioRef={audioRef} emotion="warm" className="relative h-full w-full overflow-hidden" />
+          <AvatarViewer vrmUrl={vrm || "/avatars/default.glb"} audioRef={audioRef} emotion="warm" className="relative h-full w-full overflow-hidden" />
         ) : (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-center">
             <span
