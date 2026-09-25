@@ -22,7 +22,7 @@
   "faqs": [
     {
       "q": "Is my flight on time?",
-      "a": "I can't see live flight data here, so please check your flight status in our app or on the website using your 6-character booking reference. Share your name and booking reference and I can point you to the right lookup for your flight."
+      "a": "I can't see live flight data, delays or delay information here, so if your flight is delayed or running late, so please check your flight status in our app or on the website using your 6-character booking reference. Share your name and booking reference and I can point you to the right lookup for your flight."
     },
     {
       "q": "My flight was cancelled — how do I rebook?",

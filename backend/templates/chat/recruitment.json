@@ -16,43 +16,43 @@
     },
     {
       "expect_contains": "cv",
-      "user": "Please put me forward \u2014 I'm Alex Nowak, alex.nowak@example.co.uk, warehouse operative, CV attached."
+      "user": "Please put me forward — I'm Alex Nowak, alex.nowak@example.co.uk, warehouse operative, CV attached."
     }
   ],
-  "escalation": "For job offers, rejections feedback or anything sensitive I'll bring in a human consultant \u2014 leave your name, email and the role you want and we reply within one working day.",
+  "escalation": "For job offers, rejections feedback or anything sensitive I'll bring in a human consultant — leave your name, email and the role you want and we reply within one working day.",
   "faqs": [
     {
-      "q": "How do I apply or drop off my CV?",
-      "a": "Share your name, email and the role you want right here, plus a link to your CV \u2014 a consultant replies within one working day. No cover letter needed."
+      "q": "How do I apply or drop off my CV for a role?",
+      "a": "Share your name, email and the role you want right here, plus a link to your CV. Mention the role you want – driver, warehouse, care, hospitality or admin – and your area — a consultant replies within one working day. No cover letter needed."
     },
     {
       "q": "Do I need the right to work in the UK?",
-      "a": "Yes, you need the right to work in the UK \u2014 tell us your visa or settlement status and we'll confirm eligibility before putting you forward. We verify documents at registration."
+      "a": "Yes, you need the right to work in the UK — tell us your visa or settlement status and we'll confirm eligibility before putting you forward. We verify documents at registration."
     },
     {
       "q": "Which roles and sectors do you recruit for?",
-      "a": "We recruit warehouse operatives, drivers, care assistants, hospitality and admin staff across the Midlands and North. New roles land daily \u2014 tell me your area and I'll match you."
+      "a": "We recruit warehouse operatives, drivers, care assistants, hospitality and admin staff across the Midlands and North. New roles land daily — tell me your area and I'll match you."
     },
     {
       "q": "How does temp vs permanent pay work?",
-      "a": "Temp roles pay weekly with holiday accrual; permanent salaries are benchmarked to market \u2014 typically drivers \u00a313\u2013\u00a316 per hour, warehouse \u00a312\u2013\u00a314 and care \u00a312.50\u2013\u00a315 around Birmingham."
+      "a": "Temp roles pay weekly with holiday accrual; permanent salaries are benchmarked to market — typically drivers £13–£16 per hour, warehouse £12–£14 and care £12.50–£15 around Birmingham."
     },
     {
       "q": "What is the interview process?",
-      "a": "A short phone screen, then a client interview \u2014 usually within a week. Care and driving roles need a DBS or licence check, which we arrange for you."
+      "a": "A short phone screen, then a client interview — usually within a week. Care and driving roles need a DBS or licence check, which we arrange for you."
     },
     {
       "q": "Do candidates pay any fees?",
-      "a": "Finding work through us is free for candidates \u2014 employers pay our fees, and CV reviews plus interview prep are free too. Optional CV writing support is \u00a349 one-off."
+      "a": "Finding work through us is free for candidates — employers pay our fees, and CV reviews plus interview prep are free too. Optional CV writing support is £49 one-off."
     }
   ],
   "greeting": "Hi! I can match you to live roles, answer hiring questions and take your CV. What kind of work are you looking for?",
-  "hours": "Mon\u2013Fri 08:30\u201317:30; consultants reply within one working day",
+  "hours": "Mon–Fri 08:30–17:30; consultants reply within one working day",
   "id": "chat-recruitment-uk",
   "industry": "recruitment",
   "kind": "chat",
   "locale": "en-GB",
-  "name": "Recruitment Assistant \u2014 UK",
+  "name": "Recruitment Assistant — UK",
   "services": [
     {
       "name": "Permanent placements",
