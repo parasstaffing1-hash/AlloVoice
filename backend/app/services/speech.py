@@ -145,6 +145,59 @@ class EdgeTTSVoice(TTSProvider):
             PRIMARY_VOICE if primary == FALLBACK_VOICE else FALLBACK_VOICE
         )
 
+    @staticmethod
+    def _cache_dir() -> str:
+        """Disk cache for repeat phrases (greetings, prices, closers).
+        VOICE_TTS_CACHE_DIR overrides; default is the OS temp dir.
+        No new infra — plain files, capped at 500 newest."""
+        d = (os.getenv("VOICE_TTS_CACHE_DIR") or "").strip() or os.path.join(
+            tempfile.gettempdir(), "allovoice_tts")
+        try:
+            os.makedirs(d, exist_ok=True)
+        except OSError:
+            return ""
+        return d
+
+    @staticmethod
+    def _cache_key(text: str, voice: str, rate: str, pitch: str) -> str:
+        import hashlib
+
+        raw = f"{voice}|{rate}|{pitch}|{text}".encode("utf-8", "ignore")
+        return hashlib.sha1(raw).hexdigest() + ".mp3"
+
+    def _cache_get(self, key: str) -> bytes:
+        d = self._cache_dir()
+        if not d:
+            return b""
+        try:
+            p = os.path.join(d, key)
+            if os.path.isfile(p):
+                with open(p, "rb") as fh:
+                    return fh.read()
+        except OSError:
+            pass
+        return b""
+
+    def _cache_put(self, key: str, data: bytes) -> None:
+        d = self._cache_dir()
+        if not d or not data:
+            return
+        try:
+            with open(os.path.join(d, key), "wb") as fh:
+                fh.write(data)
+            files = sorted(
+                (os.path.join(d, f) for f in os.listdir(d)
+                 if f.endswith(".mp3")),
+                key=lambda p: os.path.getmtime(p),
+            )
+            for old in files[:-500]:
+                try:
+                    os.unlink(old)
+                except OSError:
+                    pass
+        except OSError:
+            pass
+
     async def _speak_with_voice(self, text: str, voice: str,
                                 rate: str = "+0%", pitch: str = "+0Hz") -> bytes:
         import edge_tts
@@ -167,9 +220,14 @@ class EdgeTTSVoice(TTSProvider):
         text = (text or "").strip()[:MAX_TTS_CHARS]
         if not text:
             return b"", self.primary
+        key = self._cache_key(text, self.primary, rate, pitch)
+        hit = self._cache_get(key)
+        if hit:
+            return hit, self.primary
         try:
             data = await self._speak_with_voice(text, self.primary, rate, pitch)
             if data:
+                self._cache_put(key, data)
                 return data, self.primary
             raise RuntimeError("primary TTS returned empty audio")
         except Exception:

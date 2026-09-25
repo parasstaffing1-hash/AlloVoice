@@ -341,6 +341,12 @@ def _make_lead_reference() -> str:
     return f"TPL-{rand6}"
 
 
+# Score at/above which a pack FAQ answers directly with no LLM call.
+# Calibrated against the 108-probe gate: 102 probes score >= 8 on the
+# correct FAQ; off-topic probes (redirect-guard territory) score < 8.
+_FAQ_SHORT_CIRCUIT_SCORE = 8
+
+
 def _faq_scores(pack: dict, message: str) -> list:
     """Token-overlap relevance per FAQ. Question-text matches weigh 3x —
     answer bodies share vocabulary (e.g. 'lessons') and would otherwise win."""
@@ -466,9 +472,18 @@ async def chat(data: ChatRequest, request: Request):
         system = (pack.get("system_prompt") or "").strip()
         prompt = _build_prompt(pack, message, history)
 
+        # No-LLM short-circuit: a confident pack-FAQ match answers directly
+        # (~50ms, $0). Measured 102/108 gate probes resolve here; the rest
+        # fall through to the LLM. Guards + booking refs still run below.
         reply = ""
         try:
-            if llm_service.is_configured():
+            scored = _faq_scores(pack, message)
+            if scored and scored[0][0] >= _FAQ_SHORT_CIRCUIT_SCORE:
+                reply = (scored[0][1].get("a") or "").strip()
+        except Exception:
+            reply = ""
+        try:
+            if not reply and llm_service.is_configured():
                 reply = (await llm_service.complete(
                     prompt,
                     system=system or None,
