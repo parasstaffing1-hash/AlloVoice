@@ -43,7 +43,9 @@ export default function VoiceAgentPage() {
   const statusRef = useRef<Status>("Idle");
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdFiredRef = useRef(false);
-  const didStartOnPressRef = useRef(false);
+  const recordingRef = useRef(false);
+  const holdModeRef = useRef(false);
+  const interruptArmedRef = useRef(false);
   const justStoppedHoldRef = useRef(false);
   const processingRef = useRef(false);
   const pressStartRef = useRef(0);
@@ -181,9 +183,10 @@ export default function VoiceAgentPage() {
 
   const stopAndProcess = useCallback(() => {
     const rec = mediaRecorderRef.current;
-    if (!rec || statusRef.current !== "Listening") return;
+    if (!rec || !recordingRef.current) return;
     if (processingRef.current) return;
     processingRef.current = true;
+    recordingRef.current = false;
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
@@ -229,7 +232,7 @@ export default function VoiceAgentPage() {
   }, [handleAudioBase64, setBothStatus, showError, stopStream]);
 
   const startRecording = useCallback(() => {
-    if (statusRef.current === "Listening" || statusRef.current === "Thinking") return;
+    if (recordingRef.current || statusRef.current === "Thinking") return;
     if (!token) {
       showError("Sign in required to use the voice assistant.");
       return;
@@ -263,9 +266,12 @@ export default function VoiceAgentPage() {
           setBothStatus("Idle");
           stopStream();
           mediaRecorderRef.current = null;
+          recordingRef.current = false;
+          processingRef.current = false;
         };
         rec.start();
         pressStartRef.current = Date.now();
+        recordingRef.current = true;
         setBothStatus("Listening");
       })
       .catch(() => {
@@ -275,27 +281,29 @@ export default function VoiceAgentPage() {
   }, [token, interruptPlayback, setBothStatus, showError, stopStream]);
 
   // ---- push-to-talk + click-toggle wiring ----
+  // Single source of truth: recordingRef. Press starts a hold timer;
+  // holding 350ms+ records in hold mode (release stops). A short tap
+  // toggles via the click handler. No flag can swallow a stop twice.
   const handlePressStart = useCallback(() => {
-    if (statusRef.current === "Thinking" || statusRef.current === "Speaking") {
-      // Interrupt a speaking reply and start a fresh utterance immediately.
-      if (statusRef.current === "Speaking") {
-        interruptPlayback();
-        setBothStatus("Idle");
-      } else {
-        return;
-      }
-    }
-    if (statusRef.current === "Listening") {
-      didStartOnPressRef.current = false;
+    if (statusRef.current === "Thinking") return;
+    if (statusRef.current === "Speaking") {
+      // Barge-in: cut the reply, start listening (toggle-ON).
+      // The trailing click is consumed so it can't instant-stop.
+      interruptPlayback();
+      setBothStatus("Idle");
+      interruptArmedRef.current = true;
+      startRecording();
       return;
     }
-    didStartOnPressRef.current = true;
+    if (recordingRef.current) return; // already listening; release/click stops
+    holdModeRef.current = false;
     holdFiredRef.current = false;
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
     pressTimerRef.current = setTimeout(() => {
       holdFiredRef.current = true;
+      holdModeRef.current = true;
+      startRecording();
     }, 350);
-    startRecording();
   }, [interruptPlayback, setBothStatus, startRecording]);
 
   const handlePressEnd = useCallback(() => {
@@ -303,24 +311,29 @@ export default function VoiceAgentPage() {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
-    if (statusRef.current !== "Listening") return;
-    if (holdFiredRef.current && didStartOnPressRef.current) {
+    if (!recordingRef.current) return;
+    if (holdModeRef.current) {
       // Genuine press-and-hold release -> finish the turn.
+      holdModeRef.current = false;
       justStoppedHoldRef.current = true;
       setTimeout(() => {
         justStoppedHoldRef.current = false;
       }, 400);
       stopAndProcess();
     }
-    // Short tap: stay listening (toggle-ON). Second tap's click handler stops.
+    // Short tap: stay listening (toggle-ON). The click handler toggles.
   }, [stopAndProcess]);
 
   const handleMicClick = useCallback(() => {
     if (justStoppedHoldRef.current) return; // click trailing a hold-release
-    if (didStartOnPressRef.current) return; // first tap that toggled ON
-    // Second tap while toggle-listening -> stop and process.
-    if (statusRef.current === "Listening") stopAndProcess();
-  }, [stopAndProcess]);
+    if (interruptArmedRef.current) {
+      interruptArmedRef.current = false;
+      return; // click trailing a barge-in tap
+    }
+    // Toggle: stop while listening, start while idle.
+    if (recordingRef.current) stopAndProcess();
+    else startRecording();
+  }, [stopAndProcess, startRecording]);
 
   const endChat = useCallback(() => {
     interruptPlayback();
@@ -341,6 +354,9 @@ export default function VoiceAgentPage() {
     sessionIdRef.current = null;
     chunksRef.current = [];
     processingRef.current = false;
+    recordingRef.current = false;
+    holdModeRef.current = false;
+    interruptArmedRef.current = false;
     setMessages([]);
     setError(null);
     setBothStatus("Idle");
