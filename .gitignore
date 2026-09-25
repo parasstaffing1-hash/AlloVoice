@@ -50,6 +50,7 @@ make_icons.py
 *.log
 *.bat
 out.log
+.tts-cache/
 
 # ─── Python ───────────────────────────────────────────────────
 __pycache__/
