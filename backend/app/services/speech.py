@@ -160,6 +160,73 @@ class GroqWhisperSTT(STTProvider):
 
 
 # ---------------------------------------------------------------------------
+# VoiceStudio local STT (open-source ElevenLabs alternative, on-device).
+# Needs the VoiceStudio desktop app running (loopback :3900, no auth).
+# Activate with VOICE_STT_PROVIDER=voicestudio. Model name configurable —
+# OpenAI-compatible servers typically accept any label.
+# ---------------------------------------------------------------------------
+
+_VOICESTUDIO_BASE = (
+    os.getenv("VOICESTUDIO_URL", "http://127.0.0.1:3900").strip()
+    or "http://127.0.0.1:3900"
+).rstrip("/")
+_VOICESTUDIO_MODEL = (
+    os.getenv("VOICESTUDIO_STT_MODEL", "whisper-1").strip() or "whisper-1"
+)
+_VS_CLIENT = None
+
+
+def _get_vs_client():
+    """Shared HTTP client (connection reuse). Never raises."""
+    global _VS_CLIENT
+    if _VS_CLIENT is None:
+        import httpx
+
+        _VS_CLIENT = httpx.AsyncClient(timeout=90.0)
+    return _VS_CLIENT
+
+
+async def voicestudio_available(timeout: float = 3.0) -> bool:
+    """True when the VoiceStudio backend answers its discovery endpoint."""
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.get(_VOICESTUDIO_BASE + "/.well-known/voicestudio-speech")
+            return r.status_code < 500
+    except Exception:
+        return False
+
+
+class VoiceStudioSTT(STTProvider):
+    """VoiceStudio on-device Whisper via its OpenAI-compatible endpoint.
+
+    No API key, no cloud, no model download in our process — the app owns
+    its models. Raises RuntimeError (clean) when the app is not running so
+    callers can fall back to local faster-whisper.
+    """
+
+    async def transcribe(self, wav_bytes: bytes) -> str:
+        if not wav_bytes:
+            return ""
+        try:
+            client = _get_vs_client()
+            resp = await client.post(
+                _VOICESTUDIO_BASE + "/v1/audio/transcriptions",
+                files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+                data={"model": _VOICESTUDIO_MODEL, "language": "en"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            raise RuntimeError(f"VoiceStudio STT failed: {e}") from e
+        text = (data.get("text") or "").strip() if isinstance(data, dict) else ""
+        if not text:
+            raise RuntimeError("VoiceStudio STT returned empty transcript")
+        return text
+
+
+# ---------------------------------------------------------------------------
 # edge-tts TTS
 # ---------------------------------------------------------------------------
 
@@ -283,10 +350,13 @@ class EdgeTTSVoice(TTSProvider):
 
 
 def get_stt(name: str | None = None) -> STTProvider:
-    # VOICE_STT_PROVIDER: faster-whisper (default, local) | groq (hosted) | sarvam (swap-in point)
+    # VOICE_STT_PROVIDER: faster-whisper (default, local) | groq (hosted) |
+    #   voicestudio (local VoiceStudio app, OpenAI-compatible) | sarvam
     provider = (name or os.getenv("VOICE_STT_PROVIDER", "faster-whisper")).strip().lower()
     if provider == "groq":
         return GroqWhisperSTT()
+    if provider == "voicestudio":
+        return VoiceStudioSTT()
     if provider == "sarvam":
         raise NotImplementedError("Sarvam swap-in point")
     if provider in ("faster-whisper", "faster_whisper", "whisper", "local"):
