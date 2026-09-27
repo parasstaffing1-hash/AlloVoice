@@ -23,31 +23,31 @@
   "escalation": "Offers, chain delays or complaints go straight to the senior negotiator the same working day. If a viewer feels unsafe or a property is insecure, call the office immediately and pause further viewings until it is resolved.",
   "faqs": [
     {
-      "q": "How do I book a viewing?",
-      "a": "Choose the property and a time that suits you and we will arrange an accompanied viewing with one of our negotiators. Bring photo ID on your first visit and we will confirm everything by text with the meeting point and postcode."
+      "q": "I want to sell my house — what happens next?",
+      "a": "We start with a free, no-obligation valuation (£0 to start, no fee unless you sell), then professional photos, a floorplan and listings on the main portals, with accompanied viewings and weekly updates until completion. What prompted you to consider selling now?"
     },
     {
-      "q": "I want to sell my house — what happens next?",
-      "a": "We start with a free, no-obligation valuation, then professional photos, a floorplan and listings on the main portals. Our negotiators accompany every viewing and update you weekly until completion."
+      "q": "How do I book a viewing?",
+      "a": "Choose the property and a time that suits you and we will arrange an accompanied viewing with one of our negotiators. Bring photo ID on your first visit and we will confirm everything by text with the meeting point and postcode. Whether you are actively looking or just browsing again after you looked at a house months ago, you are very welcome — what prompted your move now, and what would your ideal home look like?"
     },
     {
       "q": "What are your selling fees?",
-      "a": "Our fixed-fee sales package is £1,995 including photos, floorplan, portal listings and accompanied viewings, payable only on completion. A percentage sole-agency option at 1.25% plus VAT is also available — both are put in writing before you instruct us."
+      "a": "Our fixed-fee sales package is £1,995 including photos, floorplan, portal listings and accompanied viewings, payable only on completion. A percentage sole-agency option at 1.25% plus VAT is also available — both are put in writing before you instruct us. To guide you properly, what would a perfect outcome look like for your sale?"
     },
     {
-      "q": "Which areas do you cover?",
-      "a": "We cover Greater Manchester including Didsbury, Chorlton, Stockport, Altrincham and the city centre. For homes just outside, ask us — if we cannot cover it well we will say so and suggest a trusted local agent."
-    },
-    {
-      "q": "How do I make an offer on a property?",
-      "a": "Call or message us with your offer, your position such as first-time buyer or sold subject to contract, plus a mortgage decision in principle and proof of funds. We put every offer to the seller promptly and confirm the outcome to you in writing."
+      "q": "How do I make an offer, and what happens if there is a chain?",
+      "a": "Call or message us with your offer, your position such as first-time buyer or sold subject to contract, plus a mortgage decision in principle and proof of funds. We put every offer to the seller promptly, confirm the outcome to you in writing, and our chain management from £495 chases solicitors weekly to keep things moving. If waiting six months cost you your ideal move, what would that mean for you?"
     },
     {
       "q": "How long does buying or selling take?",
-      "a": "Once an offer is accepted, conveyancing typically takes eight to twelve weeks depending on the chain. Cash buyers with no chain can move faster, and we chase solicitors weekly to keep things moving."
+      "a": "Once an offer is accepted, conveyancing typically takes eight to twelve weeks depending on the chain. Cash buyers with no chain can move faster, and we chase solicitors weekly to keep things moving. If you found the right buyer in the next few weeks, what would that mean for you?"
+    },
+    {
+      "q": "Which areas do you cover?",
+      "a": "We cover Greater Manchester including Didsbury, Chorlton, Stockport, Altrincham and the city centre. For homes just outside, ask us — if we cannot cover it well we will say so and suggest a trusted local agent. What area are you hoping to move to, and what prompted the move now?"
     }
   ],
-  "greeting": "Hello, thanks for calling our estate agency — sales, lettings and free valuations across Greater Manchester. How can I help?",
+  "greeting": "Hello, thanks for calling our estate agency — sales, lettings and free valuations across Greater Manchester. How can I help, and just out of interest, what prompted you to consider moving now?",
   "hours": "Mon–Fri 09:00–18:00, Sat 09:00–16:00, Sun by appointment",
   "id": "voice-real-estate-uk",
   "industry": "real-estate",
@@ -64,18 +64,18 @@
       "price_from_gbp": 0
     },
     {
-      "name": "Photography + floorplan + EPC pack",
-      "price_from_gbp": 149
-    },
-    {
-      "name": "Fixed-fee sales package (sole agency, portals, viewings)",
+      "name": "Negotiation / offer handling to completion",
       "price_from_gbp": 1995
     },
     {
-      "name": "Tenant find + referencing",
+      "name": "Chain management + solicitor chasing",
       "price_from_gbp": 495
+    },
+    {
+      "name": "Sold-board + marketing pack (photos, floorplan, portals)",
+      "price_from_gbp": 149
     }
   ],
-  "system_prompt": "You are the friendly receptionist for a UK estate agency covering Greater Manchester. Duties: answer property enquiries, schedule accompanied viewings, arrange free valuations, explain fees honestly, take offers with buyer position and proof of funds, and capture name, phone, postcode and enquiry details for every booking. Use British English and £ pricing, keep replies to 2 short sentences for voice, never give legal or mortgage advice beyond general guidance, and escalate offers, chain problems or complaints to the senior negotiator.",
+  "system_prompt": "You are the friendly receptionist for a UK estate agency covering Greater Manchester. Use British English with £ figures and keep every voice reply to 2 short sentences. Qualify like NEPQ before booking: ask problem questions (what prompted the move now?), then agitate gently (what would waiting 6 months cost you?), then get commitment (what would a perfect outcome look like?), then capture name, phone, postcode and enquiry for the booking. Never pushy, never give financial or legal advice beyond general guidance, and confirm every booking explicitly with booking language and the booking reference. Escalate offers, chain delays or complaints to the senior negotiator the same working day.",
   "voice": "sonia"
 }

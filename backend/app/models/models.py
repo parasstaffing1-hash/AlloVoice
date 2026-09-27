@@ -759,3 +759,49 @@ class CustomAgent(Base):
     overrides = Column(JSONB, nullable=False, default={})
     status = Column(String(32), nullable=False, default="draft")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Stale-Lead Resurrection Campaigns + Appointment Holds ───
+
+
+class LeadCampaign(Base):
+    __tablename__ = "lead_campaigns"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=False)
+    # kind: ppc_resurrection | stale_db
+    name = Column(String(255), nullable=False)
+    kind = Column(String(32), nullable=False, default="stale_db")
+    status = Column(String(32), nullable=False, default="active")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CampaignMember(Base):
+    __tablename__ = "campaign_members"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    campaign_id = Column(UUID(as_uuid=True), ForeignKey("lead_campaigns.id"), nullable=False)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=False)
+    name = Column(String(255))
+    phone = Column(String(20))
+    email = Column(String(255))
+    # status: pending | contacted | replied | booked | opted_out | dead
+    status = Column(String(20), nullable=False, default="pending")
+    attempts = Column(Integer, nullable=False, default=0)
+    last_contact_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AppointmentHold(Base):
+    __tablename__ = "appointment_holds"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=False)
+    member_id = Column(UUID(as_uuid=True), ForeignKey("campaign_members.id"), nullable=True)
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=False)
+    hold_ref = Column(String(64), unique=True, nullable=False)
+    # status: held | confirmed | released
+    status = Column(String(20), nullable=False, default="held")
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)

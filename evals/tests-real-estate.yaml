@@ -2,7 +2,7 @@
 # Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
 # script, `prompt` = decisive caller turn (stateless single-shot probe).
 
-- description: "[real-estate-a] Viewing booking + full lead capture. Script — T1 caller: 'I'd like to book a viewing for the two-bed terrace.' T2 agent takes contact: M14 5TQ, Sarah Ahmed, 07700 900321, offers accompanied slots. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language OR booking reference."
+- description: "[real-estate-a] Viewing booking + full lead capture. Script — T1 caller: 'I'd like to book a viewing for the two-bed terrace.' T2 agent takes contact: M14 5TQ, Sarah Ahmed, 07700 900321, offers accompanied slots. T3 agent confirms booking + reference. Probe compresses T1+T2 answers into one turn; PASS = booking language AND booking reference."
   vars:
     template_id: voice-real-estate-uk
     prompt: "I'd like to book a viewing for the two-bed terrace on Wilmslow Road. I'm Sarah Ahmed, postcode M14 5TQ, number 07700 900321. When can I come?"
@@ -11,9 +11,9 @@
     - type: icontains
       value: book
     - type: javascript
-      value: output.toLowerCase().includes('reference') || output.toLowerCase().includes('bk-') || output.toLowerCase().includes('booked')
+      value: output.toLowerCase().includes('reference') && (output.includes('TPL-') || output.toLowerCase().includes('booked') || output.toLowerCase().includes('booking'))
 
-- description: "[real-estate-b] Selling-fees price enquiry. Script — T1 caller: 'What are your fees if I sell my house with you?' T2 agent quotes a £ figure, explains fixed-fee vs percentage, asks postcode for a valuation. PASS = reply names a £ price."
+- description: "[real-estate-b] Selling-fees price enquiry. Script — T1 caller: 'What are your fees if I sell my house with you?' T2 agent quotes a £ figure, explains fixed-fee vs percentage, asks postcode for a valuation. PASS = reply names a £ price with digits."
   vars:
     template_id: voice-real-estate-uk
     prompt: "What are your fees if I sell my three-bed house with you? Can you give me a price?"
@@ -21,14 +21,16 @@
   assert:
     - type: contains
       value: "£"
+    - type: javascript
+      value: /£\s?\d/.test(output)
 
-- description: "[real-estate-c] Out-of-area caller (London, Manchester agency). Script — T1 caller: 'I'm in London, can you sell my flat?' T2 agent handles gracefully: states coverage area, does NOT fake a booking, asks postcode. PASS = coverage language ('cover…') OR asks postcode."
+- description: "[real-estate-c] Cold/stale-lead edge: caller looked 8 months ago, just browsing. Script — T1 caller: 'I looked at a house 8 months ago, just browsing.' T2 agent engages warmly, never pushy, asks an NEPQ qualifying question. PASS = reply asks a question (?) AND contains no pushy hard-close language."
   vars:
     template_id: voice-real-estate-uk
-    prompt: "Hi, I'm in London, postcode E1 6AN — do you cover my area? I want to sell my flat."
+    prompt: "I called about a house I looked at 8 months ago, just browsing really, not sure what to do."
   threshold: 0.5
   assert:
-    - type: icontains
-      value: cover
-    - type: icontains
-      value: postcode
+    - type: javascript
+      value: output.includes('?')
+    - type: javascript
+      value: output.toLowerCase().includes('buy now') == false && output.toLowerCase().includes('limited offer') == false
