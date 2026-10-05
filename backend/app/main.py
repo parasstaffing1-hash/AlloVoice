@@ -19,7 +19,7 @@ from app.routes import (
     quickbooks, review_platforms, marketing, chatbot, performance,
     warehouses, attendance, safety, branding, billing, voice_agent,
     gocardless, outlook, fault_codes, rams, realtime_voice, calls,
-    telephony, agents, sms_agent, campaigns, holds,
+    telephony, agents, sms_agent, campaigns, holds, collections,
 )
 
 # Sentry (guarded inside init_sentry — no-op without DSN)
@@ -156,6 +156,7 @@ app.include_router(agents.router)
 app.include_router(sms_agent.router)
 app.include_router(campaigns.router)
 app.include_router(holds.router)
+app.include_router(collections.router)
 
 # ─── Tier 5: Premium ──────────────────────────────────────
 app.include_router(performance.router)
@@ -171,7 +172,14 @@ socket_app = socketio.ASGIApp(sio, app)
 
 @app.on_event("startup")
 async def startup():
-    await init_db()
+    # DB-resilient boot: packs/chat/voice demos are file-driven and must
+    # survive a sleeping database (Aiven free naps, Oracle cold boots).
+    # Pooled engine reconnects per request (pre_ping); DB-backed routes
+    # 500 individually until it is back instead of killing the process.
+    try:
+        await init_db()
+    except Exception as e:
+        print(f"startup: init_db skipped ({type(e).__name__}) — retrying per request")
 
 
 @app.get("/api/health")

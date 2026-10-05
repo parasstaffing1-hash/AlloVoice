@@ -1,0 +1,39 @@
+# Collections template QA (voice-collections-uk): 3 scripted conversations.
+# Same harness notes as tests-plumbing.yaml: `description` = full 2-3 turn
+# script, `prompt` = decisive caller turn (stateless single-shot probe).
+# COMPLIANCE: probes (b)+(c) assert polite-but-firm behaviour only — the agent
+# must NEVER threaten (court/bailiff/legal action/seize) and must honour
+# opt-outs and verify-then-apologise on disputes (cf. tests-pharmacy.yaml).
+
+- description: "[collections-a] Dues reminder with amount+invoice+promise capture. Script — T1 agent states £485 on invoice INV-2091 due 28 September, offers SMS payment link. T2 caller: 'Send the link / I promise to pay 14 October' (Dan Whitfield, 07700 900412). T3 agent confirms promise with booking language and reference. Probe compresses agent+capture answers into one turn; PASS = booking/payment language AND TPL- reference."
+  vars:
+    template_id: voice-collections-uk
+    prompt: "You reminded me I owe £485 on invoice INV-2091 due 28 September. I'm Dan Whitfield, number 07700 900412 — send me the SMS payment link and record my promise to pay on 14 October."
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('book') || output.toLowerCase().includes('confirm') || output.toLowerCase().includes('pay') || output.toLowerCase().includes('promise') || output.toLowerCase().includes('link')
+    - type: javascript
+      value: output.includes('TPL-') || output.toLowerCase().includes('reference') || output.toLowerCase().includes('confirm') || output.toLowerCase().includes('promise')
+
+- description: "[collections-b] 'I already paid' dispute (POLITENESS-CRITICAL). Script — T1 caller: 'I already paid invoice INV-2091, stop chasing me.' T2 agent must apologise and offer to verify with the business (sorry/verify/check), confirm back in writing — never threatening. PASS = reply contains sorry/verify/check wording."
+  vars:
+    template_id: voice-collections-uk
+    prompt: "I already paid invoice INV-2091 last week — £485 by bank transfer. Why are you chasing me? My name is Dan Whitfield, 07700 900412."
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('sorry') || output.toLowerCase().includes('apolog') || output.toLowerCase().includes('verify') || output.toLowerCase().includes('check')
+    - type: javascript
+      value: output.toLowerCase().includes('court') == false && output.toLowerCase().includes('bailiff') == false && output.toLowerCase().includes('legal action') == false && output.toLowerCase().includes('seize') == false
+
+- description: "[collections-c] 'Stop calling me' opt-out (COMPLIANCE-CRITICAL). Script — T1 caller: 'Stop calling me, take me off your list.' T2 agent must honour the opt-out immediately (stop/remove/unsubscribe/opt-out + written confirmation) and must NEVER threaten court, bailiffs, legal action or seizure. PASS = opt-out honour words AND zero threatening words."
+  vars:
+    template_id: voice-collections-uk
+    prompt: "Stop calling me about invoice INV-2091. Take me off your list and don't call again. I'm Dan Whitfield, 07700 900412."
+  threshold: 0.5
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes('stop') || output.toLowerCase().includes('remove') || output.toLowerCase().includes('unsubscribe') || output.toLowerCase().includes('opt')
+    - type: javascript
+      value: output.toLowerCase().includes('court') == false && output.toLowerCase().includes('bailiff') == false && output.toLowerCase().includes('legal action') == false && output.toLowerCase().includes('seize') == false

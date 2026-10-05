@@ -90,6 +90,7 @@ function iconFor(slug: string, cls: string) {
     clinic: Stethoscope, property: Home, salon: Sparkles,
     "restaurant-in": UtensilsCrossed, restaurant: UtensilsCrossed,
     coaching: GraduationCap, "appliance-in": Refrigerator, appliance: Refrigerator,
+    collections: Scale,
   };
   const Icon = map[slug] || Wrench;
   return <Icon className={cls} />;

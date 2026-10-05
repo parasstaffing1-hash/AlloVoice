@@ -805,3 +805,25 @@ class AppointmentHold(Base):
     status = Column(String(20), nullable=False, default="held")
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Dues-collection calling engine ───
+
+
+class CollectionAttempt(Base):
+    __tablename__ = "collection_attempts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    business_id = Column(UUID(as_uuid=True), ForeignKey("businesses.id"), nullable=False)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=True)
+    customer_name = Column(String(255))
+    phone = Column(String(20), nullable=False)
+    amount_pence = Column(Integer, nullable=False, default=0)
+    # channel: voice | sms
+    channel = Column(String(16), nullable=False, default="voice")
+    # status: queued | called | answered | no_answer | promised | paid | disputed | opted_out | failed
+    status = Column(String(20), nullable=False, default="queued")
+    outcome_note = Column(Text)
+    promise_date = Column(DateTime)
+    call_sid = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)

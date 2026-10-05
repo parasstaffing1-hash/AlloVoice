@@ -62,6 +62,7 @@ const SLUG_TO_ID: Record<string, string> = {
   coaching: "voice-coaching-in",
   "appliance-us": "voice-appliance-us",
   "appliance-in": "voice-appliance-in",
+  collections: "voice-collections-uk",
 };
 
 const ID_TO_SLUG: Record<string, string> = Object.fromEntries(
